@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaundryApp - Premium Laundry Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'landing/css/styles.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">LaundryApp</div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="/api/schema/swagger-ui/" class="btn-api">API Docs</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1 class="fade-in">Modernize Your Laundry Business</h1>
+            <p class="fade-in delay-1">The all-in-one multi-tenant management system for forward-thinking laundry offices.</p>
+            <div class="hero-actions fade-in delay-2">
+                <a href="#get-started" class="btn btn-primary">Get Started</a>
+                <a href="#features" class="btn btn-secondary">Learn More</a>
+            </div>
+        </div>
+    </header>
+
+    <section id="features" class="features">
+        <h2>Why Choose LaundryApp?</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="icon">🏢</div>
+                <h3>Multi-Tenant Architecture</h3>
+                <p>Strict data isolation per office. Manage multiple branches seamlessly.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">⚡</div>
+                <h3>Lightning Fast API</h3>
+                <p>Powered by Django REST Framework and fully documented with Swagger.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">📱</div>
+                <h3>WhatsApp Integration</h3>
+                <p>Track which customers are reachable instantly via WhatsApp markers.</p>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
