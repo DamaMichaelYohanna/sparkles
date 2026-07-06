@@ -1,7 +1,12 @@
 from django.urls import path
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
 
 urlpatterns = [
+    # Auth
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
     # LaundryOffice
     path('offices/', views.LaundryOfficeListCreateView.as_view(), name='office-list'),
     path('offices/<uuid:pk>/', views.LaundryOfficeRetrieveUpdateDestroyView.as_view(), name='office-detail'),

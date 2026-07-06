@@ -1,45 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/network/api_client.dart';
 import '../../core/models/dashboard_stats_model.dart';
 import '../../core/models/order_model.dart';
-
-final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
-});
+import '../../core/providers.dart';
 
 final dashboardStatsProvider = FutureProvider.autoDispose<DashboardStats>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  
+  // For offline first, we could also cache this, but let's just fetch for now
+  // or return default stats on failure.
+  final api = ref.watch(apiServiceProvider);
   try {
     final response = await api.dio.get('/dashboard/operations/');
     return DashboardStats.fromJson(response.data);
   } catch (e) {
-    // Return empty stats on error or throw to let UI handle it
-    print("Error fetching dashboard stats: $e");
-    // For now, if the API isn't up, we throw to show error state, 
-    // or we could return empty data. Let's throw.
-    throw Exception('Failed to load dashboard stats');
+    return DashboardStats(totalRevenue: 0, pendingOrders: 0, completedOrders: 0, overdueOrders: 0);
   }
 });
 
 final recentOrdersProvider = FutureProvider.autoDispose<List<OrderModel>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  
-  try {
-    // Fetching orders, maybe limiting to recent ones
-    final response = await api.dio.get('/orders/', queryParameters: {'limit': 5});
-    
-    // DRF usually paginates, so results might be in response.data['results']
-    List<dynamic> data = [];
-    if (response.data is Map && response.data.containsKey('results')) {
-      data = response.data['results'];
-    } else if (response.data is List) {
-      data = response.data;
-    }
-
-    return data.map((json) => OrderModel.fromJson(json)).toList();
-  } catch (e) {
-    print("Error fetching recent orders: $e");
-    throw Exception('Failed to load recent orders');
-  }
+  final syncRepo = ref.watch(syncRepositoryProvider);
+  final orders = await syncRepo.getOrders();
+  // Sort and limit locally
+  orders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  return orders.take(5).toList();
 });

@@ -1,9 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/providers.dart';
 import '../shell/shell_screen.dart';
 
-class AuthScreen extends StatelessWidget {
+class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends ConsumerState<AuthScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  void _login() async {
+    setState(() => _isLoading = true);
+    final api = ref.read(apiServiceProvider);
+    
+    final token = await api.login(_emailController.text, _passwordController.text);
+    
+    setState(() => _isLoading = false);
+    
+    if (token != null) {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const ShellScreen()),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login failed. Check your credentials.')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +72,9 @@ class AuthScreen extends StatelessWidget {
               ),
               const SizedBox(height: 48),
               TextFormField(
+                controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'Email',
+                  labelText: 'Username or Email',
                   prefixIcon: const Icon(Icons.email_outlined),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -48,6 +83,7 @@ class AuthScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Password',
@@ -59,18 +95,16 @@ class AuthScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const ShellScreen()),
-                  );
-                },
+                onPressed: _isLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Sign In', style: TextStyle(fontSize: 16)),
+                child: _isLoading 
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Sign In', style: TextStyle(fontSize: 16)),
               ),
             ],
           ),
@@ -79,3 +113,4 @@ class AuthScreen extends StatelessWidget {
     );
   }
 }
+

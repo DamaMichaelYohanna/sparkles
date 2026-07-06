@@ -138,7 +138,7 @@ class DashboardScreen extends ConsumerWidget {
                         getDrawingHorizontalLine: (value) => FlLine(color: AppTheme.background, strokeWidth: 1),
                       ),
                       borderData: FlBorderData(show: false),
-                      barGroups: MockData.weeklyRevenue.asMap().entries.map((entry) {
+                      barGroups: [450.0, 600.0, 300.0, 800.0, 550.0, 900.0, 1200.0].asMap().entries.map((entry) {
                         return BarChartGroupData(
                           x: entry.key,
                           barRods: [
