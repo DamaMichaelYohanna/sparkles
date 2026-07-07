@@ -1,0 +1,52 @@
+{% extends 'landing/dashboard_base.html' %}
+
+{% block title %}Sparkles Global Dashboard - Offices{% endblock %}
+{% block header_title %}Registered Offices{% endblock %}
+
+{% block content %}
+<section class="charts-section" style="grid-template-columns: 1fr;">
+    <div class="recent-orders-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3>Office Directory</h3>
+            <button class="btn-api" style="padding: 0.5rem 1rem; border: none; font-size: 0.85rem; cursor: pointer;">+ Add Office</button>
+        </div>
+        
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>Office Name</th>
+                    <th>Contact Info</th>
+                    <th>Subscription</th>
+                    <th>Created On</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for office in offices %}
+                <tr>
+                    <td style="font-weight: 600;">{{ office.name }}</td>
+                    <td>{{ office.contact_info|default:"N/A" }}</td>
+                    <td>
+                        <span style="background: var(--grey-200); padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">
+                            {{ office.get_subscription_tier_display }}
+                        </span>
+                    </td>
+                    <td>{{ office.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        {% if office.is_deleted %}
+                            <span style="color: #dc3545; font-weight: 600; font-size: 0.85rem;">Inactive</span>
+                        {% else %}
+                            <span style="color: #198754; font-weight: 600; font-size: 0.85rem;">Active</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No offices registered yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -30,3 +30,21 @@ def dashboard(request):
         'chart_data': chart_data,
     }
     return render(request, 'landing/dashboard.html', context)
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def offices_list(request):
+    offices = LaundryOffice.objects.all().order_by('-created_at')
+    context = {'offices': offices}
+    return render(request, 'landing/offices.html', context)
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def users_list(request):
+    users = User.objects.select_related('office').all().order_by('-date_joined')
+    context = {'users': users}
+    return render(request, 'landing/users.html', context)
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def settings_view(request):
+    # Placeholder for actual settings logic
+    context = {}
+    return render(request, 'landing/settings.html', context)

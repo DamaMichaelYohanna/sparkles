@@ -53,7 +53,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               const Icon(Icons.local_laundry_service, size: 80, color: AppTheme.primaryColor),
               const SizedBox(height: 24),
               const Text(
-                'Laundry Manager',
+                'Sparkles',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 28,

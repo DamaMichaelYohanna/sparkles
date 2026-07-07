@@ -1,118 +1,91 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaaS Global Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'landing/css/styles.css' %}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="dashboard-body">
-    <div class="dashboard-layout">
-        <aside class="sidebar">
-            <div class="logo">LaundryApp</div>
-            <nav class="sidebar-nav">
-                <a href="#" class="active">📊 Overview</a>
-                <a href="#">🏢 Offices</a>
-                <a href="#">👥 Users</a>
-                <a href="#">⚙️ Settings</a>
-                <a href="/" class="back-home">← Back to Site</a>
-            </nav>
-        </aside>
+{% extends 'landing/dashboard_base.html' %}
 
-        <main class="dashboard-content">
-            <header class="dashboard-header">
-                <h2>Global Platform Overview</h2>
-                <div class="user-profile">
-                    Admin User
-                </div>
-            </header>
+{% block title %}Sparkles Global Dashboard - Overview{% endblock %}
+{% block header_title %}Global Platform Overview{% endblock %}
 
-            <section class="kpi-grid">
-                <div class="kpi-card">
-                    <h3>Total Offices</h3>
-                    <div class="value">{{ total_offices }}</div>
-                </div>
-                <div class="kpi-card">
-                    <h3>Total Users</h3>
-                    <div class="value">{{ total_users }}</div>
-                </div>
-                <div class="kpi-card">
-                    <h3>Total Orders</h3>
-                    <div class="value">{{ total_orders }}</div>
-                </div>
-                <div class="kpi-card">
-                    <h3>Total Revenue</h3>
-                    <div class="value">${{ total_revenue|floatformat:2 }}</div>
-                </div>
-            </section>
-
-            <section class="charts-section">
-                <div class="chart-container">
-                    <h3>Orders by Office</h3>
-                    <canvas id="ordersChart"></canvas>
-                </div>
-                <div class="recent-orders-container">
-                    <h3>Recent Platform Orders</h3>
-                    <table class="dashboard-table">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Office</th>
-                                <th>Customer</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for order in recent_orders %}
-                            <tr>
-                                <td>{{ order.id|truncatechars:8 }}</td>
-                                <td>{{ order.office.name }}</td>
-                                <td>{{ order.customer_name }}</td>
-                                <td>${{ order.total_price }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4">No orders found on the platform yet.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
+{% block content %}
+<section class="kpi-grid">
+    <div class="kpi-card">
+        <h3>Total Offices</h3>
+        <div class="value">{{ total_offices }}</div>
     </div>
+    <div class="kpi-card">
+        <h3>Total Users</h3>
+        <div class="value">{{ total_users }}</div>
+    </div>
+    <div class="kpi-card">
+        <h3>Total Orders</h3>
+        <div class="value">{{ total_orders }}</div>
+    </div>
+    <div class="kpi-card">
+        <h3>Total Revenue</h3>
+        <div class="value">${{ total_revenue|floatformat:2 }}</div>
+    </div>
+</section>
 
-    <script>
-        const ctx = document.getElementById('ordersChart').getContext('2d');
-        const ordersChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {{ chart_labels|safe }},
-                datasets: [{
-                    label: 'Total Orders',
-                    data: {{ chart_data|safe }},
-                    backgroundColor: '#1297fd',
-                    borderRadius: 4,
-                }]
+<section class="charts-section">
+    <div class="chart-container">
+        <h3>Orders by Office</h3>
+        <canvas id="ordersChart"></canvas>
+    </div>
+    <div class="recent-orders-container">
+        <h3>Recent Platform Orders</h3>
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Office</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                    <td>{{ order.id|truncatechars:8 }}</td>
+                    <td>{{ order.office.name }}</td>
+                    <td>{{ order.customer_name }}</td>
+                    <td>${{ order.total_price }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No orders found on the platform yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const ctx = document.getElementById('ordersChart').getContext('2d');
+    const ordersChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Total Orders',
+                data: {{ chart_data|safe }},
+                backgroundColor: '#5a626a',
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
-    </script>
-</body>
-</html>
+        }
+    });
+</script>
+{% endblock %}

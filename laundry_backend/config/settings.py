@@ -82,7 +82,7 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Laundry Management System API',
+    'TITLE': 'Sparkles API',
     'DESCRIPTION': 'API documentation for the multi-tenant laundry backend.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,

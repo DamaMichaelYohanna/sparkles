@@ -13,7 +13,7 @@ class LaundryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Laundry Manager',
+      title: 'Sparkles',
       theme: AppTheme.lightTheme,
       home: const AuthScreen(),
       debugShowCheckedModeBanner: false,

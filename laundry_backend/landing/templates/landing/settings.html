@@ -1,0 +1,39 @@
+{% extends 'landing/dashboard_base.html' %}
+
+{% block title %}Sparkles Global Dashboard - Settings{% endblock %}
+{% block header_title %}Platform Settings{% endblock %}
+
+{% block content %}
+<section class="charts-section" style="grid-template-columns: 1fr;">
+    <div class="recent-orders-container">
+        <h3 style="margin-bottom: 1.5rem;">Global Configuration</h3>
+        
+        <div style="max-width: 600px;">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Platform Name</label>
+                <input type="text" value="Sparkles" disabled style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); color: var(--grey-500); background: var(--grey-50);">
+                <small style="color: var(--grey-500); display: block; margin-top: 0.25rem;">Contact support to change the global platform name.</small>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Default Subscription Tier</label>
+                <select disabled style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); color: var(--grey-500); background: var(--grey-50);">
+                    <option selected>Free</option>
+                    <option>Basic</option>
+                    <option>Premium</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Maintenance Mode</label>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="maintenance" disabled>
+                    <label for="maintenance" style="color: var(--grey-500);">Enable maintenance mode (prevents new logins)</label>
+                </div>
+            </div>
+
+            <button class="btn-api" style="padding: 0.8rem 2rem; border: none; font-size: 1rem; cursor: pointer; opacity: 0.7;" disabled>Save Changes</button>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'landing/dashboard_base.html' %}
+
+{% block title %}Sparkles Global Dashboard - Users{% endblock %}
+{% block header_title %}User Management{% endblock %}
+
+{% block content %}
+<section class="charts-section" style="grid-template-columns: 1fr;">
+    <div class="recent-orders-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3>Platform Users</h3>
+            <button class="btn-api" style="padding: 0.5rem 1rem; border: none; font-size: 0.85rem; cursor: pointer;">+ Invite User</button>
+        </div>
+        
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Associated Office</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td style="font-weight: 600;">{{ user.username }}</td>
+                    <td>{{ user.email|default:"N/A" }}</td>
+                    <td>{{ user.office.name|default:"Global Admin" }}</td>
+                    <td>
+                        {% if user.is_superuser %}
+                            <span style="background: var(--primary); color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Super Admin</span>
+                        {% elif user.is_office_admin %}
+                            <span style="background: var(--grey-500); color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Office Admin</span>
+                        {% else %}
+                            <span style="background: var(--grey-200); padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Staff</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
