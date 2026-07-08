@@ -7,8 +7,8 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.exceptions import PermissionDenied
 from offices.models import LaundryOffice
-from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem
-from .permissions import IsOfficeAdmin
+from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem, ActionLog
+from .permissions import IsOfficeAdmin, TierLimitPermission
 from .serializers import (
     LaundryOfficeSerializer, ServiceTypeSerializer, CategorySerializer,
     ItemPricingSerializer, OrderStatusSerializer, OrderSerializer, OrderItemSerializer,
@@ -37,14 +37,38 @@ class BaseTenantView:
             
         model = self.serializer_class.Meta.model
         if model == LaundryOffice:
-            serializer.save()
+            instance = serializer.save()
         elif model == OrderItem:
             order = serializer.validated_data.get('order')
             if order and order.office != user.office:
                 raise PermissionDenied("Invalid order for your office.")
-            serializer.save()
+            instance = serializer.save()
         else:
-            serializer.save(office=user.office)
+            instance = serializer.save(office=user.office)
+            
+        # Audit Trail Logging
+        if model in [Order]:
+            ActionLog.objects.create(
+                office=user.office,
+                user=user,
+                action=f"{model.__name__.upper()}_CREATED",
+                details=f"Created ID {instance.id}"
+            )
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        user = self.request.user
+        model = self.serializer_class.Meta.model
+        
+        # Audit Trail Logging
+        if model in [Order] and user.office:
+            ActionLog.objects.create(
+                office=user.office,
+                user=user,
+                action=f"{model.__name__.upper()}_UPDATED",
+                details=f"Updated ID {instance.id}"
+            )
+
 
 # LaundryOffice
 class LaundryOfficeListCreateView(BaseTenantView, generics.ListCreateAPIView):
@@ -124,7 +148,7 @@ class OrderItemRetrieveUpdateDestroyView(BaseTenantView, generics.RetrieveUpdate
 # Sub Users
 class SubUserListCreateView(generics.ListCreateAPIView):
     serializer_class = SubUserSerializer
-    permission_classes = [IsOfficeAdmin]
+    permission_classes = [IsOfficeAdmin, TierLimitPermission]
 
     def get_queryset(self):
         user = self.request.user
@@ -210,3 +234,19 @@ class OfficeFinancialDashboardAPIView(APIView):
             "total_outstanding_balances": total_outstanding_balances,
             "top_selling_items": list(top_items)
         })
+
+# Integrations
+class PaystackWebhookView(APIView):
+    permission_classes = [] # Webhooks shouldn't require our JWT auth
+    
+    def post(self, request, *args, **kwargs):
+        # In a real app, verify Paystack signature here using HMAC
+        event = request.data.get('event')
+        data = request.data.get('data', {})
+        
+        if event == 'charge.success':
+            reference = data.get('reference')
+            # Look up office by reference, update subscription, log payment, etc.
+            print(f"Payment successful for reference: {reference}")
+            
+        return Response(status=200)

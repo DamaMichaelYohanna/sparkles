@@ -1,6 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
+from .sync_views import SyncAPIView
 
 urlpatterns = [
     # Auth
@@ -41,4 +42,10 @@ urlpatterns = [
     # Dashboards
     path('dashboard/operations/', views.OfficeOperationsDashboardAPIView.as_view(), name='dashboard-operations'),
     path('dashboard/finance/', views.OfficeFinancialDashboardAPIView.as_view(), name='dashboard-finance'),
+
+    # Sync
+    path('sync/', SyncAPIView.as_view(), name='api-sync'),
+    
+    # Webhooks
+    path('webhooks/paystack/', views.PaystackWebhookView.as_view(), name='webhook-paystack'),
 ]

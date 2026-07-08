@@ -41,3 +41,9 @@ class OrderItem(BaseModel):
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+
+class ActionLog(BaseModel):
+    office = models.ForeignKey('offices.LaundryOffice', on_delete=models.CASCADE, related_name='action_logs')
+    user = models.ForeignKey('offices.User', on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50) # e.g., "ORDER_CREATED", "ORDER_PAID"
+    details = models.TextField(blank=True)
