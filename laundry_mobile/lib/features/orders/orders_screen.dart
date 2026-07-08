@@ -3,6 +3,7 @@ import 'providers/orders_provider.dart';
 import '../../core/models/order_model.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import 'add_order_screen.dart';
 
 class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({Key? key}) : super(key: key);
@@ -131,7 +132,9 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     },
   ),
   floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddOrderScreen()));
+        },
         backgroundColor: AppTheme.primaryColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),

@@ -29,8 +29,16 @@ class SyncRepository {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final lastSync = prefs.getString('last_sync_timestamp');
+      
+      // 1. Push pending records
+      final pendingRecords = await _dbHelper.getPendingSyncRecords();
+      if ((pendingRecords['orders'] as List).isNotEmpty || (pendingRecords['order_items'] as List).isNotEmpty) {
+        await _apiService.pushDelta(pendingRecords);
+        await _dbHelper.markRecordsAsSynced();
+      }
 
+      // 2. Pull delta
+      final lastSync = prefs.getString('last_sync_timestamp');
       final deltaPayload = await _apiService.syncDelta(lastSync);
       final db = await _dbHelper.database;
       

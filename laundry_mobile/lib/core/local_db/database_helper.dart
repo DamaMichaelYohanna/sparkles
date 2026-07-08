@@ -111,4 +111,35 @@ CREATE TABLE item_pricing (
     final db = await instance.database;
     db.close();
   }
+
+  // --- CRUD for Orders ---
+  Future<void> insertOrder(Map<String, dynamic> orderData) async {
+    final db = await database;
+    await db.insert('orders', orderData, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<void> insertOrderItem(Map<String, dynamic> itemData) async {
+    final db = await database;
+    await db.insert('order_items', itemData, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  // --- Sync Engine Queries ---
+  Future<Map<String, dynamic>> getPendingSyncRecords() async {
+    final db = await database;
+    
+    final pendingOrders = await db.query('orders', where: 'sync_status = ?', whereArgs: ['pending']);
+    final pendingItems = await db.query('order_items', where: 'sync_status = ?', whereArgs: ['pending']);
+    
+    return {
+      'orders': pendingOrders,
+      'order_items': pendingItems,
+    };
+  }
+
+  Future<void> markRecordsAsSynced() async {
+    final db = await database;
+    
+    await db.update('orders', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
+    await db.update('order_items', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
+  }
 }

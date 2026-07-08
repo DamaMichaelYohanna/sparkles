@@ -5,10 +5,8 @@ import 'dart:io';
 class ApiService {
   late final Dio _dio;
 
-  // Use 10.0.2.2 for Android Emulator, 127.0.0.1 for desktop/iOS
-  final String _baseUrl = Platform.isAndroid 
-      ? 'http://10.0.2.2:8000/api'
-      : 'http://127.0.0.1:8000/api';
+  // Production URL on Vercel
+  final String _baseUrl = 'https://sparkles-green.vercel.app/api';
 
   ApiService() {
     _dio = Dio(BaseOptions(
@@ -84,6 +82,15 @@ class ApiService {
       return response.data as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Failed to sync delta: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> pushDelta(Map<String, dynamic> payload) async {
+    try {
+      final response = await _dio.post('/sync/', data: payload);
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Failed to push delta: $e');
     }
   }
 
