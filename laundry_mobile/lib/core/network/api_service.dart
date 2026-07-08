@@ -32,6 +32,16 @@ class ApiService {
       },
       onError: (DioException e, handler) {
         print('API Error: ${e.response?.statusCode} - ${e.message}');
+        if (e.response?.statusCode == 403) {
+          // Handle TierLimitPermission or general 403s
+          final message = e.response?.data?['detail'] ?? "Subscription limit reached or access denied.";
+          return handler.next(DioException(
+            requestOptions: e.requestOptions,
+            response: e.response,
+            type: e.type,
+            error: Exception("TierLimitError: $message"),
+          ));
+        }
         return handler.next(e);
       },
     ));
@@ -56,9 +66,33 @@ class ApiService {
   Future<List<dynamic>> getOrders() async {
     try {
       final response = await _dio.get('/orders/');
+      // Pagination parsing if applicable, though for sync we use /api/sync/
+      if (response.data is Map && response.data.containsKey('results')) {
+        return response.data['results'] as List<dynamic>;
+      }
       return response.data as List<dynamic>;
     } catch (e) {
       throw Exception('Failed to load orders: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> syncDelta(String? lastSyncTimestamp) async {
+    try {
+      final response = await _dio.get('/sync/', queryParameters: {
+        if (lastSyncTimestamp != null) 'last_sync_timestamp': lastSyncTimestamp,
+      });
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Failed to sync delta: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getDashboardOperations() async {
+    try {
+      final response = await _dio.get('/dashboard/operations/');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Failed to load dashboard: $e');
     }
   }
 

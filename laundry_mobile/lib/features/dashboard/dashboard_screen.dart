@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/theme.dart';
-import '../../core/mock_data.dart';
 import 'widgets/kpi_card.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -158,6 +157,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

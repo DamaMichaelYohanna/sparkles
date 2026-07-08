@@ -34,17 +34,60 @@ CREATE TABLE orders (
   amount_paid REAL,
   current_status TEXT,
   created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
   sync_status TEXT
 )
 ''');
 
     await db.execute('''
-CREATE TABLE offices (
+CREATE TABLE order_items (
+  id TEXT PRIMARY KEY,
+  order_id TEXT,
+  item_pricing_id TEXT,
+  quantity INTEGER,
+  unit_price REAL,
+  discount_amount REAL,
+  subtotal REAL,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
+  sync_status TEXT
+)
+''');
+
+    await db.execute('''
+CREATE TABLE service_types (
   id TEXT PRIMARY KEY,
   name TEXT,
-  contact_info TEXT,
-  subscription_tier TEXT,
-  preferences TEXT,
+  description TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
+  sync_status TEXT
+)
+''');
+
+    await db.execute('''
+CREATE TABLE categories (
+  id TEXT PRIMARY KEY,
+  name TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
+  sync_status TEXT
+)
+''');
+
+    await db.execute('''
+CREATE TABLE order_statuses (
+  id TEXT PRIMARY KEY,
+  name TEXT,
+  sequence_order INTEGER,
+  is_completed_state INTEGER DEFAULT 0,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
   sync_status TEXT
 )
 ''');
@@ -56,6 +99,9 @@ CREATE TABLE item_pricing (
   price REAL,
   category_id TEXT,
   service_type_id TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
   sync_status TEXT
 )
 ''');

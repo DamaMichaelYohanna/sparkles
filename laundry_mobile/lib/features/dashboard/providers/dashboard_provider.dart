@@ -1,15 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/models/dashboard_stats_model.dart';
-import '../../core/models/order_model.dart';
-import '../../core/providers.dart';
+import 'package:laundry_mobile/core/models/dashboard_stats_model.dart';
+import 'package:laundry_mobile/core/models/order_model.dart';
+import 'package:laundry_mobile/core/providers.dart';
 
 final dashboardStatsProvider = FutureProvider.autoDispose<DashboardStats>((ref) async {
   // For offline first, we could also cache this, but let's just fetch for now
   // or return default stats on failure.
   final api = ref.watch(apiServiceProvider);
   try {
-    final response = await api.dio.get('/dashboard/operations/');
-    return DashboardStats.fromJson(response.data);
+    final response = await api.getDashboardOperations();
+    return DashboardStats.fromJson(response);
   } catch (e) {
     return DashboardStats(totalRevenue: 0, pendingOrders: 0, completedOrders: 0, overdueOrders: 0);
   }
