@@ -6,13 +6,14 @@ class ApiService {
   late final Dio _dio;
 
   // Production URL on Vercel
-  final String _baseUrl = 'https://sparkles-green.vercel.app/api';
+  final String _baseUrl = 'https://sparkles-green.vercel.app/api/';
 
   ApiService() {
+    print(">>> API_SERVICE INITIALIZED WITH 60s TIMEOUT <<<");
     _dio = Dio(BaseOptions(
       baseUrl: _baseUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -46,24 +47,35 @@ class ApiService {
   }
 
   Future<String?> login(String username, String password) async {
+    print('Attempting login to $_baseUrl with username: $username');
     try {
-      final response = await _dio.post('/token/', data: {
+      final response = await _dio.post('token/', data: {
         'username': username,
         'password': password,
       });
+      print('Login success! Status code: ${response.statusCode}');
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('access_token', response.data['access']);
       await prefs.setString('refresh_token', response.data['refresh']);
       return response.data['access'];
     } catch (e) {
-      print('Login failed: $e');
+      if (e is DioException) {
+        print('Login DioException: ${e.message}');
+        print('Request URL was: ${e.requestOptions.uri}');
+        if (e.response != null) {
+          print('Response Status: ${e.response?.statusCode}');
+          print('Response Data: ${e.response?.data}');
+        }
+      } else {
+        print('Login failed with unknown error: $e');
+      }
       return null;
     }
   }
 
   Future<List<dynamic>> getOrders() async {
     try {
-      final response = await _dio.get('/orders/');
+      final response = await _dio.get('orders/');
       // Pagination parsing if applicable, though for sync we use /api/sync/
       if (response.data is Map && response.data.containsKey('results')) {
         return response.data['results'] as List<dynamic>;
@@ -76,7 +88,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> syncDelta(String? lastSyncTimestamp) async {
     try {
-      final response = await _dio.get('/sync/', queryParameters: {
+      final response = await _dio.get('sync/', queryParameters: {
         if (lastSyncTimestamp != null) 'last_sync_timestamp': lastSyncTimestamp,
       });
       return response.data as Map<String, dynamic>;
@@ -87,7 +99,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> pushDelta(Map<String, dynamic> payload) async {
     try {
-      final response = await _dio.post('/sync/', data: payload);
+      final response = await _dio.post('sync/', data: payload);
       return response.data as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Failed to push delta: $e');
@@ -96,7 +108,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> getDashboardOperations() async {
     try {
-      final response = await _dio.get('/dashboard/operations/');
+      final response = await _dio.get('dashboard/operations/');
       return response.data as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Failed to load dashboard: $e');

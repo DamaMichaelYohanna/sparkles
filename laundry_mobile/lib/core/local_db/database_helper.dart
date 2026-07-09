@@ -123,16 +123,37 @@ CREATE TABLE item_pricing (
     await db.insert('order_items', itemData, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<void> insertCategory(Map<String, dynamic> categoryData) async {
+    final db = await database;
+    await db.insert('categories', categoryData, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<void> insertServiceType(Map<String, dynamic> serviceData) async {
+    final db = await database;
+    await db.insert('service_types', serviceData, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<void> insertItemPricing(Map<String, dynamic> pricingData) async {
+    final db = await database;
+    await db.insert('item_pricing', pricingData, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
   // --- Sync Engine Queries ---
   Future<Map<String, dynamic>> getPendingSyncRecords() async {
     final db = await database;
     
     final pendingOrders = await db.query('orders', where: 'sync_status = ?', whereArgs: ['pending']);
     final pendingItems = await db.query('order_items', where: 'sync_status = ?', whereArgs: ['pending']);
+    final pendingCategories = await db.query('categories', where: 'sync_status = ?', whereArgs: ['pending']);
+    final pendingServices = await db.query('service_types', where: 'sync_status = ?', whereArgs: ['pending']);
+    final pendingPricing = await db.query('item_pricing', where: 'sync_status = ?', whereArgs: ['pending']);
     
     return {
       'orders': pendingOrders,
       'order_items': pendingItems,
+      'categories': pendingCategories,
+      'service_types': pendingServices,
+      'item_pricing': pendingPricing,
     };
   }
 
@@ -141,5 +162,8 @@ CREATE TABLE item_pricing (
     
     await db.update('orders', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
     await db.update('order_items', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
+    await db.update('categories', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
+    await db.update('service_types', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
+    await db.update('item_pricing', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
   }
 }

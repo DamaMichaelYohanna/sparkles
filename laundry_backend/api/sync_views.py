@@ -60,9 +60,100 @@ class SyncAPIView(APIView):
         data = request.data
         orders_data = data.get('orders', [])
         order_items_data = data.get('order_items', [])
+        categories_data = data.get('categories', [])
+        service_types_data = data.get('service_types', [])
+        item_pricing_data = data.get('item_pricing', [])
 
         processed_orders = 0
         processed_items = 0
+        processed_configs = 0
+
+        # Process Categories
+        for cat_dict in categories_data:
+            cat_id = cat_dict.get('id')
+            if not cat_id: continue
+            try:
+                cat_obj = Category.objects.get(id=cat_id, office=office)
+                incoming_updated_at = parse(cat_dict.get('updated_at', ''))
+                if incoming_updated_at > cat_obj.updated_at:
+                    if cat_dict.get('is_deleted', False):
+                        cat_obj.is_deleted = True
+                    else:
+                        cat_obj.name = cat_dict.get('name', cat_obj.name)
+                    cat_obj.save()
+                    processed_configs += 1
+            except Category.DoesNotExist:
+                if not cat_dict.get('is_deleted', False):
+                    Category.objects.create(
+                        id=cat_id,
+                        office=office,
+                        name=cat_dict.get('name', '')
+                    )
+                    processed_configs += 1
+
+        # Process Service Types
+        for srv_dict in service_types_data:
+            srv_id = srv_dict.get('id')
+            if not srv_id: continue
+            try:
+                srv_obj = ServiceType.objects.get(id=srv_id, office=office)
+                incoming_updated_at = parse(srv_dict.get('updated_at', ''))
+                if incoming_updated_at > srv_obj.updated_at:
+                    if srv_dict.get('is_deleted', False):
+                        srv_obj.is_deleted = True
+                    else:
+                        srv_obj.name = srv_dict.get('name', srv_obj.name)
+                        srv_obj.description = srv_dict.get('description', srv_obj.description)
+                    srv_obj.save()
+                    processed_configs += 1
+            except ServiceType.DoesNotExist:
+                if not srv_dict.get('is_deleted', False):
+                    ServiceType.objects.create(
+                        id=srv_id,
+                        office=office,
+                        name=srv_dict.get('name', ''),
+                        description=srv_dict.get('description', '')
+                    )
+                    processed_configs += 1
+
+        # Process Item Pricing
+        for ip_dict in item_pricing_data:
+            ip_id = ip_dict.get('id')
+            if not ip_id: continue
+            try:
+                ip_obj = ItemPricing.objects.get(id=ip_id, office=office)
+                incoming_updated_at = parse(ip_dict.get('updated_at', ''))
+                if incoming_updated_at > ip_obj.updated_at:
+                    if ip_dict.get('is_deleted', False):
+                        ip_obj.is_deleted = True
+                    else:
+                        ip_obj.name = ip_dict.get('name', ip_obj.name)
+                        ip_obj.price = ip_dict.get('price', ip_obj.price)
+                    ip_obj.save()
+                    processed_configs += 1
+            except ItemPricing.DoesNotExist:
+                if not ip_dict.get('is_deleted', False):
+                    cat_id = ip_dict.get('category_id')
+                    srv_id = ip_dict.get('service_type_id')
+                    
+                    # Resolve category and service type objects
+                    cat_obj = None
+                    if cat_id:
+                        cat_obj = Category.objects.filter(id=cat_id, office=office).first()
+                    srv_obj = None
+                    if srv_id:
+                        srv_obj = ServiceType.objects.filter(id=srv_id, office=office).first()
+
+                    if srv_obj:
+                        ItemPricing.objects.create(
+                            id=ip_id,
+                            office=office,
+                            category=cat_obj,
+                            service_type=srv_obj,
+                            name=ip_dict.get('name', ''),
+                            price=ip_dict.get('price', 0)
+                        )
+                        processed_configs += 1
 
         # Process Orders
         for order_dict in orders_data:
@@ -149,5 +240,6 @@ class SyncAPIView(APIView):
         return Response({
             "status": "success",
             "processed_orders": processed_orders,
-            "processed_items": processed_items
+            "processed_items": processed_items,
+            "processed_configs": processed_configs
         })

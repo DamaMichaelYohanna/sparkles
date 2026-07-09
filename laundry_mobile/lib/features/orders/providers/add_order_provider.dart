@@ -38,7 +38,7 @@ class DraftOrderState {
   double get total => items.fold(0.0, (sum, item) => sum + item.subtotal);
 }
 
-class AddOrderNotifier extends AutoDisposeNotifier<DraftOrderState> {
+class AddOrderNotifier extends Notifier<DraftOrderState> {
   @override
   DraftOrderState build() {
     return DraftOrderState();
@@ -131,6 +131,6 @@ class AddOrderNotifier extends AutoDisposeNotifier<DraftOrderState> {
   }
 }
 
-final addOrderProvider = NotifierProvider.autoDispose<AddOrderNotifier, DraftOrderState>(() {
+final addOrderProvider = NotifierProvider<AddOrderNotifier, DraftOrderState>(() {
   return AddOrderNotifier();
 });

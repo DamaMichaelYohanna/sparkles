@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme.dart';
 import 'providers/add_order_provider.dart';
+import '../settings/providers/pricing_provider.dart';
+import '../../core/models/category_model.dart';
+import '../../core/models/service_type_model.dart';
+import '../../core/models/item_pricing_model.dart';
 
 class AddOrderScreen extends ConsumerStatefulWidget {
   const AddOrderScreen({Key? key}) : super(key: key);
@@ -30,62 +34,7 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.7,
-          minChildSize: 0.5,
-          maxChildSize: 0.9,
-          builder: (_, controller) {
-            return Consumer(
-              builder: (context, ref, child) {
-                final pricingAsync = ref.watch(itemPricingListProvider);
-                return pricingAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => Center(child: Text('Error: $error')),
-                  data: (pricings) {
-                    if (pricings.isEmpty) {
-                      return const Center(child: Text("No items available. Please sync first."));
-                    }
-                    return Column(
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Text(
-                            'Select Service Item',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Expanded(
-                          child: ListView.builder(
-                            controller: controller,
-                            itemCount: pricings.length,
-                            itemBuilder: (context, index) {
-                              final pricing = pricings[index];
-                              return ListTile(
-                                title: Text('Item ID: ${pricing.id}'), // Ideal: show category/service name via join, but this is a simplified MVP
-                                subtitle: Text('₦${pricing.price}'),
-                                trailing: IconButton(
-                                  icon: const Icon(LucideIcons.plusCircle, color: AppTheme.primaryColor),
-                                  onPressed: () {
-                                    ref.read(addOrderProvider.notifier).addItem(pricing, 1);
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Item added to cart!'), duration: Duration(seconds: 1)),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                );
-              }
-            );
-          },
-        );
+        return const _ItemSelectionSheet();
       }
     );
   }
@@ -238,3 +187,159 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
     );
   }
 }
+
+class _ItemSelectionSheet extends ConsumerStatefulWidget {
+  const _ItemSelectionSheet({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<_ItemSelectionSheet> createState() => _ItemSelectionSheetState();
+}
+
+class _ItemSelectionSheetState extends ConsumerState<_ItemSelectionSheet> {
+  String? selectedCategoryId;
+  String? selectedServiceId;
+  int quantity = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final servicesAsync = ref.watch(serviceTypesProvider);
+    final pricingAsync = ref.watch(itemPricingProvider);
+
+    if (categoriesAsync.isLoading || servicesAsync.isLoading || pricingAsync.isLoading) {
+      return const SizedBox(
+        height: 300,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final categories = categoriesAsync.value ?? [];
+    final services = servicesAsync.value ?? [];
+    final pricings = pricingAsync.value ?? [];
+
+    if (categories.isEmpty || services.isEmpty) {
+      return const SizedBox(
+        height: 300,
+        child: Center(child: Text("No Categories or Services configured yet.")),
+      );
+    }
+
+    // Determine currently selected pricing rule (if any)
+    ItemPricingModel? activePricing;
+    if (selectedCategoryId != null && selectedServiceId != null) {
+      try {
+        activePricing = pricings.firstWhere(
+          (p) => p.categoryId == selectedCategoryId && p.serviceTypeId == selectedServiceId,
+        );
+      } catch (e) {
+        activePricing = null; // No rule matching this combo
+      }
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Add Item to Order',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(labelText: 'Fabric Category (e.g. T-Shirt)'),
+            value: selectedCategoryId,
+            items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
+            onChanged: (val) => setState(() => selectedCategoryId = val),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(labelText: 'Service Type (e.g. Washing & Ironing)'),
+            value: selectedServiceId,
+            items: services.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))).toList(),
+            onChanged: (val) => setState(() => selectedServiceId = val),
+          ),
+          const SizedBox(height: 24),
+          
+          if (selectedCategoryId != null && selectedServiceId != null)
+            if (activePricing != null)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Unit Price:', style: TextStyle(fontSize: 16)),
+                        Text('₦${activePricing.price}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Quantity:', style: TextStyle(fontSize: 16)),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle_outline),
+                              onPressed: quantity > 1 ? () => setState(() => quantity--) : null,
+                            ),
+                            Text('$quantity', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            IconButton(
+                              icon: const Icon(Icons.add_circle_outline),
+                              onPressed: () => setState(() => quantity++),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              )
+            else
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'No pricing rule configured for this combination.',
+                  style: TextStyle(color: Colors.redAccent, fontStyle: FontStyle.italic),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: activePricing == null
+                ? null
+                : () {
+                    ref.read(addOrderProvider.notifier).addItem(activePricing!, quantity);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Item added to cart!'), duration: Duration(seconds: 1)),
+                    );
+                  },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Add to Order', style: TextStyle(fontSize: 16)),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+}
+

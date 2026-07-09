@@ -32,7 +32,11 @@ class SyncRepository {
       
       // 1. Push pending records
       final pendingRecords = await _dbHelper.getPendingSyncRecords();
-      if ((pendingRecords['orders'] as List).isNotEmpty || (pendingRecords['order_items'] as List).isNotEmpty) {
+      if ((pendingRecords['orders'] as List).isNotEmpty || 
+          (pendingRecords['order_items'] as List).isNotEmpty ||
+          (pendingRecords['categories'] as List).isNotEmpty ||
+          (pendingRecords['service_types'] as List).isNotEmpty ||
+          (pendingRecords['item_pricing'] as List).isNotEmpty) {
         await _apiService.pushDelta(pendingRecords);
         await _dbHelper.markRecordsAsSynced();
       }
