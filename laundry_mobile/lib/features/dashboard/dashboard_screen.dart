@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/theme.dart';
+import '../../core/providers.dart';
 import 'widgets/kpi_card.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -28,10 +29,18 @@ class DashboardScreen extends ConsumerWidget {
       body: statsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
-        data: (stats) => SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        data: (stats) => RefreshIndicator(
+          onRefresh: () async {
+            final syncRepo = ref.read(syncRepositoryProvider);
+            await syncRepo.getOrders();
+            ref.invalidate(dashboardStatsProvider);
+            ref.invalidate(recentOrdersProvider);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Row(
@@ -57,6 +66,7 @@ class DashboardScreen extends ConsumerWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
+              childAspectRatio: 1.3,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               children: [
@@ -102,8 +112,8 @@ class DashboardScreen extends ConsumerWidget {
                   child: BarChart(
                     BarChartData(
                       alignment: BarChartAlignment.spaceAround,
-                      maxY: 1500,
-                      barTouchData: BarTouchData(enabled: false),
+                      maxY: (stats.weeklyTrend.reduce((a, b) => a > b ? a : b) * 1.2).clamp(1000, 10000000),
+                      barTouchData: BarTouchData(enabled: true),
                       titlesData: FlTitlesData(
                         show: true,
                         bottomTitles: AxisTitles(
@@ -137,7 +147,7 @@ class DashboardScreen extends ConsumerWidget {
                         getDrawingHorizontalLine: (value) => FlLine(color: AppTheme.background, strokeWidth: 1),
                       ),
                       borderData: FlBorderData(show: false),
-                      barGroups: [450.0, 600.0, 300.0, 800.0, 550.0, 900.0, 1200.0].asMap().entries.map((entry) {
+                      barGroups: stats.weeklyTrend.asMap().entries.map((entry) {
                         return BarChartGroupData(
                           x: entry.key,
                           barRods: [
@@ -157,6 +167,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
       ),
       ),
     );

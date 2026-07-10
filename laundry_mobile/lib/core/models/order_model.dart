@@ -1,8 +1,10 @@
 class OrderModel {
   final String id;
   final String customerName;
+  final String customerPhone;
   final String status;
   final double totalPrice;
+  final double amountPaid;
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isDeleted;
@@ -11,8 +13,10 @@ class OrderModel {
   OrderModel({
     required this.id,
     required this.customerName,
+    this.customerPhone = '',
     required this.status,
     required this.totalPrice,
+    this.amountPaid = 0.0,
     required this.createdAt,
     required this.updatedAt,
     this.isDeleted = false,
@@ -30,8 +34,10 @@ class OrderModel {
     return OrderModel(
       id: json['id'] ?? '',
       customerName: json['customer_name'] ?? 'Unknown Customer',
+      customerPhone: json['customer_phone'] ?? '',
       status: statusName,
       totalPrice: double.tryParse(json['total_price']?.toString() ?? '0.0') ?? 0.0,
+      amountPaid: double.tryParse(json['amount_paid']?.toString() ?? '0.0') ?? 0.0,
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
@@ -46,8 +52,10 @@ class OrderModel {
     return OrderModel(
       id: map['id'] as String,
       customerName: map['customer_name'] as String,
+      customerPhone: map['customer_phone'] as String? ?? '',
       status: map['current_status'] as String,
       totalPrice: map['total_price'] as double,
+      amountPaid: map['amount_paid'] as double? ?? 0.0,
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : DateTime.now(),
       isDeleted: (map['is_deleted'] as int? ?? 0) == 1,
@@ -59,8 +67,10 @@ class OrderModel {
     return {
       'id': id,
       'customer_name': customerName,
+      'customer_phone': customerPhone,
       'current_status': status,
       'total_price': totalPrice,
+      'amount_paid': amountPaid,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'is_deleted': isDeleted ? 1 : 0,
@@ -69,5 +79,5 @@ class OrderModel {
   }
 
   String get displayId => id.length > 8 ? id.substring(0, 8).toUpperCase() : id.toUpperCase();
-  String get displayDate => "\${createdAt.year}-\${createdAt.month.toString().padLeft(2, '0')}-\${createdAt.day.toString().padLeft(2, '0')}";
+  String get displayDate => "${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}";
 }

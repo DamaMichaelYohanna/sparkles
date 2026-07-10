@@ -2,17 +2,50 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:laundry_mobile/core/models/dashboard_stats_model.dart';
 import 'package:laundry_mobile/core/models/order_model.dart';
 import 'package:laundry_mobile/core/providers.dart';
+import 'package:laundry_mobile/core/local_db/database_helper.dart';
 
 final dashboardStatsProvider = FutureProvider.autoDispose<DashboardStats>((ref) async {
-  // For offline first, we could also cache this, but let's just fetch for now
-  // or return default stats on failure.
-  final api = ref.watch(apiServiceProvider);
-  try {
-    final response = await api.getDashboardOperations();
-    return DashboardStats.fromJson(response);
-  } catch (e) {
-    return DashboardStats(totalRevenue: 0, pendingOrders: 0, completedOrders: 0, overdueOrders: 0);
+  final db = await DatabaseHelper.instance.database;
+  final results = await db.query('orders', where: 'is_deleted = ?', whereArgs: [0]);
+  final orders = results.map((e) => OrderModel.fromDb(e)).toList();
+
+  double totalRevenue = 0.0;
+  int pending = 0;
+  int completed = 0;
+  int overdue = 0;
+
+  for (var order in orders) {
+    totalRevenue += order.amountPaid;
+    if (order.status == 'Pending') {
+      pending++;
+    } else if (order.status == 'Completed') {
+      completed++;
+    } else if (order.status == 'Overdue') {
+      overdue++;
+    }
   }
+
+  // Calculate weekly trend (Monday to Sunday)
+  List<double> weeklyTrend = List.generate(7, (_) => 0.0);
+  final now = DateTime.now();
+  final monday = now.subtract(Duration(days: now.weekday - 1));
+  final startOfWeek = DateTime(monday.year, monday.month, monday.day);
+  final endOfWeek = startOfWeek.add(const Duration(days: 7));
+
+  for (var order in orders) {
+    if (order.createdAt.isAfter(startOfWeek) && order.createdAt.isBefore(endOfWeek)) {
+      int weekday = order.createdAt.weekday; // 1 = Mon, 7 = Sun
+      weeklyTrend[weekday - 1] += order.totalPrice;
+    }
+  }
+
+  return DashboardStats(
+    totalRevenue: totalRevenue,
+    pendingOrders: pending,
+    completedOrders: completed,
+    overdueOrders: overdue,
+    weeklyTrend: weeklyTrend,
+  );
 });
 
 final recentOrdersProvider = FutureProvider.autoDispose<List<OrderModel>>((ref) async {

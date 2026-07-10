@@ -25,7 +25,7 @@ class SyncRepository {
 
   Future<void> _performDeltaSync() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.none) return;
+    if (connectivityResult.isEmpty || connectivityResult.contains(ConnectivityResult.none)) return;
 
     try {
       final prefs = await SharedPreferences.getInstance();

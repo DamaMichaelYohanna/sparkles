@@ -166,4 +166,60 @@ CREATE TABLE item_pricing (
     await db.update('service_types', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
     await db.update('item_pricing', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
   }
+
+  Future<List<Map<String, dynamic>>> getOrderItemsWithPricing(String orderId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT oi.*, ip.name as item_name, ip.price as current_price
+      FROM order_items oi
+      LEFT JOIN item_pricing ip ON oi.item_pricing_id = ip.id
+      WHERE oi.order_id = ? AND oi.is_deleted = 0
+    ''', [orderId]);
+  }
+
+  Future<void> updateOrderStatusAndPayment(String orderId, String status, double amountPaid) async {
+    final db = await database;
+    final now = DateTime.now().toUtc().toIso8601String();
+    await db.update(
+      'orders',
+      {
+        'current_status': status,
+        'amount_paid': amountPaid,
+        'updated_at': now,
+        'sync_status': 'pending',
+      },
+      where: 'id = ?',
+      whereArgs: [orderId],
+    );
+  }
+
+  Future<void> softDeleteOrder(String orderId) async {
+    final db = await database;
+    final now = DateTime.now().toUtc().toIso8601String();
+    final batch = db.batch();
+    
+    batch.update(
+      'orders',
+      {
+        'is_deleted': 1,
+        'updated_at': now,
+        'sync_status': 'pending',
+      },
+      where: 'id = ?',
+      whereArgs: [orderId],
+    );
+
+    batch.update(
+      'order_items',
+      {
+        'is_deleted': 1,
+        'updated_at': now,
+        'sync_status': 'pending',
+      },
+      where: 'order_id = ?',
+      whereArgs: [orderId],
+    );
+
+    await batch.commit(noResult: true);
+  }
 }

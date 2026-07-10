@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../orders/orders_screen.dart';
+import '../finance/finance_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../core/theme.dart';
 
@@ -18,6 +19,7 @@ class _ShellScreenState extends State<ShellScreen> {
   final List<Widget> _screens = [
     const DashboardScreen(),
     const OrdersScreen(),
+    const FinanceScreen(),
     const SettingsScreen(),
   ];
 
@@ -46,6 +48,7 @@ class _ShellScreenState extends State<ShellScreen> {
           unselectedItemColor: AppTheme.textSecondary,
           showSelectedLabels: true,
           showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
           elevation: 0,
           items: const [
             BottomNavigationBarItem(
@@ -55,6 +58,10 @@ class _ShellScreenState extends State<ShellScreen> {
             BottomNavigationBarItem(
               icon: Icon(LucideIcons.shoppingBag),
               label: 'Orders',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(LucideIcons.wallet),
+              label: 'Finance',
             ),
             BottomNavigationBarItem(
               icon: Icon(LucideIcons.settings),
