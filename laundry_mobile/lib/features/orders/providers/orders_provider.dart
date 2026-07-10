@@ -17,7 +17,7 @@ class OrdersFilterState {
   OrdersFilterState({
     this.status = 'All',
     this.paymentStatus = 'All',
-    this.dateRange = 'All Time',
+    this.dateRange = 'Today',
     this.customDateRange,
   });
 
