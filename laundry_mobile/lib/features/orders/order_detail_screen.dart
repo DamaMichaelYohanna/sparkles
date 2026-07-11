@@ -436,6 +436,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                                 final quantity = item['quantity'] ?? 1;
                                 final unitPrice = item['unit_price'] ?? 0.0;
                                 final subtotal = item['subtotal'] ?? 0.0;
+                                final discountAmount = item['discount_amount'] ?? 0.0;
 
                                 return Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -450,7 +451,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            'Quantity: $quantity × ₦${unitPrice.toStringAsFixed(2)}',
+                                            'Quantity: $quantity × ₦${unitPrice.toStringAsFixed(2)}' +
+                                            (discountAmount > 0
+                                                ? ' (Discount: -₦${discountAmount.toStringAsFixed(2)})'
+                                                : ''),
                                             style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                                           ),
                                         ],
@@ -485,10 +489,34 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Total Amount'),
+                              const Text('Subtotal'),
+                              Text(
+                                '₦${(_order.totalPrice + _order.discountAmount).toStringAsFixed(2)}',
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                          if (_order.discountAmount > 0) ...[
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Order Discount'),
+                                Text(
+                                  '-₦${_order.discountAmount.toStringAsFixed(2)}',
+                                  style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.redAccent),
+                                ),
+                              ],
+                            ),
+                          ],
+                          const Divider(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Total Amount', style: TextStyle(fontWeight: FontWeight.bold)),
                               Text(
                                 '₦${_order.totalPrice.toStringAsFixed(2)}',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                             ],
                           ),

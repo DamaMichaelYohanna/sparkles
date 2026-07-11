@@ -19,26 +19,34 @@ class DraftOrderState {
   final String customerName;
   final String customerPhone;
   final List<OrderItemModel> items;
+  final double orderDiscount;
 
   DraftOrderState({
     this.customerName = '',
     this.customerPhone = '',
     this.items = const [],
+    this.orderDiscount = 0.0,
   });
 
   DraftOrderState copyWith({
     String? customerName,
     String? customerPhone,
     List<OrderItemModel>? items,
+    double? orderDiscount,
   }) {
     return DraftOrderState(
       customerName: customerName ?? this.customerName,
       customerPhone: customerPhone ?? this.customerPhone,
       items: items ?? this.items,
+      orderDiscount: orderDiscount ?? this.orderDiscount,
     );
   }
   
-  double get total => items.fold(0.0, (sum, item) => sum + item.subtotal);
+  double get total {
+    final itemsSum = items.fold(0.0, (sum, item) => sum + item.subtotal);
+    final finalSum = itemsSum - orderDiscount;
+    return finalSum < 0 ? 0.0 : finalSum;
+  }
 }
 
 class AddOrderNotifier extends Notifier<DraftOrderState> {
@@ -49,22 +57,27 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
 
   void updateCustomerInfo({String? name, String? phone}) {
     state = state.copyWith(
-      customerName: name,
-      customerPhone: phone,
+      customerName: name ?? state.customerName,
+      customerPhone: phone ?? state.customerPhone,
     );
   }
 
-  void addItem(ItemPricingModel pricing, int quantity) {
+  void updateOrderDiscount(double discount) {
+    state = state.copyWith(orderDiscount: discount);
+  }
+
+  void addItem(ItemPricingModel pricing, int quantity, double discountAmount) {
     // Generate a temporary order ID if we haven't yet, or just use empty string for the draft.
     // The final order ID will be assigned when saving.
+    final double subtotal = (pricing.price * quantity) - discountAmount;
     final newItem = OrderItemModel(
       id: const Uuid().v4(),
       orderId: '', // placeholder
       itemPricingId: pricing.id,
       quantity: quantity,
       unitPrice: pricing.price,
-      discountAmount: 0.0,
-      subtotal: pricing.price * quantity,
+      discountAmount: discountAmount,
+      subtotal: subtotal < 0 ? 0.0 : subtotal,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       syncStatus: 'pending',
@@ -75,14 +88,16 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
     if (existingIndex >= 0) {
       final existingItem = state.items[existingIndex];
       final newQuantity = existingItem.quantity + quantity;
+      final newDiscount = existingItem.discountAmount + discountAmount;
+      final double newSubtotal = (existingItem.unitPrice * newQuantity) - newDiscount;
       final updatedItem = OrderItemModel(
         id: existingItem.id,
         orderId: existingItem.orderId,
         itemPricingId: existingItem.itemPricingId,
         quantity: newQuantity,
         unitPrice: existingItem.unitPrice,
-        discountAmount: existingItem.discountAmount,
-        subtotal: existingItem.unitPrice * newQuantity,
+        discountAmount: newDiscount,
+        subtotal: newSubtotal < 0 ? 0.0 : newSubtotal,
         createdAt: existingItem.createdAt,
         updatedAt: DateTime.now(),
         syncStatus: 'pending',
@@ -110,6 +125,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
       createdAt: now,
       updatedAt: now,
       syncStatus: 'pending',
+      discountAmount: state.orderDiscount,
     );
 
     // Save order

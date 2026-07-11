@@ -42,6 +42,9 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
   @override
   Widget build(BuildContext context) {
     final draftState = ref.watch(addOrderProvider);
+    final pricingListAsync = ref.watch(itemPricingListProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final servicesAsync = ref.watch(serviceTypesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -118,15 +121,50 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
                 separatorBuilder: (context, index) => const Divider(),
                 itemBuilder: (context, index) {
                   final item = draftState.items[index];
+                  String displayName = 'Laundry Item';
+                  
+                  if (pricingListAsync.hasValue && categoriesAsync.hasValue && servicesAsync.hasValue) {
+                    final pricings = pricingListAsync.value ?? [];
+                    final categories = categoriesAsync.value ?? [];
+                    final services = servicesAsync.value ?? [];
+                    
+                    try {
+                      final pricing = pricings.firstWhere((p) => p.id == item.itemPricingId);
+                      final cat = categories.firstWhere((c) => c.id == pricing.categoryId);
+                      final svc = services.firstWhere((s) => s.id == pricing.serviceTypeId);
+                      displayName = "${cat.name} (${svc.name})";
+                    } catch (_) {}
+                  }
+
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text('Pricing ID: ${item.itemPricingId.substring(0, 8)}...'),
-                    subtitle: Text('Qty: ${item.quantity} x ₦${item.unitPrice}'),
+                    title: Text(displayName),
+                    subtitle: Text(
+                      'Qty: ${item.quantity} x ₦${item.unitPrice}' +
+                      (item.discountAmount > 0
+                          ? ' (Discount: -₦${item.discountAmount.toStringAsFixed(0)})'
+                          : ''),
+                    ),
                     trailing: Text('₦${item.subtotal}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   );
                 },
               ),
             
+            const SizedBox(height: 24),
+            const Text('Order Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Overall Order Discount (₦) - Optional',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(LucideIcons.tag),
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (val) {
+                final discount = double.tryParse(val) ?? 0.0;
+                ref.read(addOrderProvider.notifier).updateOrderDiscount(discount);
+              },
+            ),
             const SizedBox(height: 32),
           ],
         ),
@@ -150,6 +188,17 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (draftState.orderDiscount > 0) ...[
+                    Text(
+                      'Subtotal: ₦${draftState.items.fold(0.0, (sum, item) => sum + item.subtotal).toStringAsFixed(2)}',
+                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11),
+                    ),
+                    Text(
+                      'Discount: -₦${draftState.orderDiscount.toStringAsFixed(2)}',
+                      style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 4),
+                  ],
                   const Text('Total Amount', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
                   Text('₦${draftState.total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppTheme.primaryColor)),
                 ],
@@ -199,6 +248,13 @@ class _ItemSelectionSheetState extends ConsumerState<_ItemSelectionSheet> {
   String? selectedCategoryId;
   String? selectedServiceId;
   int quantity = 1;
+  final _discountController = TextEditingController();
+
+  @override
+  void dispose() {
+    _discountController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -266,6 +322,16 @@ class _ItemSelectionSheetState extends ConsumerState<_ItemSelectionSheet> {
             items: services.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))).toList(),
             onChanged: (val) => setState(() => selectedServiceId = val),
           ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _discountController,
+            decoration: const InputDecoration(
+              labelText: 'Item Discount (₦) - Optional',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(LucideIcons.tag),
+            ),
+            keyboardType: TextInputType.number,
+          ),
           const SizedBox(height: 24),
           
           if (selectedCategoryId != null && selectedServiceId != null)
@@ -324,7 +390,8 @@ class _ItemSelectionSheetState extends ConsumerState<_ItemSelectionSheet> {
             onPressed: activePricing == null
                 ? null
                 : () {
-                    ref.read(addOrderProvider.notifier).addItem(activePricing!, quantity);
+                    final discount = double.tryParse(_discountController.text) ?? 0.0;
+                    ref.read(addOrderProvider.notifier).addItem(activePricing!, quantity, discount);
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Item added to cart!'), duration: Duration(seconds: 1)),

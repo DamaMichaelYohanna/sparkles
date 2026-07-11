@@ -9,6 +9,7 @@ class OrderModel {
   final DateTime updatedAt;
   final bool isDeleted;
   final String syncStatus;
+  final double discountAmount;
 
   OrderModel({
     required this.id,
@@ -21,6 +22,7 @@ class OrderModel {
     required this.updatedAt,
     this.isDeleted = false,
     this.syncStatus = 'synced',
+    this.discountAmount = 0.0,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -45,6 +47,7 @@ class OrderModel {
           ? DateTime.parse(json['updated_at']) 
           : DateTime.now(),
       isDeleted: json['is_deleted'] ?? false,
+      discountAmount: double.tryParse(json['discount_amount']?.toString() ?? '0.0') ?? 0.0,
     );
   }
 
@@ -60,6 +63,7 @@ class OrderModel {
       updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : DateTime.now(),
       isDeleted: (map['is_deleted'] as int? ?? 0) == 1,
       syncStatus: map['sync_status'] as String? ?? 'synced',
+      discountAmount: map['discount_amount'] as double? ?? 0.0,
     );
   }
 
@@ -75,6 +79,7 @@ class OrderModel {
       'updated_at': updatedAt.toIso8601String(),
       'is_deleted': isDeleted ? 1 : 0,
       'sync_status': syncStatus,
+      'discount_amount': discountAmount,
     };
   }
 

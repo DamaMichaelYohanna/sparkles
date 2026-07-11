@@ -19,9 +19,16 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE orders ADD COLUMN discount_amount REAL DEFAULT 0.0');
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -36,7 +43,8 @@ CREATE TABLE orders (
   created_at TEXT,
   updated_at TEXT,
   is_deleted INTEGER DEFAULT 0,
-  sync_status TEXT
+  sync_status TEXT,
+  discount_amount REAL DEFAULT 0.0
 )
 ''');
 
