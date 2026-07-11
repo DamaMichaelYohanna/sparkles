@@ -13,12 +13,14 @@ class OrdersFilterState {
   final String paymentStatus;
   final String dateRange; // 'All Time', 'Today', 'This Week', 'This Month', 'Custom'
   final DateTimeRange? customDateRange;
+  final String searchQuery;
 
   OrdersFilterState({
     this.status = 'All',
     this.paymentStatus = 'All',
     this.dateRange = 'Today',
     this.customDateRange,
+    this.searchQuery = '',
   });
 
   OrdersFilterState copyWith({
@@ -26,12 +28,14 @@ class OrdersFilterState {
     String? paymentStatus,
     String? dateRange,
     DateTimeRange? customDateRange,
+    String? searchQuery,
   }) {
     return OrdersFilterState(
       status: status ?? this.status,
       paymentStatus: paymentStatus ?? this.paymentStatus,
       dateRange: dateRange ?? this.dateRange,
       customDateRange: customDateRange ?? this.customDateRange,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 }
@@ -42,6 +46,7 @@ class OrdersFilterNotifier extends Notifier<OrdersFilterState> {
 
   void setStatus(String value) => state = state.copyWith(status: value);
   void setPaymentStatus(String value) => state = state.copyWith(paymentStatus: value);
+  void setSearchQuery(String value) => state = state.copyWith(searchQuery: value);
   void setDateRange(String value) {
     if (value != 'Custom') {
       state = state.copyWith(dateRange: value, customDateRange: null);
@@ -71,6 +76,15 @@ final filteredOrdersListProvider = Provider.autoDispose<AsyncValue<List<OrderMod
     data: (orders) {
       final now = DateTime.now();
       List<OrderModel> filtered = orders;
+
+      // 0. Search Query Filter
+      if (filter.searchQuery.isNotEmpty) {
+        final q = filter.searchQuery.toLowerCase();
+        filtered = filtered.where((o) =>
+            o.customerName.toLowerCase().contains(q) ||
+            o.customerPhone.toLowerCase().contains(q) ||
+            o.displayId.toLowerCase().contains(q)).toList();
+      }
 
       // 1. Order Status Filter
       if (filter.status != 'All') {

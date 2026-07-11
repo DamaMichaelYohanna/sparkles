@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../core/widgets/sync_badge.dart';
 import 'providers/analysis_provider.dart';
 
 class AnalysisScreen extends ConsumerWidget {
@@ -16,6 +17,10 @@ class AnalysisScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Business Analysis'),
+        actions: const [
+          SyncBadge(),
+          SizedBox(width: 8),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {

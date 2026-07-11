@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
+import '../../core/providers.dart';
 
-class OfficeDetailsScreen extends StatefulWidget {
+class OfficeDetailsScreen extends ConsumerStatefulWidget {
   const OfficeDetailsScreen({Key? key}) : super(key: key);
 
   @override
-  State<OfficeDetailsScreen> createState() => _OfficeDetailsScreenState();
+  ConsumerState<OfficeDetailsScreen> createState() => _OfficeDetailsScreenState();
 }
 
-class _OfficeDetailsScreenState extends State<OfficeDetailsScreen> {
+class _OfficeDetailsScreenState extends ConsumerState<OfficeDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _addressController;
@@ -49,6 +51,8 @@ class _OfficeDetailsScreenState extends State<OfficeDetailsScreen> {
       await prefs.setString('office_name', _nameController.text);
       await prefs.setString('office_address', _addressController.text);
       await prefs.setString('office_contact', _contactController.text);
+      
+      ref.invalidate(officeNameProvider);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

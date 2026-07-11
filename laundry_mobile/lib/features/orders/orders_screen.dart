@@ -5,9 +5,30 @@ import '../../core/theme.dart';
 import 'add_order_screen.dart';
 import 'order_detail_screen.dart';
 import 'providers/orders_provider.dart';
+import '../../core/widgets/sync_badge.dart';
 
-class OrdersScreen extends ConsumerWidget {
+class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({Key? key}) : super(key: key);
+
+  @override
+  ConsumerState<OrdersScreen> createState() => _OrdersScreenState();
+}
+
+class _OrdersScreenState extends ConsumerState<OrdersScreen> {
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    final currentQuery = ref.read(ordersFilterProvider).searchQuery;
+    _searchController = TextEditingController(text: currentQuery);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _showFilterBottomSheet(BuildContext context) {
     showModalBottomSheet(
@@ -23,7 +44,7 @@ class OrdersScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final ordersAsync = ref.watch(filteredOrdersListProvider);
     final filter = ref.watch(ordersFilterProvider);
     final filterNotifier = ref.read(ordersFilterProvider.notifier);
@@ -31,6 +52,12 @@ class OrdersScreen extends ConsumerWidget {
     final hasActiveFilters = filter.status != 'All' ||
         filter.paymentStatus != 'All' ||
         filter.dateRange != 'All Time';
+
+    ref.listen<OrdersFilterState>(ordersFilterProvider, (previous, next) {
+      if (next.searchQuery.isEmpty && _searchController.text.isNotEmpty) {
+        _searchController.clear();
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -57,12 +84,7 @@ class OrdersScreen extends ConsumerWidget {
             ),
             onPressed: () => _showFilterBottomSheet(context),
           ),
-          IconButton(
-            icon: const Icon(LucideIcons.refreshCw, size: 18),
-            onPressed: () {
-              ref.invalidate(ordersListProvider);
-            },
-          ),
+          const SyncBadge(),
           const SizedBox(width: 8),
         ],
       ),
@@ -72,6 +94,43 @@ class OrdersScreen extends ConsumerWidget {
         },
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search by customer name or phone...',
+                  prefixIcon: const Icon(LucideIcons.search, size: 18),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: () {
+                            _searchController.clear();
+                            filterNotifier.setSearchQuery('');
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.primaryColor),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                onChanged: (val) {
+                  filterNotifier.setSearchQuery(val);
+                },
+              ),
+            ),
             // Active Filter Chips (Only shown if filters are active)
             if (hasActiveFilters)
               Container(

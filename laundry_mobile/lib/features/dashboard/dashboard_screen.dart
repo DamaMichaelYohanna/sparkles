@@ -7,6 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import 'widgets/kpi_card.dart';
+import '../../core/widgets/sync_badge.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -19,6 +20,7 @@ class DashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Global Overview'),
         actions: [
+          const SyncBadge(),
           IconButton(
             icon: const Icon(LucideIcons.bell),
             onPressed: () {},
@@ -47,14 +49,24 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                  child: const Text('A', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    ref.watch(officeNameProvider).maybeWhen(
+                      data: (name) => name.isNotEmpty ? name[0].toUpperCase() : 'L',
+                      orElse: () => 'L',
+                    ),
+                    style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('Welcome back, Admin', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text('Here is what is happening today.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                  children: [
+                    ref.watch(officeNameProvider).when(
+                      data: (name) => Text('Welcome back, $name', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      loading: () => const Text('Welcome back...', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      error: (_, __) => const Text('Welcome back, Admin', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                    const Text('Here is what is happening today.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
                   ],
                 ),
               ],
