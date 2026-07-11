@@ -6,7 +6,7 @@ import 'package:laundry_mobile/core/models/item_pricing_model.dart';
 import 'package:laundry_mobile/core/local_db/database_helper.dart';
 import 'orders_provider.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
-import '../../finance/providers/finance_provider.dart';
+import '../../analysis/providers/analysis_provider.dart';
 
 // Provides the items available to be selected in the Add Order screen
 final itemPricingListProvider = FutureProvider.autoDispose<List<ItemPricingModel>>((ref) async {
@@ -139,7 +139,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
     ref.invalidate(ordersListProvider);
     ref.invalidate(recentOrdersProvider);
     ref.invalidate(dashboardStatsProvider);
-    ref.invalidate(rawFinanceOrdersProvider);
+    ref.invalidate(rawAnalysisOrdersProvider);
   }
 }
 

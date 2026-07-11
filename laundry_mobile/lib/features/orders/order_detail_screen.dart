@@ -6,7 +6,7 @@ import '../../core/models/order_model.dart';
 import '../../core/theme.dart';
 import 'providers/orders_provider.dart';
 import '../dashboard/providers/dashboard_provider.dart';
-import '../finance/providers/finance_provider.dart';
+import '../analysis/providers/analysis_provider.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
   final OrderModel order;
@@ -66,7 +66,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       ref.invalidate(ordersListProvider);
       ref.invalidate(recentOrdersProvider);
       ref.invalidate(dashboardStatsProvider);
-      ref.invalidate(rawFinanceOrdersProvider);
+      ref.invalidate(rawAnalysisOrdersProvider);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Order status updated to $newStatus')),
@@ -100,7 +100,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       ref.invalidate(ordersListProvider);
       ref.invalidate(recentOrdersProvider);
       ref.invalidate(dashboardStatsProvider);
-      ref.invalidate(rawFinanceOrdersProvider);
+      ref.invalidate(rawAnalysisOrdersProvider);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Payment of ₦${paymentAmount.toStringAsFixed(2)} recorded successfully')),
@@ -140,7 +140,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         ref.invalidate(ordersListProvider);
         ref.invalidate(recentOrdersProvider);
         ref.invalidate(dashboardStatsProvider);
-        ref.invalidate(rawFinanceOrdersProvider);
+        ref.invalidate(rawAnalysisOrdersProvider);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
