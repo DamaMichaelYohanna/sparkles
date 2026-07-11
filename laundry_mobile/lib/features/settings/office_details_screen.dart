@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 
 class OfficeDetailsScreen extends StatefulWidget {
@@ -10,9 +11,29 @@ class OfficeDetailsScreen extends StatefulWidget {
 
 class _OfficeDetailsScreenState extends State<OfficeDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: 'My Laundry Co.');
-  final _addressController = TextEditingController(text: '123 Clean St, Suite 4');
-  final _contactController = TextEditingController(text: '+1 234 567 8900');
+  late final TextEditingController _nameController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _contactController;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _addressController = TextEditingController();
+    _contactController = TextEditingController();
+    _loadDetails();
+  }
+
+  Future<void> _loadDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _nameController.text = prefs.getString('office_name') ?? 'My Laundry Co.';
+      _addressController.text = prefs.getString('office_address') ?? '123 Clean St, Suite 4';
+      _contactController.text = prefs.getString('office_contact') ?? '+1 234 567 8900';
+      _isLoading = false;
+    });
+  }
 
   @override
   void dispose() {
@@ -22,13 +43,19 @@ class _OfficeDetailsScreenState extends State<OfficeDetailsScreen> {
     super.dispose();
   }
 
-  void _saveDetails() {
+  Future<void> _saveDetails() async {
     if (_formKey.currentState!.validate()) {
-      // In a real app, save to backend or local storage here.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Office details saved successfully!')),
-      );
-      Navigator.pop(context);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('office_name', _nameController.text);
+      await prefs.setString('office_address', _addressController.text);
+      await prefs.setString('office_contact', _contactController.text);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Office details saved successfully!')),
+        );
+        Navigator.pop(context);
+      }
     }
   }
 
@@ -44,7 +71,9 @@ class _OfficeDetailsScreenState extends State<OfficeDetailsScreen> {
           )
         ],
       ),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
