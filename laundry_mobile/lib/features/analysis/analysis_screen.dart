@@ -32,9 +32,6 @@ class AnalysisScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. SMART ACTIONABLE INSIGHTS SECTION (AI Sparks)
-                _buildInsightsCard(stats.businessInsights),
-                const SizedBox(height: 20),
 
                 // 2. FINANCIAL SUMMARY SECTION
                 const Text(
@@ -190,63 +187,7 @@ class AnalysisScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInsightsCard(List<String> insights) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: AppTheme.primaryColor.withOpacity(0.15), width: 1.5),
-      ),
-      color: AppTheme.primaryColor.withOpacity(0.04),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: const [
-                Icon(LucideIcons.sparkles, color: AppTheme.primaryColor, size: 18),
-                SizedBox(width: 8),
-                Text(
-                  'Business Insights',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ...insights.map((insight) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 4.0),
-                        child: Icon(Icons.lens, size: 6, color: AppTheme.primaryColor),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          insight,
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            color: AppTheme.textPrimary,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildOperationsCard(AnalysisStats stats) {
     final total = stats.completedOrdersCount + stats.pendingOrdersCount + stats.overdueOrdersCount;

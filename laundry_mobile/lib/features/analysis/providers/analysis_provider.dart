@@ -26,7 +26,6 @@ class AnalysisStats {
   // Growth & projections
   final double wowGrowth;
   final double projectedMonthlyRevenue;
-  final List<String> businessInsights;
 
   AnalysisStats({
     required this.totalSales,
@@ -46,7 +45,6 @@ class AnalysisStats {
     required this.yearlyOrdersValue,
     required this.wowGrowth,
     required this.projectedMonthlyRevenue,
-    required this.businessInsights,
   });
 }
 
@@ -165,45 +163,6 @@ final analysisStatsProvider = Provider.autoDispose<AsyncValue<AnalysisStats>>((r
       double dailyAverageThisWeek = thisWeekRevenue / daysIntoWeek;
       double projectedMonthlyRevenue = dailyAverageThisWeek * 30;
 
-      // ----------------------------------------------------
-      // Actionable Business Insights Generation
-      // ----------------------------------------------------
-      List<String> insights = [];
-
-      // 1. Outstanding and collections insights
-      if (outstanding > 10000 && collectionRate < 70) {
-        insights.add(
-          "Uncollected balance is high (₦${outstanding.toStringAsFixed(0)}). Consider sending payment reminders to improve your Collection Rate (${collectionRate.toStringAsFixed(1)}%)."
-        );
-      } else if (collectionRate >= 90 && totalSales > 0) {
-        insights.add(
-          "Excellent collection performance! Your Collection Rate is at ${collectionRate.toStringAsFixed(1)}%."
-        );
-      }
-
-      // 2. Operational health insights
-      if (overdue > 0) {
-        insights.add(
-          "Operations Alert: There are $overdue overdue orders. Prioritize processing these to prevent delivery delays."
-        );
-      }
-
-      // 3. Sales growth insights
-      if (wowGrowth > 5) {
-        insights.add(
-          "Positive trend! Sales grew by ${wowGrowth.toStringAsFixed(1)}% compared to last week. Marketing and demand are rising."
-        );
-      } else if (wowGrowth < -5) {
-        insights.add(
-          "Sales dipped by ${(wowGrowth * -1).toStringAsFixed(1)}% WoW. Consider running a weekend discount or promotion."
-        );
-      }
-
-      // Default insight if list is empty
-      if (insights.isEmpty) {
-        insights.add("Steady operations. Keep maintaining the current workflow!");
-      }
-
       return AsyncValue.data(AnalysisStats(
         totalSales: totalSales,
         totalCollected: totalCollected,
@@ -222,7 +181,6 @@ final analysisStatsProvider = Provider.autoDispose<AsyncValue<AnalysisStats>>((r
         yearlyOrdersValue: yearlyOrdersValue,
         wowGrowth: wowGrowth,
         projectedMonthlyRevenue: projectedMonthlyRevenue,
-        businessInsights: insights,
       ));
     },
   );
