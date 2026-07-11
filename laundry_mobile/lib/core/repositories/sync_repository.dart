@@ -49,8 +49,11 @@ class SyncRepository {
       sqflite.Batch batch = db.batch();
 
       // Process Orders
+      final pendingOrders = await db.query('orders', where: 'sync_status = ?', whereArgs: ['pending']);
+      final pendingOrderIds = pendingOrders.map((e) => e['id'] as String).toSet();
       for (var json in (deltaPayload['orders'] as List? ?? [])) {
         final item = OrderModel.fromJson(json);
+        if (pendingOrderIds.contains(item.id)) continue;
         if (item.isDeleted) {
           batch.delete('orders', where: 'id = ?', whereArgs: [item.id]);
         } else {
@@ -59,8 +62,11 @@ class SyncRepository {
       }
 
       // Process Service Types
+      final pendingServiceTypes = await db.query('service_types', where: 'sync_status = ?', whereArgs: ['pending']);
+      final pendingServiceTypeIds = pendingServiceTypes.map((e) => e['id'] as String).toSet();
       for (var json in (deltaPayload['service_types'] as List? ?? [])) {
         final item = ServiceTypeModel.fromJson(json);
+        if (pendingServiceTypeIds.contains(item.id)) continue;
         if (item.isDeleted) {
           batch.delete('service_types', where: 'id = ?', whereArgs: [item.id]);
         } else {
@@ -69,8 +75,11 @@ class SyncRepository {
       }
 
       // Process Categories
+      final pendingCategories = await db.query('categories', where: 'sync_status = ?', whereArgs: ['pending']);
+      final pendingCategoryIds = pendingCategories.map((e) => e['id'] as String).toSet();
       for (var json in (deltaPayload['categories'] as List? ?? [])) {
         final item = CategoryModel.fromJson(json);
+        if (pendingCategoryIds.contains(item.id)) continue;
         if (item.isDeleted) {
           batch.delete('categories', where: 'id = ?', whereArgs: [item.id]);
         } else {
@@ -79,8 +88,11 @@ class SyncRepository {
       }
 
       // Process Item Pricing
+      final pendingItemPricing = await db.query('item_pricing', where: 'sync_status = ?', whereArgs: ['pending']);
+      final pendingItemPricingIds = pendingItemPricing.map((e) => e['id'] as String).toSet();
       for (var json in (deltaPayload['item_pricing'] as List? ?? [])) {
         final item = ItemPricingModel.fromJson(json);
+        if (pendingItemPricingIds.contains(item.id)) continue;
         if (item.isDeleted) {
           batch.delete('item_pricing', where: 'id = ?', whereArgs: [item.id]);
         } else {
@@ -89,8 +101,11 @@ class SyncRepository {
       }
 
       // Process Order Statuses
+      final pendingOrderStatus = await db.query('order_statuses', where: 'sync_status = ?', whereArgs: ['pending']);
+      final pendingOrderStatusIds = pendingOrderStatus.map((e) => e['id'] as String).toSet();
       for (var json in (deltaPayload['order_statuses'] as List? ?? [])) {
         final item = OrderStatusModel.fromJson(json);
+        if (pendingOrderStatusIds.contains(item.id)) continue;
         if (item.isDeleted) {
           batch.delete('order_statuses', where: 'id = ?', whereArgs: [item.id]);
         } else {
@@ -99,8 +114,11 @@ class SyncRepository {
       }
 
       // Process Order Items
+      final pendingOrderItems = await db.query('order_items', where: 'sync_status = ?', whereArgs: ['pending']);
+      final pendingOrderItemIds = pendingOrderItems.map((e) => e['id'] as String).toSet();
       for (var json in (deltaPayload['order_items'] as List? ?? [])) {
         final item = OrderItemModel.fromJson(json);
+        if (pendingOrderItemIds.contains(item.id)) continue;
         if (item.isDeleted) {
           batch.delete('order_items', where: 'id = ?', whereArgs: [item.id]);
         } else {
