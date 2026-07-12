@@ -187,33 +187,6 @@ class AnalysisScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 _buildGrowthProjectionsCard(stats),
-                
-                const Divider(height: 40),
-                const Text(
-                  'SQLite Orders Debug Inspector',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.deepOrange),
-                ),
-                const SizedBox(height: 8),
-                ref.watch(rawAnalysisOrdersProvider).maybeWhen(
-                  data: (ordersList) {
-                    if (ordersList.isEmpty) {
-                      return const Text('No orders found in local database.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary));
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: ordersList.map((o) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Text(
-                            'Order: #${o.displayId} | Date: ${o.createdAt.toIso8601String()} | ₦${o.totalPrice} | Status: ${o.status}',
-                            style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Colors.blueGrey),
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  },
-                  orElse: () => const Text('Loading debug inspector...'),
-                ),
                 const SizedBox(height: 40),
               ],
             ),
