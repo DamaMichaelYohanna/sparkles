@@ -149,6 +149,7 @@ class OrderItemRetrieveUpdateDestroyView(BaseTenantView, generics.RetrieveUpdate
 class SubUserListCreateView(generics.ListCreateAPIView):
     serializer_class = SubUserSerializer
     permission_classes = [IsOfficeAdmin, TierLimitPermission]
+    pagination_class = None
 
     def get_queryset(self):
         user = self.request.user
