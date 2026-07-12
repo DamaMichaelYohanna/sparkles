@@ -181,4 +181,17 @@ class ApiService {
       throw Exception('Failed to verify subscription: $e');
     }
   }
+
+  Future<Map<String, dynamic>> updateOfficeDetails(String officeId, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.patch('offices/$officeId/', data: data);
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        final detail = e.response?.data?['detail'] ?? e.response?.data?.toString();
+        if (detail != null) throw Exception(detail);
+      }
+      throw Exception('Failed to update office details: $e');
+    }
+  }
 }

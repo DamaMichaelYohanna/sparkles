@@ -88,7 +88,7 @@
             <div class="hero-image-content fade-in delay-1">
                 <div class="phone-mockup">
                     <div class="phone-inner">
-                        <img src="{% static 'landing/images/laundry_app_screenshot.png' %}" alt="Sparkles App Screenshot" class="app-screenshot">
+                        <img src="{% static 'landing/images/screen_dashboard.png' %}" alt="Sparkles App Dashboard Screenshot" class="app-screenshot">
                     </div>
                 </div>
             </div>
@@ -143,21 +143,42 @@
                 </p>
             </div>
             
-            <div class="showcase-image-container">
-                <img src="{% static 'landing/images/laundry_app_screenshot.png' %}" alt="Sparkles Application Mockup" class="wide-app-mockup">
-                <div class="floating-badge badge-left">
-                    <i class="fa-solid fa-bolt"></i>
-                    <div>
-                        <h5>Real-time tracking</h5>
-                        <p>Instant order sync</p>
+            <div class="showcase-phones-grid">
+                <!-- Phone 1: Login -->
+                <div class="showcase-phone-item">
+                    <div class="phone-mockup-mini">
+                        <div class="phone-inner">
+                            <img src="{% static 'landing/images/screen_login.png' %}" alt="Sign In Screen" class="app-screenshot">
+                        </div>
                     </div>
+                    <h4 class="phone-title" style="margin-top: 1rem; font-weight: 700; font-size: 1rem; color: var(--accent-dark);">Secure Login</h4>
                 </div>
-                <div class="floating-badge badge-right">
-                    <i class="fa-solid fa-wifi-slash"></i>
-                    <div>
-                        <h5>Offline Sync</h5>
-                        <p>Works without data</p>
+                <!-- Phone 2: Dashboard -->
+                <div class="showcase-phone-item">
+                    <div class="phone-mockup-mini">
+                        <div class="phone-inner">
+                            <img src="{% static 'landing/images/screen_dashboard.png' %}" alt="Dashboard Screen" class="app-screenshot">
+                        </div>
                     </div>
+                    <h4 class="phone-title" style="margin-top: 1rem; font-weight: 700; font-size: 1rem; color: var(--accent-dark);">Global Overview</h4>
+                </div>
+                <!-- Phone 3: Orders -->
+                <div class="showcase-phone-item">
+                    <div class="phone-mockup-mini">
+                        <div class="phone-inner">
+                            <img src="{% static 'landing/images/screen_orders.png' %}" alt="Orders Management Screen" class="app-screenshot">
+                        </div>
+                    </div>
+                    <h4 class="phone-title" style="margin-top: 1rem; font-weight: 700; font-size: 1rem; color: var(--accent-dark);">Orders Management</h4>
+                </div>
+                <!-- Phone 4: Settings -->
+                <div class="showcase-phone-item">
+                    <div class="phone-mockup-mini">
+                        <div class="phone-inner">
+                            <img src="{% static 'landing/images/screen_settings.png' %}" alt="Settings Screen" class="app-screenshot">
+                        </div>
+                    </div>
+                    <h4 class="phone-title" style="margin-top: 1rem; font-weight: 700; font-size: 1rem; color: var(--accent-dark);">Office Admin</h4>
                 </div>
             </div>
         </div>

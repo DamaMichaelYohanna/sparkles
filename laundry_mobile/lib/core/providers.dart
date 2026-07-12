@@ -44,7 +44,17 @@ final pendingSyncCountProvider = StreamProvider.autoDispose<int>((ref) async* {
 
 final userProfileProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final api = ref.watch(apiServiceProvider);
-  return await api.getCurrentUserProfile();
+  final profile = await api.getCurrentUserProfile();
+  
+  final prefs = await SharedPreferences.getInstance();
+  if (profile['office_name'] != null) {
+    await prefs.setString('office_name', profile['office_name']);
+  }
+  if (profile['office_contact_info'] != null) {
+    await prefs.setString('office_contact', profile['office_contact_info']);
+  }
+  
+  return profile;
 });
 
 final isAdminProvider = Provider.autoDispose<bool>((ref) {

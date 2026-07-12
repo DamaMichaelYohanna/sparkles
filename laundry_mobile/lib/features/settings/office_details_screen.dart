@@ -29,10 +29,11 @@ class _OfficeDetailsScreenState extends ConsumerState<OfficeDetailsScreen> {
 
   Future<void> _loadDetails() async {
     final prefs = await SharedPreferences.getInstance();
+    final profile = ref.read(userProfileProvider).value;
     setState(() {
-      _nameController.text = prefs.getString('office_name') ?? 'My Laundry Co.';
+      _nameController.text = profile?['office_name'] ?? prefs.getString('office_name') ?? 'My Laundry Co.';
       _addressController.text = prefs.getString('office_address') ?? '123 Clean St, Suite 4';
-      _contactController.text = prefs.getString('office_contact') ?? '+1 234 567 8900';
+      _contactController.text = profile?['office_contact_info'] ?? prefs.getString('office_contact') ?? '+1 234 567 8900';
       _isLoading = false;
     });
   }
@@ -47,18 +48,43 @@ class _OfficeDetailsScreenState extends ConsumerState<OfficeDetailsScreen> {
 
   Future<void> _saveDetails() async {
     if (_formKey.currentState!.validate()) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('office_name', _nameController.text);
-      await prefs.setString('office_address', _addressController.text);
-      await prefs.setString('office_contact', _contactController.text);
-      
-      ref.invalidate(officeNameProvider);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Office details saved successfully!')),
-        );
-        Navigator.pop(context);
+      setState(() => _isLoading = true);
+      try {
+        final profile = ref.read(userProfileProvider).value;
+        final officeId = profile?['office_id'];
+        
+        if (officeId != null) {
+          final api = ref.read(apiServiceProvider);
+          await api.updateOfficeDetails(officeId, {
+            'name': _nameController.text,
+            'contact_info': _contactController.text,
+          });
+        }
+        
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('office_name', _nameController.text);
+        await prefs.setString('office_address', _addressController.text);
+        await prefs.setString('office_contact', _contactController.text);
+        
+        ref.invalidate(officeNameProvider);
+        ref.invalidate(userProfileProvider);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Office details saved successfully!')),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to save office details: ${e.toString().replaceAll('Exception:', '').trim()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

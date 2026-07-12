@@ -394,6 +394,8 @@ class CurrentUserView(APIView):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "is_office_admin": user.is_office_admin,
+            "office_id": str(user.office.id) if user.office else None,
             "office_name": user.office.name if user.office else None,
+            "office_contact_info": user.office.contact_info if user.office else "",
             "subscription_tier": user.office.subscription_tier if user.office else 'free'
         })
