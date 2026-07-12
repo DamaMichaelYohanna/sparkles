@@ -80,6 +80,7 @@ class SyncAPIView(APIView):
                         cat_obj.is_deleted = True
                     else:
                         cat_obj.name = cat_dict.get('name', cat_obj.name)
+                    cat_obj.updated_at = incoming_updated_at
                     cat_obj.save()
                     processed_configs += 1
             except Category.DoesNotExist:
@@ -87,7 +88,9 @@ class SyncAPIView(APIView):
                     Category.objects.create(
                         id=cat_id,
                         office=office,
-                        name=cat_dict.get('name', '')
+                        name=cat_dict.get('name', ''),
+                        created_at=parse(cat_dict.get('created_at')) if cat_dict.get('created_at') else None,
+                        updated_at=parse(cat_dict.get('updated_at')) if cat_dict.get('updated_at') else None
                     )
                     processed_configs += 1
 
@@ -104,6 +107,7 @@ class SyncAPIView(APIView):
                     else:
                         srv_obj.name = srv_dict.get('name', srv_obj.name)
                         srv_obj.description = srv_dict.get('description', srv_obj.description)
+                    srv_obj.updated_at = incoming_updated_at
                     srv_obj.save()
                     processed_configs += 1
             except ServiceType.DoesNotExist:
@@ -112,7 +116,9 @@ class SyncAPIView(APIView):
                         id=srv_id,
                         office=office,
                         name=srv_dict.get('name', ''),
-                        description=srv_dict.get('description', '')
+                        description=srv_dict.get('description', ''),
+                        created_at=parse(srv_dict.get('created_at')) if srv_dict.get('created_at') else None,
+                        updated_at=parse(srv_dict.get('updated_at')) if srv_dict.get('updated_at') else None
                     )
                     processed_configs += 1
 
@@ -129,6 +135,7 @@ class SyncAPIView(APIView):
                     else:
                         ip_obj.name = ip_dict.get('name', ip_obj.name)
                         ip_obj.price = ip_dict.get('price', ip_obj.price)
+                    ip_obj.updated_at = incoming_updated_at
                     ip_obj.save()
                     processed_configs += 1
             except ItemPricing.DoesNotExist:
@@ -151,7 +158,9 @@ class SyncAPIView(APIView):
                             category=cat_obj,
                             service_type=srv_obj,
                             name=ip_dict.get('name', ''),
-                            price=ip_dict.get('price', 0)
+                            price=ip_dict.get('price', 0),
+                            created_at=parse(ip_dict.get('created_at')) if ip_dict.get('created_at') else None,
+                            updated_at=parse(ip_dict.get('updated_at')) if ip_dict.get('updated_at') else None
                         )
                         processed_configs += 1
 
@@ -187,6 +196,7 @@ class SyncAPIView(APIView):
                                 )
                             order_obj.current_status = status_obj
                                 
+                    order_obj.updated_at = incoming_updated_at
                     order_obj.save()
                     processed_orders += 1
             except Order.DoesNotExist:
@@ -209,7 +219,9 @@ class SyncAPIView(APIView):
                         total_price=order_dict.get('total_price', 0),
                         amount_paid=order_dict.get('amount_paid', 0),
                         discount_amount=order_dict.get('discount_amount', 0),
-                        current_status=status_obj
+                        current_status=status_obj,
+                        created_at=parse(order_dict.get('created_at')) if order_dict.get('created_at') else None,
+                        updated_at=parse(order_dict.get('updated_at')) if order_dict.get('updated_at') else None
                     )
                     processed_orders += 1
 
@@ -231,6 +243,7 @@ class SyncAPIView(APIView):
                         item_obj.unit_price = item_dict.get('unit_price', item_obj.unit_price)
                         item_obj.discount_amount = item_dict.get('discount_amount', item_obj.discount_amount)
                         item_obj.subtotal = item_dict.get('subtotal', item_obj.subtotal)
+                    item_obj.updated_at = incoming_updated_at
                     item_obj.save()
                     processed_items += 1
             except OrderItem.DoesNotExist:
@@ -245,7 +258,9 @@ class SyncAPIView(APIView):
                             quantity=item_dict.get('quantity', 1),
                             unit_price=item_dict.get('unit_price', 0),
                             discount_amount=item_dict.get('discount_amount', 0),
-                            subtotal=item_dict.get('subtotal', 0)
+                            subtotal=item_dict.get('subtotal', 0),
+                            created_at=parse(item_dict.get('created_at')) if item_dict.get('created_at') else None,
+                            updated_at=parse(item_dict.get('updated_at')) if item_dict.get('updated_at') else None
                         )
                         processed_items += 1
                     except (Order.DoesNotExist, ItemPricing.DoesNotExist):
