@@ -52,6 +52,10 @@ class AnalysisStats {
 final rawAnalysisOrdersProvider = FutureProvider.autoDispose<List<OrderModel>>((ref) async {
   final db = await DatabaseHelper.instance.database;
   final results = await db.query('orders', where: 'is_deleted = ?', whereArgs: [0]);
+  print('ANALYSIS DIAGNOSTIC: Total orders in DB = ${results.length}');
+  for (var map in results) {
+    print('ANALYSIS DIAGNOSTIC ORDER: id=${map['id']}, customer=${map['customer_name']}, date=${map['created_at']}, price=${map['total_price']}, status=${map['current_status']}');
+  }
   return results.map((e) => OrderModel.fromDb(e)).toList();
 });
 

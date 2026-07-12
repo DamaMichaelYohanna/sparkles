@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import 'add_order_screen.dart';
 import 'order_detail_screen.dart';
@@ -90,6 +91,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('last_sync_timestamp');
           ref.invalidate(ordersListProvider);
         },
         child: Column(

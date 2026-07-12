@@ -4,6 +4,7 @@ import '../../core/models/dashboard_stats_model.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import 'widgets/kpi_card.dart';
@@ -33,6 +34,8 @@ class DashboardScreen extends ConsumerWidget {
         error: (error, stackTrace) => Center(child: Text('Error: $error')),
         data: (stats) => RefreshIndicator(
           onRefresh: () async {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('last_sync_timestamp');
             final syncRepo = ref.read(syncRepositoryProvider);
             await syncRepo.getOrders();
             ref.invalidate(dashboardStatsProvider);

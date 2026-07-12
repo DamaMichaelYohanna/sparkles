@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../core/widgets/sync_badge.dart';
@@ -24,9 +25,12 @@ class AnalysisScreen extends ConsumerWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('last_sync_timestamp');
           final syncRepo = ref.read(syncRepositoryProvider);
           await syncRepo.getOrders();
           ref.invalidate(rawAnalysisOrdersProvider);
+          ref.invalidate(analysisStatsProvider);
         },
         child: statsAsyncValue.when(
           loading: () => const Center(child: CircularProgressIndicator()),
