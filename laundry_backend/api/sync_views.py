@@ -179,28 +179,27 @@ class SyncAPIView(APIView):
                         if status_val:
                             status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first()
                             if not status_obj:
-                                status_obj = OrderStatus.objects.filter(office=office).first()
-                            if status_obj:
-                                order_obj.current_status = status_obj
+                                status_obj = OrderStatus.objects.create(
+                                    office=office,
+                                    name=status_val,
+                                    sequence_order=OrderStatus.objects.filter(office=office).count() + 1,
+                                    is_completed_state=(status_val.lower() == 'completed')
+                                )
+                            order_obj.current_status = status_obj
                                 
                     order_obj.save()
                     processed_orders += 1
             except Order.DoesNotExist:
                 if not order_dict.get('is_deleted', False):
                     # Create new
-                    status_val = order_dict.get('current_status')
-                    status_obj = None
-                    if status_val:
-                        status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first()
+                    status_val = order_dict.get('current_status') or 'Pending'
+                    status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first()
                     if not status_obj:
-                        status_obj = OrderStatus.objects.filter(office=office).first()
-                    if not status_obj:
-                        # Auto-create default OrderStatus if none exists at all for this office
                         status_obj = OrderStatus.objects.create(
                             office=office,
-                            name='Pending',
-                            sequence_order=1,
-                            is_completed_state=False
+                            name=status_val,
+                            sequence_order=OrderStatus.objects.filter(office=office).count() + 1,
+                            is_completed_state=(status_val.lower() == 'completed')
                         )
                     Order.objects.create(
                         id=order_id,
