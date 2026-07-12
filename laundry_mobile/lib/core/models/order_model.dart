@@ -41,10 +41,10 @@ class OrderModel {
       totalPrice: double.tryParse(json['total_price']?.toString() ?? '0.0') ?? 0.0,
       amountPaid: double.tryParse(json['amount_paid']?.toString() ?? '0.0') ?? 0.0,
       createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+          ? DateTime.parse(json['created_at']).toLocal() 
           : DateTime.now(),
       updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at']) 
+          ? DateTime.parse(json['updated_at']).toLocal() 
           : DateTime.now(),
       isDeleted: json['is_deleted'] ?? false,
       discountAmount: double.tryParse(json['discount_amount']?.toString() ?? '0.0') ?? 0.0,
@@ -59,8 +59,8 @@ class OrderModel {
       status: map['current_status'] as String,
       totalPrice: map['total_price'] as double,
       amountPaid: map['amount_paid'] as double? ?? 0.0,
-      createdAt: DateTime.parse(map['created_at'] as String),
-      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : DateTime.now(),
+      createdAt: DateTime.parse(map['created_at'] as String).toLocal(),
+      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String).toLocal() : DateTime.now(),
       isDeleted: (map['is_deleted'] as int? ?? 0) == 1,
       syncStatus: map['sync_status'] as String? ?? 'synced',
       discountAmount: map['discount_amount'] as double? ?? 0.0,

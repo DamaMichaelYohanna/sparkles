@@ -22,7 +22,22 @@ class DatabaseHelper {
       version: 2,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
+      onOpen: _onOpen,
     );
+  }
+
+  Future _onOpen(Database db) async {
+    try {
+      await db.execute('''
+        UPDATE orders 
+        SET current_status = (
+          SELECT name FROM order_statuses WHERE order_statuses.id = orders.current_status
+        )
+        WHERE length(current_status) = 36
+      ''');
+    } catch (e) {
+      print('Error resolving UUID statuses on open: $e');
+    }
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
