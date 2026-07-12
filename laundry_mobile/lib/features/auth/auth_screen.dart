@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../shell/shell_screen.dart';
+import 'register_screen.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
@@ -121,6 +122,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 child: _isLoading 
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Sign In', style: TextStyle(fontSize: 16)),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                        );
+                      },
+                child: const Text(
+                  "Don't have an account? Register your office",
+                  style: TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),

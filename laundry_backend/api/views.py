@@ -399,3 +399,59 @@ class CurrentUserView(APIView):
             "office_contact_info": user.office.contact_info if user.office else "",
             "subscription_tier": user.office.subscription_tier if user.office else 'free'
         })
+
+class RegisterOfficeView(APIView):
+    permission_classes = [] # Public endpoint
+
+    def post(self, request):
+        office_name = request.data.get('office_name')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        if not office_name or not email or not password:
+            return Response({"error": "Office name, email, and password are required."}, status=400)
+            
+        if User.objects.filter(email=email).exists():
+            return Response({"error": "A user with this email already exists."}, status=400)
+            
+        from django.db import transaction
+        try:
+            with transaction.atomic():
+                # 1. Create office
+                office = LaundryOffice.objects.create(
+                    name=office_name,
+                    subscription_tier='free'
+                )
+                
+                # 2. Create user (owner / admin)
+                user = User.objects.create(
+                    username=email,
+                    email=email,
+                    office=office,
+                    is_office_admin=True
+                )
+                user.set_password(password)
+                user.save()
+                
+                # 3. Initialize default data (Categories, ServiceTypes, ItemPricing)
+                clothing = Category.objects.create(office=office, name="Clothing")
+                household = Category.objects.create(office=office, name="Household")
+                
+                wash_iron = ServiceType.objects.create(office=office, name="Wash & Iron")
+                dry_clean = ServiceType.objects.create(office=office, name="Dry Clean")
+                iron_only = ServiceType.objects.create(office=office, name="Ironing Only")
+                
+                # Default pricing
+                ItemPricing.objects.create(office=office, category=clothing, service_type=wash_iron, name="Shirt", price=1500)
+                ItemPricing.objects.create(office=office, category=clothing, service_type=wash_iron, name="Trousers", price=1200)
+                ItemPricing.objects.create(office=office, category=clothing, service_type=dry_clean, name="Suit Jacket", price=2500)
+                ItemPricing.objects.create(office=office, category=household, service_type=wash_iron, name="Bedsheet", price=2500)
+                
+            return Response({
+                "status": "success",
+                "message": "Office and admin account registered successfully.",
+                "office_name": office.name,
+                "email": user.email
+            }, status=201)
+        except Exception as e:
+            return Response({"error": f"Registration failed: {str(e)}"}, status=500)

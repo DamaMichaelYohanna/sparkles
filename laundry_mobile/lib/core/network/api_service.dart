@@ -194,4 +194,21 @@ class ApiService {
       throw Exception('Failed to update office details: $e');
     }
   }
+
+  Future<Map<String, dynamic>> registerOffice(String officeName, String email, String password) async {
+    try {
+      final response = await _dio.post('register/', data: {
+        'office_name': officeName,
+        'email': email,
+        'password': password,
+      });
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        final error = e.response?.data?['error'] ?? e.response?.data?.toString();
+        if (error != null) throw Exception(error);
+      }
+      throw Exception('Failed to register: $e');
+    }
+  }
 }

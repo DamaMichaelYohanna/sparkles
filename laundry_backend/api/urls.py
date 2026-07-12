@@ -53,4 +53,7 @@ urlpatterns = [
     # Billing
     path('billing/initialize/', views.InitializeSubscriptionView.as_view(), name='billing-initialize'),
     path('billing/verify/', views.VerifySubscriptionView.as_view(), name='billing-verify'),
+
+    # Registration
+    path('register/', views.RegisterOfficeView.as_view(), name='api-register'),
 ]
