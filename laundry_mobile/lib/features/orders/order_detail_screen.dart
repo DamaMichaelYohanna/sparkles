@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:printing/printing.dart';
 import '../../core/local_db/database_helper.dart';
 import '../../core/models/order_model.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../core/utils/receipt_generator.dart';
 import 'providers/orders_provider.dart';
 import '../dashboard/providers/dashboard_provider.dart';
 import '../analysis/providers/analysis_provider.dart';
@@ -157,6 +159,72 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     }
   }
 
+  Future<void> _handleReceiptActions() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Receipt Options',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(LucideIcons.printer, color: AppTheme.primaryColor),
+                title: const Text('Print / Save PDF'),
+                subtitle: const Text('Open system print preview & download portal'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  try {
+                    final pdfBytes = await ReceiptGenerator.generateReceiptPdf(_order, _items);
+                    await Printing.layoutPdf(
+                      onLayout: (format) async => pdfBytes,
+                      name: 'receipt_${_order.displayId}',
+                    );
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to generate receipt: $e')),
+                      );
+                    }
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(LucideIcons.share2, color: AppTheme.primaryColor),
+                title: const Text('Share Receipt'),
+                subtitle: const Text('Send PDF invoice via WhatsApp, email etc.'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  try {
+                    final pdfBytes = await ReceiptGenerator.generateReceiptPdf(_order, _items);
+                    await Printing.sharePdf(
+                      bytes: pdfBytes,
+                      filename: 'receipt_${_order.displayId}.pdf',
+                    );
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to share receipt: $e')),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showPaymentDialog() {
     final controller = TextEditingController();
     final remaining = _order.totalPrice - _order.amountPaid;
@@ -273,6 +341,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       appBar: AppBar(
         title: const Text('Order Details'),
         actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.printer, color: AppTheme.primaryColor),
+            onPressed: _handleReceiptActions,
+          ),
           if (isAdmin)
             IconButton(
               icon: const Icon(LucideIcons.trash2, color: Colors.redAccent),
