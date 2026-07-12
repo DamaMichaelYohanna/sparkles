@@ -1,34 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../orders/orders_screen.dart';
 import '../analysis/analysis_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../core/theme.dart';
+import '../../core/providers.dart';
 
-class ShellScreen extends StatefulWidget {
+class ShellScreen extends ConsumerStatefulWidget {
   const ShellScreen({Key? key}) : super(key: key);
 
   @override
-  State<ShellScreen> createState() => _ShellScreenState();
+  ConsumerState<ShellScreen> createState() => _ShellScreenState();
 }
 
-class _ShellScreenState extends State<ShellScreen> {
+class _ShellScreenState extends ConsumerState<ShellScreen> {
   int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const OrdersScreen(),
-    const AnalysisScreen(),
-    const SettingsScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = ref.watch(isAdminProvider);
+
+    final List<Widget> screens = [
+      const DashboardScreen(),
+      const OrdersScreen(),
+      if (isAdmin) const AnalysisScreen(),
+      const SettingsScreen(),
+    ];
+
+    // Align current index in case screens list size changes dynamically
+    final actualIndex = _currentIndex >= screens.length ? 0 : _currentIndex;
+
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+        index: actualIndex,
+        children: screens,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -41,7 +48,7 @@ class _ShellScreenState extends State<ShellScreen> {
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex,
+          currentIndex: actualIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           backgroundColor: Colors.white,
           selectedItemColor: AppTheme.textPrimary,
@@ -50,20 +57,21 @@ class _ShellScreenState extends State<ShellScreen> {
           showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
+          items: [
+            const BottomNavigationBarItem(
               icon: Icon(LucideIcons.layoutDashboard),
               label: 'Dashboard',
             ),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
               icon: Icon(LucideIcons.shoppingBag),
               label: 'Orders',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(LucideIcons.barChart2),
-              label: 'Analysis',
-            ),
-            BottomNavigationBarItem(
+            if (isAdmin)
+              const BottomNavigationBarItem(
+                icon: Icon(LucideIcons.barChart2),
+                label: 'Analysis',
+              ),
+            const BottomNavigationBarItem(
               icon: Icon(LucideIcons.settings),
               label: 'Settings',
             ),

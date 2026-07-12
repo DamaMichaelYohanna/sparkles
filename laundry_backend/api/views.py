@@ -250,3 +250,18 @@ class PaystackWebhookView(APIView):
             print(f"Payment successful for reference: {reference}")
             
         return Response(status=200)
+
+class CurrentUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            "id": str(user.id),
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "is_office_admin": user.is_office_admin,
+            "office_name": user.office.name if user.office else None
+        })

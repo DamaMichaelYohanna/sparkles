@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/local_db/database_helper.dart';
 import '../../core/models/order_model.dart';
 import '../../core/theme.dart';
+import '../../core/providers.dart';
 import 'providers/orders_provider.dart';
 import '../dashboard/providers/dashboard_provider.dart';
 import '../analysis/providers/analysis_provider.dart';
@@ -257,6 +258,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   Widget build(BuildContext context) {
     final balance = _order.totalPrice - _order.amountPaid;
     final isFullyPaid = balance <= 0;
+    final isAdmin = ref.watch(isAdminProvider);
 
     Color statusColor;
     if (_order.status == 'Completed') {
@@ -271,10 +273,11 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       appBar: AppBar(
         title: const Text('Order Details'),
         actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.trash2, color: Colors.redAccent),
-            onPressed: _deleteOrder,
-          ),
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(LucideIcons.trash2, color: Colors.redAccent),
+              onPressed: _deleteOrder,
+            ),
           const SizedBox(width: 8),
         ],
       ),

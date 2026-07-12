@@ -115,5 +115,44 @@ class ApiService {
     }
   }
 
-  // Define other API methods as needed (Dashboard stats, etc)
+  Future<Map<String, dynamic>> getCurrentUserProfile() async {
+    try {
+      final response = await _dio.get('users/me/');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception('Failed to get current user profile: $e');
+    }
+  }
+
+  Future<List<dynamic>> getSubUsers() async {
+    try {
+      final response = await _dio.get('users/');
+      return response.data as List<dynamic>;
+    } catch (e) {
+      throw Exception('Failed to load sub-users: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> createSubUser(Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.post('users/', data: data);
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        final detail = e.response?.data?['detail'] ?? e.response?.data?.toString();
+        if (detail != null) {
+          throw Exception(detail);
+        }
+      }
+      throw Exception('Failed to create user: $e');
+    }
+  }
+
+  Future<void> deleteSubUser(String id) async {
+    try {
+      await _dio.delete('users/$id/');
+    } catch (e) {
+      throw Exception('Failed to delete user: $e');
+    }
+  }
 }

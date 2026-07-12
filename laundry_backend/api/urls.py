@@ -38,6 +38,7 @@ urlpatterns = [
     # Sub-users
     path('users/', views.SubUserListCreateView.as_view(), name='subuser-list'),
     path('users/<uuid:pk>/', views.SubUserRetrieveUpdateDestroyView.as_view(), name='subuser-detail'),
+    path('users/me/', views.CurrentUserView.as_view(), name='current-user-detail'),
 
     # Dashboards
     path('dashboard/operations/', views.OfficeOperationsDashboardAPIView.as_view(), name='dashboard-operations'),

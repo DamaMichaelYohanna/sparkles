@@ -28,3 +28,21 @@ final pendingSyncCountProvider = StreamProvider.autoDispose<int>((ref) async* {
     await Future.delayed(const Duration(seconds: 4));
   }
 });
+
+final userProfileProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+  final api = ref.watch(apiServiceProvider);
+  return await api.getCurrentUserProfile();
+});
+
+final isAdminProvider = Provider.autoDispose<bool>((ref) {
+  final profileAsync = ref.watch(userProfileProvider);
+  return profileAsync.maybeWhen(
+    data: (profile) => profile['is_office_admin'] == true,
+    orElse: () => false,
+  );
+});
+
+final subUsersProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final api = ref.watch(apiServiceProvider);
+  return await api.getSubUsers();
+});
