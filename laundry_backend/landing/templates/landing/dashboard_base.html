@@ -13,7 +13,10 @@
 <body class="dashboard-body">
     <div class="dashboard-layout">
         <aside class="sidebar">
-            <div class="logo">✨ Sparkles</div>
+            <div class="logo">
+                <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles Logo" class="logo-img">
+                Sparkles
+            </div>
             <nav class="sidebar-nav">
                 <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">📊 Overview</a>
                 <a href="{% url 'offices_list' %}" class="{% if request.resolver_match.url_name == 'offices_list' %}active{% endif %}">🏢 Offices</a>

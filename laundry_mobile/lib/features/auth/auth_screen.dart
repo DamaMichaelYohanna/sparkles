@@ -50,7 +50,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.local_laundry_service, size: 80, color: AppTheme.primaryColor),
+              Image.asset(
+                'assets/images/logo.png',
+                height: 120,
+                fit: BoxFit.contain,
+              ),
               const SizedBox(height: 24),
               const Text(
                 'Sparkles',
