@@ -46,6 +46,7 @@ class SyncRepository {
     if (connectivityResult.isEmpty || connectivityResult.contains(ConnectivityResult.none)) return;
 
     _isSyncing = true;
+    _ref.read(syncStatusProvider.notifier).setSyncing();
     try {
       final prefs = await SharedPreferences.getInstance();
       
@@ -151,9 +152,11 @@ class SyncRepository {
       await prefs.setString('last_sync_timestamp', DateTime.now().toUtc().toIso8601String());
       
       _lastSyncTime = DateTime.now();
+      _ref.read(syncStatusProvider.notifier).setSuccess(_lastSyncTime!);
       _ref.read(lastSyncTimestampProvider.notifier).update(_lastSyncTime);
     } catch (e) {
       print('Delta Sync failed: $e');
+      _ref.read(syncStatusProvider.notifier).setError(e.toString());
     } finally {
       _isSyncing = false;
     }

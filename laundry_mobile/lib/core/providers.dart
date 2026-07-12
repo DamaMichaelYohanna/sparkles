@@ -59,3 +59,54 @@ final subUsersProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final api = ref.watch(apiServiceProvider);
   return await api.getSubUsers();
 });
+
+enum SyncStatus { idle, syncing, success, error }
+
+class SyncStatusState {
+  final SyncStatus status;
+  final String? errorMessage;
+  final DateTime? lastSyncTime;
+
+  SyncStatusState({
+    required this.status,
+    this.errorMessage,
+    this.lastSyncTime,
+  });
+
+  SyncStatusState copyWith({
+    SyncStatus? status,
+    String? errorMessage,
+    DateTime? lastSyncTime,
+  }) {
+    return SyncStatusState(
+      status: status ?? this.status,
+      errorMessage: errorMessage ?? this.errorMessage,
+      lastSyncTime: lastSyncTime ?? this.lastSyncTime,
+    );
+  }
+}
+
+class SyncStatusNotifier extends Notifier<SyncStatusState> {
+  @override
+  SyncStatusState build() => SyncStatusState(status: SyncStatus.idle);
+
+  void setSyncing() {
+    state = state.copyWith(status: SyncStatus.syncing, errorMessage: null);
+  }
+
+  void setSuccess(DateTime time) {
+    state = state.copyWith(status: SyncStatus.success, lastSyncTime: time);
+  }
+
+  void setError(String message) {
+    state = state.copyWith(status: SyncStatus.error, errorMessage: message);
+  }
+
+  void setIdle() {
+    state = state.copyWith(status: SyncStatus.idle);
+  }
+}
+
+final syncStatusProvider = NotifierProvider<SyncStatusNotifier, SyncStatusState>(() {
+  return SyncStatusNotifier();
+});
