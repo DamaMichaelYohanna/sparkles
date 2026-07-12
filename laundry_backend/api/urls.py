@@ -49,4 +49,8 @@ urlpatterns = [
     
     # Webhooks
     path('webhooks/paystack/', views.PaystackWebhookView.as_view(), name='webhook-paystack'),
+
+    # Billing
+    path('billing/initialize/', views.InitializeSubscriptionView.as_view(), name='billing-initialize'),
+    path('billing/verify/', views.VerifySubscriptionView.as_view(), name='billing-verify'),
 ]

@@ -155,4 +155,30 @@ class ApiService {
       throw Exception('Failed to delete user: $e');
     }
   }
+
+  Future<Map<String, dynamic>> initializeSubscription(String tier) async {
+    try {
+      final response = await _dio.post('billing/initialize/', data: {'tier': tier});
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        final error = e.response?.data?['error'] ?? e.response?.data?.toString();
+        if (error != null) throw Exception(error);
+      }
+      throw Exception('Failed to initialize subscription: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> verifySubscription(String reference) async {
+    try {
+      final response = await _dio.get('billing/verify/', queryParameters: {'reference': reference});
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        final error = e.response?.data?['error'] ?? e.response?.data?.toString();
+        if (error != null) throw Exception(error);
+      }
+      throw Exception('Failed to verify subscription: $e');
+    }
+  }
 }

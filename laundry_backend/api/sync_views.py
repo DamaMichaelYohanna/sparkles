@@ -10,13 +10,15 @@ from .serializers import (
     OrderStatusSerializer, OrderSerializer, OrderItemSerializer
 )
 
+from .permissions import TierLimitPermission
+
 def make_aware(dt):
     if dt is None:
         return None
     return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
 
 class SyncAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, TierLimitPermission]
 
     def get(self, request):
         office = request.user.office

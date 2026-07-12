@@ -241,16 +241,101 @@ class PaystackWebhookView(APIView):
     permission_classes = [] # Webhooks shouldn't require our JWT auth
     
     def post(self, request, *args, **kwargs):
-        # In a real app, verify Paystack signature here using HMAC
         event = request.data.get('event')
         data = request.data.get('data', {})
         
         if event == 'charge.success':
             reference = data.get('reference')
-            # Look up office by reference, update subscription, log payment, etc.
             print(f"Payment successful for reference: {reference}")
+            # Look up office by pending reference
+            office = LaundryOffice.objects.filter(preferences__pending_subscription__reference=reference).first()
+            if office:
+                pending = office.preferences.get('pending_subscription', {})
+                tier = pending.get('tier', 'free')
+                office.subscription_tier = tier
+                office.preferences.pop('pending_subscription', None)
+                office.save()
+                print(f"Webhook: Upgraded office {office.name} to {tier}")
             
         return Response(status=200)
+
+class InitializeSubscriptionView(APIView):
+    permission_classes = [IsOfficeAdmin]
+
+    def post(self, request):
+        import uuid
+        user = request.user
+        if not user.office:
+            return Response({"error": "No office associated with user"}, status=400)
+            
+        tier = request.data.get('tier')
+        if tier not in ['starter', 'pro', 'premium']:
+            return Response({"error": "Invalid subscription tier"}, status=400)
+            
+        prices = {
+            'starter': 250000, # ₦2,500
+            'pro': 750000,     # ₦7,500
+            'premium': 1500000  # ₦15,000
+        }
+        amount_kobo = prices[tier]
+        reference = f"sub_{uuid.uuid4().hex[:12]}"
+        
+        # Initialize Paystack payment
+        from .paystack import initialize_payment
+        res = initialize_payment(email=user.email, amount_kobo=amount_kobo, reference=reference)
+        
+        if res.get('status') == True:
+            # Save pending reference in office preferences
+            office = user.office
+            if not office.preferences:
+                office.preferences = {}
+            office.preferences['pending_subscription'] = {
+                'reference': reference,
+                'tier': tier,
+                'amount': amount_kobo // 100
+            }
+            office.save()
+            return Response({
+                "status": "success",
+                "authorization_url": res['data']['authorization_url'],
+                "reference": reference
+            })
+        else:
+            return Response({"error": res.get('message', 'Failed to initialize payment')}, status=400)
+
+class VerifySubscriptionView(APIView):
+    permission_classes = [IsOfficeAdmin]
+
+    def get(self, request):
+        user = request.user
+        reference = request.query_params.get('reference')
+        if not reference:
+            return Response({"error": "Reference parameter is required"}, status=400)
+            
+        office = user.office
+        if not office:
+            return Response({"error": "No office associated with user"}, status=400)
+            
+        pending = office.preferences.get('pending_subscription')
+        if not pending or pending.get('reference') != reference:
+            return Response({"error": "No pending subscription found for this reference"}, status=400)
+            
+        from .paystack import verify_payment
+        res = verify_payment(reference)
+        
+        if res.get('status') == True and res['data']['status'] == 'success':
+            tier = pending.get('tier')
+            office.subscription_tier = tier
+            # Clear pending subscription
+            office.preferences.pop('pending_subscription', None)
+            office.save()
+            return Response({
+                "status": "success",
+                "message": f"Subscription successfully upgraded to {tier}.",
+                "tier": tier
+            })
+        else:
+            return Response({"error": "Payment verification failed or payment not completed"}, status=400)
 
 class CurrentUserView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -264,5 +349,6 @@ class CurrentUserView(APIView):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "is_office_admin": user.is_office_admin,
-            "office_name": user.office.name if user.office else None
+            "office_name": user.office.name if user.office else None,
+            "subscription_tier": user.office.subscription_tier if user.office else 'free'
         })

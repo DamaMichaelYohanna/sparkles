@@ -10,7 +10,7 @@ class IsOfficeAdmin(permissions.IsAuthenticated):
 
 class TierLimitPermission(permissions.BasePermission):
     """
-    Enforces subscription tier limits on specific resources (e.g., max users).
+    Enforces subscription tier limits on specific resources (e.g., max users and monthly orders).
     """
     message = "Subscription tier limit reached. Please upgrade to add more."
 
@@ -25,14 +25,34 @@ class TierLimitPermission(permissions.BasePermission):
             
         tier = user.office.subscription_tier
         
-        # Example: Enforce user limit on SubUserListCreateView
+        # 1. Enforce staff user limit on SubUserListCreateView
         if view.__class__.__name__ == 'SubUserListCreateView':
-            current_users = user.office.users.count()
-            if tier == 'free' and current_users >= 3:
-                self.message = "Free tier allows a maximum of 3 users. Please upgrade to Basic or Premium."
+            # Count only active non-admin staff users
+            current_staff = user.office.users.filter(is_office_admin=False).count()
+            if tier == 'free' and current_staff >= 1:
+                self.message = "Free tier allows a maximum of 1 staff account. Please upgrade to Starter, Pro, or Premium."
                 return False
-            elif tier == 'basic' and current_users >= 10:
-                self.message = "Basic tier allows a maximum of 10 users. Please upgrade to Premium."
+            elif tier == 'starter' and current_staff >= 3:
+                self.message = "Starter tier allows a maximum of 3 staff accounts. Please upgrade to Pro or Premium."
+                return False
+            elif tier == 'pro' and current_staff >= 10:
+                self.message = "Pro tier allows a maximum of 10 staff accounts. Please upgrade to Premium."
+                return False
+                
+        # 2. Enforce monthly order creation limit on OrderListCreateView and SyncAPIView
+        if view.__class__.__name__ in ['OrderListCreateView', 'SyncAPIView']:
+            from django.utils import timezone
+            now = timezone.now()
+            current_month_orders = user.office.orders.filter(
+                created_at__year=now.year,
+                created_at__month=now.month
+            ).count()
+            
+            if tier == 'free' and current_month_orders >= 50:
+                self.message = "Free tier allows a maximum of 50 orders per month. Please upgrade to Starter, Pro, or Premium."
+                return False
+            elif tier == 'starter' and current_month_orders >= 500:
+                self.message = "Starter tier allows a maximum of 500 orders per month. Please upgrade to Pro or Premium."
                 return False
                 
         return True

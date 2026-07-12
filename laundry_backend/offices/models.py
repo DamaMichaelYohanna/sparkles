@@ -25,7 +25,8 @@ class BaseModel(models.Model):
 class LaundryOffice(BaseModel):
     SUBSCRIPTION_TIERS = [
         ('free', 'Free'),
-        ('basic', 'Basic'),
+        ('starter', 'Starter'),
+        ('pro', 'Pro'),
         ('premium', 'Premium'),
     ]
     name = models.CharField(max_length=255)
