@@ -41,6 +41,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    current_status = serializers.SlugRelatedField(
+        slug_field='name',
+        queryset=OrderStatus.objects.all()
+    )
     class Meta:
         model = Order
         fields = '__all__'
