@@ -531,8 +531,8 @@ body {
     margin: 0 auto;
     padding: 0 2rem;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 2.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
 }
 
 .feature-card {
@@ -1084,4 +1084,46 @@ footer {
     overflow: hidden;
     position: relative;
     border: 1px solid #111;
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 576px) {
+    .showcase-phones-grid {
+        gap: 1.25rem;
+        padding: 1rem 0;
+    }
+    .phone-mockup-mini {
+        width: 190px;
+        height: 380px;
+        border-radius: 28px;
+        padding: 7px;
+    }
+    .phone-mockup-mini .phone-inner {
+        border-radius: 21px;
+    }
+    .hero {
+        padding: 6rem 0 3rem 0;
+    }
+    .hero-title {
+        font-size: 2.1rem !important;
+        letter-spacing: -1px;
+    }
+    .cta-title {
+        font-size: 1.8rem !important;
+    }
+    .features {
+        padding: 4rem 0;
+    }
+    .feature-card {
+        padding: 2rem 1.5rem;
+    }
+    .about-section {
+        padding: 4rem 0;
+    }
+    .showcase-section {
+        padding: 4rem 0;
+    }
+    .download-cta-section {
+        padding: 4rem 0;
+    }
 }
