@@ -31,6 +31,7 @@ class Order(BaseModel):
     current_status = models.ForeignKey(OrderStatus, on_delete=models.RESTRICT)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     due_date = models.DateTimeField(null=True, blank=True)
     custom_notes = models.TextField(blank=True)
 

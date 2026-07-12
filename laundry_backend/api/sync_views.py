@@ -172,12 +172,14 @@ class SyncAPIView(APIView):
                         order_obj.customer_phone = order_dict.get('customer_phone', order_obj.customer_phone)
                         order_obj.total_price = order_dict.get('total_price', order_obj.total_price)
                         order_obj.amount_paid = order_dict.get('amount_paid', order_obj.amount_paid)
+                        order_obj.discount_amount = order_dict.get('discount_amount', order_obj.discount_amount)
                         
                         # Handle status which might be an ID or string in the payload depending on frontend
                         status_val = order_dict.get('current_status')
                         if status_val:
-                            # Simple approach: assume frontend sends the name for now, or fetch the status object
-                            status_obj = OrderStatus.objects.filter(office=office, name=status_val).first()
+                            status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first()
+                            if not status_obj:
+                                status_obj = OrderStatus.objects.filter(office=office).first()
                             if status_obj:
                                 order_obj.current_status = status_obj
                                 
@@ -187,7 +189,19 @@ class SyncAPIView(APIView):
                 if not order_dict.get('is_deleted', False):
                     # Create new
                     status_val = order_dict.get('current_status')
-                    status_obj = OrderStatus.objects.filter(office=office, name=status_val).first()
+                    status_obj = None
+                    if status_val:
+                        status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first()
+                    if not status_obj:
+                        status_obj = OrderStatus.objects.filter(office=office).first()
+                    if not status_obj:
+                        # Auto-create default OrderStatus if none exists at all for this office
+                        status_obj = OrderStatus.objects.create(
+                            office=office,
+                            name='Pending',
+                            sequence_order=1,
+                            is_completed_state=False
+                        )
                     Order.objects.create(
                         id=order_id,
                         office=office,
@@ -195,6 +209,7 @@ class SyncAPIView(APIView):
                         customer_phone=order_dict.get('customer_phone', ''),
                         total_price=order_dict.get('total_price', 0),
                         amount_paid=order_dict.get('amount_paid', 0),
+                        discount_amount=order_dict.get('discount_amount', 0),
                         current_status=status_obj
                     )
                     processed_orders += 1
