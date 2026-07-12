@@ -9,8 +9,21 @@ final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
 });
 
+class LastSyncTimestampNotifier extends Notifier<DateTime?> {
+  @override
+  DateTime? build() => null;
+
+  void update(DateTime? value) {
+    state = value;
+  }
+}
+
+final lastSyncTimestampProvider = NotifierProvider<LastSyncTimestampNotifier, DateTime?>(() {
+  return LastSyncTimestampNotifier();
+});
+
 final syncRepositoryProvider = Provider<SyncRepository>((ref) {
-  return SyncRepository();
+  return SyncRepository(ref);
 });
 
 final officeNameProvider = FutureProvider.autoDispose<String>((ref) async {

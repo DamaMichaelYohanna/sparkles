@@ -2,12 +2,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from dateutil.parser import parse
+from django.utils import timezone
 from offices.models import LaundryOffice
 from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem
 from .serializers import (
     ServiceTypeSerializer, CategorySerializer, ItemPricingSerializer,
     OrderStatusSerializer, OrderSerializer, OrderItemSerializer
 )
+
+def make_aware(dt):
+    if dt is None:
+        return None
+    return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
 
 class SyncAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -31,7 +37,7 @@ class SyncAPIView(APIView):
 
         if last_sync:
             try:
-                last_sync_date = parse(last_sync)
+                last_sync_date = make_aware(parse(last_sync))
                 service_types_qs = service_types_qs.filter(updated_at__gte=last_sync_date)
                 categories_qs = categories_qs.filter(updated_at__gte=last_sync_date)
                 item_pricing_qs = item_pricing_qs.filter(updated_at__gte=last_sync_date)
@@ -74,7 +80,7 @@ class SyncAPIView(APIView):
             if not cat_id: continue
             try:
                 cat_obj = Category.objects.get(id=cat_id, office=office)
-                incoming_updated_at = parse(cat_dict.get('updated_at', ''))
+                incoming_updated_at = make_aware(parse(cat_dict.get('updated_at', '')))
                 if incoming_updated_at > cat_obj.updated_at:
                     if cat_dict.get('is_deleted', False):
                         cat_obj.is_deleted = True
@@ -89,8 +95,8 @@ class SyncAPIView(APIView):
                         id=cat_id,
                         office=office,
                         name=cat_dict.get('name', ''),
-                        created_at=parse(cat_dict.get('created_at')) if cat_dict.get('created_at') else None,
-                        updated_at=parse(cat_dict.get('updated_at')) if cat_dict.get('updated_at') else None
+                        created_at=make_aware(parse(cat_dict.get('created_at'))) if cat_dict.get('created_at') else None,
+                        updated_at=make_aware(parse(cat_dict.get('updated_at'))) if cat_dict.get('updated_at') else None
                     )
                     processed_configs += 1
 
@@ -100,7 +106,7 @@ class SyncAPIView(APIView):
             if not srv_id: continue
             try:
                 srv_obj = ServiceType.objects.get(id=srv_id, office=office)
-                incoming_updated_at = parse(srv_dict.get('updated_at', ''))
+                incoming_updated_at = make_aware(parse(srv_dict.get('updated_at', '')))
                 if incoming_updated_at > srv_obj.updated_at:
                     if srv_dict.get('is_deleted', False):
                         srv_obj.is_deleted = True
@@ -117,8 +123,8 @@ class SyncAPIView(APIView):
                         office=office,
                         name=srv_dict.get('name', ''),
                         description=srv_dict.get('description', ''),
-                        created_at=parse(srv_dict.get('created_at')) if srv_dict.get('created_at') else None,
-                        updated_at=parse(srv_dict.get('updated_at')) if srv_dict.get('updated_at') else None
+                        created_at=make_aware(parse(srv_dict.get('created_at'))) if srv_dict.get('created_at') else None,
+                        updated_at=make_aware(parse(srv_dict.get('updated_at'))) if srv_dict.get('updated_at') else None
                     )
                     processed_configs += 1
 
@@ -128,7 +134,7 @@ class SyncAPIView(APIView):
             if not ip_id: continue
             try:
                 ip_obj = ItemPricing.objects.get(id=ip_id, office=office)
-                incoming_updated_at = parse(ip_dict.get('updated_at', ''))
+                incoming_updated_at = make_aware(parse(ip_dict.get('updated_at', '')))
                 if incoming_updated_at > ip_obj.updated_at:
                     if ip_dict.get('is_deleted', False):
                         ip_obj.is_deleted = True
@@ -159,8 +165,8 @@ class SyncAPIView(APIView):
                             service_type=srv_obj,
                             name=ip_dict.get('name', ''),
                             price=ip_dict.get('price', 0),
-                            created_at=parse(ip_dict.get('created_at')) if ip_dict.get('created_at') else None,
-                            updated_at=parse(ip_dict.get('updated_at')) if ip_dict.get('updated_at') else None
+                            created_at=make_aware(parse(ip_dict.get('created_at'))) if ip_dict.get('created_at') else None,
+                            updated_at=make_aware(parse(ip_dict.get('updated_at'))) if ip_dict.get('updated_at') else None
                         )
                         processed_configs += 1
 
@@ -172,7 +178,7 @@ class SyncAPIView(APIView):
             try:
                 order_obj = Order.objects.get(id=order_id, office=office)
                 # Last write wins
-                incoming_updated_at = parse(order_dict.get('updated_at', ''))
+                incoming_updated_at = make_aware(parse(order_dict.get('updated_at', '')))
                 if incoming_updated_at > order_obj.updated_at:
                     if order_dict.get('is_deleted', False):
                         order_obj.is_deleted = True
@@ -220,8 +226,8 @@ class SyncAPIView(APIView):
                         amount_paid=order_dict.get('amount_paid', 0),
                         discount_amount=order_dict.get('discount_amount', 0),
                         current_status=status_obj,
-                        created_at=parse(order_dict.get('created_at')) if order_dict.get('created_at') else None,
-                        updated_at=parse(order_dict.get('updated_at')) if order_dict.get('updated_at') else None
+                        created_at=make_aware(parse(order_dict.get('created_at'))) if order_dict.get('created_at') else None,
+                        updated_at=make_aware(parse(order_dict.get('updated_at'))) if order_dict.get('updated_at') else None
                     )
                     processed_orders += 1
 
@@ -234,7 +240,7 @@ class SyncAPIView(APIView):
 
             try:
                 item_obj = OrderItem.objects.get(id=item_id, order__office=office)
-                incoming_updated_at = parse(item_dict.get('updated_at', ''))
+                incoming_updated_at = make_aware(parse(item_dict.get('updated_at', '')))
                 if incoming_updated_at > item_obj.updated_at:
                     if item_dict.get('is_deleted', False):
                         item_obj.is_deleted = True
@@ -259,8 +265,8 @@ class SyncAPIView(APIView):
                             unit_price=item_dict.get('unit_price', 0),
                             discount_amount=item_dict.get('discount_amount', 0),
                             subtotal=item_dict.get('subtotal', 0),
-                            created_at=parse(item_dict.get('created_at')) if item_dict.get('created_at') else None,
-                            updated_at=parse(item_dict.get('updated_at')) if item_dict.get('updated_at') else None
+                            created_at=make_aware(parse(item_dict.get('created_at'))) if item_dict.get('created_at') else None,
+                            updated_at=make_aware(parse(item_dict.get('updated_at'))) if item_dict.get('updated_at') else None
                         )
                         processed_items += 1
                     except (Order.DoesNotExist, ItemPricing.DoesNotExist):

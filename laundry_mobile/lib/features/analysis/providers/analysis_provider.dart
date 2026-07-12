@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/local_db/database_helper.dart';
 import '../../../core/models/order_model.dart';
+import '../../../core/providers.dart';
 
 class AnalysisStats {
   final double totalSales;
@@ -50,6 +51,9 @@ class AnalysisStats {
 
 // Primary raw data provider
 final rawAnalysisOrdersProvider = FutureProvider.autoDispose<List<OrderModel>>((ref) async {
+  ref.watch(lastSyncTimestampProvider);
+  ref.watch(syncRepositoryProvider).triggerSync();
+
   final db = await DatabaseHelper.instance.database;
   final results = await db.query('orders', where: 'is_deleted = ?', whereArgs: [0]);
   print('ANALYSIS DIAGNOSTIC: Total orders in DB = ${results.length}');

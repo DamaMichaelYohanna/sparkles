@@ -245,4 +245,16 @@ CREATE TABLE item_pricing (
 
     await batch.commit(noResult: true);
   }
+
+  Future<void> clearDatabase() async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('orders');
+      await txn.delete('order_items');
+      await txn.delete('service_types');
+      await txn.delete('categories');
+      await txn.delete('order_statuses');
+      await txn.delete('item_pricing');
+    });
+  }
 }

@@ -8,6 +8,7 @@ import 'staff_management_screen.dart';
 import '../auth/auth_screen.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../core/local_db/database_helper.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -16,6 +17,8 @@ class SettingsScreen extends ConsumerWidget {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');
     await prefs.remove('refresh_token');
+    await prefs.remove('last_sync_timestamp');
+    await DatabaseHelper.instance.clearDatabase();
     if (context.mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const AuthScreen()),

@@ -5,6 +5,9 @@ import 'package:laundry_mobile/core/providers.dart';
 import 'package:laundry_mobile/core/local_db/database_helper.dart';
 
 final dashboardStatsProvider = FutureProvider.autoDispose<DashboardStats>((ref) async {
+  ref.watch(lastSyncTimestampProvider);
+  ref.watch(syncRepositoryProvider).triggerSync();
+
   final db = await DatabaseHelper.instance.database;
   final results = await db.query('orders', where: 'is_deleted = ?', whereArgs: [0]);
   final orders = results.map((e) => OrderModel.fromDb(e)).toList();
@@ -49,6 +52,7 @@ final dashboardStatsProvider = FutureProvider.autoDispose<DashboardStats>((ref) 
 });
 
 final recentOrdersProvider = FutureProvider.autoDispose<List<OrderModel>>((ref) async {
+  ref.watch(lastSyncTimestampProvider);
   final syncRepo = ref.watch(syncRepositoryProvider);
   final orders = await syncRepo.getOrders();
   // Sort and limit locally

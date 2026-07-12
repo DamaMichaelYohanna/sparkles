@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../local_db/database_helper.dart';
@@ -9,10 +10,21 @@ import '../models/category_model.dart';
 import '../models/item_pricing_model.dart';
 import '../models/order_status_model.dart';
 import '../models/order_item_model.dart';
+import '../providers.dart';
 
 class SyncRepository {
+  final Ref _ref;
   final ApiService _apiService = ApiService();
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+
+  bool _isSyncing = false;
+  DateTime? _lastSyncTime;
+
+  SyncRepository(this._ref);
+
+  void triggerSync() {
+    _performDeltaSync();
+  }
 
   Future<List<OrderModel>> getOrders() async {
     final db = await _dbHelper.database;
@@ -24,9 +36,16 @@ class SyncRepository {
   }
 
   Future<void> _performDeltaSync() async {
+    if (_isSyncing) return;
+
+    if (_lastSyncTime != null && DateTime.now().difference(_lastSyncTime!) < const Duration(seconds: 10)) {
+      return;
+    }
+
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult.isEmpty || connectivityResult.contains(ConnectivityResult.none)) return;
 
+    _isSyncing = true;
     try {
       final prefs = await SharedPreferences.getInstance();
       
@@ -131,8 +150,12 @@ class SyncRepository {
       // Update timestamp to current UTC time
       await prefs.setString('last_sync_timestamp', DateTime.now().toUtc().toIso8601String());
       
+      _lastSyncTime = DateTime.now();
+      _ref.read(lastSyncTimestampProvider.notifier).update(_lastSyncTime);
     } catch (e) {
       print('Delta Sync failed: $e');
+    } finally {
+      _isSyncing = false;
     }
   }
 }
