@@ -1,7 +1,7 @@
 import requests
 from django.conf import settings
 
-def initialize_payment(email, amount_kobo, reference):
+def initialize_payment(email, amount_kobo, reference, plan_code=None):
     """
     Initializes a Paystack transaction.
     amount_kobo: Amount in the smallest currency unit (e.g., Kobo for NGN)
@@ -15,8 +15,9 @@ def initialize_payment(email, amount_kobo, reference):
         "email": email,
         "amount": amount_kobo,
         "reference": reference,
-        # "callback_url": "https://sparkles-green.vercel.app/billing/callback"
     }
+    if plan_code:
+        payload["plan"] = plan_code
     response = requests.post(url, json=payload, headers=headers)
     return response.json()
 

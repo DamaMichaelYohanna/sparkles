@@ -246,16 +246,55 @@ class PaystackWebhookView(APIView):
         
         if event == 'charge.success':
             reference = data.get('reference')
-            print(f"Payment successful for reference: {reference}")
-            # Look up office by pending reference
+            customer_email = data.get('customer', {}).get('email')
+            print(f"Payment successful for reference: {reference}, email: {customer_email}")
+            
+            # Look up office by pending reference first
             office = LaundryOffice.objects.filter(preferences__pending_subscription__reference=reference).first()
+            
+            # Fallback to looking up office by customer admin email (for renewal events)
+            if not office and customer_email:
+                user_obj = User.objects.filter(email=customer_email, is_office_admin=True).first()
+                if user_obj and user_obj.office:
+                    office = user_obj.office
+            
             if office:
                 pending = office.preferences.get('pending_subscription', {})
-                tier = pending.get('tier', 'free')
-                office.subscription_tier = tier
-                office.preferences.pop('pending_subscription', None)
+                if pending and pending.get('reference') == reference:
+                    # Upgrade initiated from app / browser
+                    tier = pending.get('tier', 'free')
+                    office.subscription_tier = tier
+                    office.preferences.pop('pending_subscription', None)
+                else:
+                    # Recurring subscription payment from Paystack Plan billing
+                    plan_code = data.get('plan', {}).get('plan_code')
+                    from django.conf import settings
+                    if plan_code == getattr(settings, 'PAYSTACK_PLAN_PREMIUM', 'premium'):
+                        office.subscription_tier = 'premium'
+                    elif plan_code == getattr(settings, 'PAYSTACK_PLAN_PRO', 'pro'):
+                        office.subscription_tier = 'pro'
+                    elif plan_code == getattr(settings, 'PAYSTACK_PLAN_STARTER', 'starter'):
+                        office.subscription_tier = 'starter'
+                
+                if not office.preferences:
+                    office.preferences = {}
+                office.preferences['subscription_status'] = 'active'
                 office.save()
-                print(f"Webhook: Upgraded office {office.name} to {tier}")
+                print(f"Webhook: Activated/Renewed subscription to {office.subscription_tier} for office: {office.name}")
+                
+        elif event in ['subscription.disable', 'subscription.cancel']:
+            customer_email = data.get('customer', {}).get('email')
+            print(f"Subscription disabled/cancelled for customer: {customer_email}")
+            if customer_email:
+                user_obj = User.objects.filter(email=customer_email, is_office_admin=True).first()
+                if user_obj and user_obj.office:
+                    office = user_obj.office
+                    office.subscription_tier = 'free'
+                    if not office.preferences:
+                        office.preferences = {}
+                    office.preferences['subscription_status'] = 'disabled'
+                    office.save()
+                    print(f"Webhook: Downgraded office {office.name} to FREE due to cancel/renewal failure.")
             
         return Response(status=200)
 
@@ -280,9 +319,15 @@ class InitializeSubscriptionView(APIView):
         amount_kobo = prices[tier]
         reference = f"sub_{uuid.uuid4().hex[:12]}"
         
+        # Load subscription plan code from settings
+        from django.conf import settings
+        plan_code = getattr(settings, f"PAYSTACK_PLAN_{tier.upper()}", None)
+        if plan_code and "placeholder" in plan_code:
+            plan_code = None # Ignore placeholder plan code for simple sandbox payments
+            
         # Initialize Paystack payment
         from .paystack import initialize_payment
-        res = initialize_payment(email=user.email, amount_kobo=amount_kobo, reference=reference)
+        res = initialize_payment(email=user.email, amount_kobo=amount_kobo, reference=reference, plan_code=plan_code)
         
         if res.get('status') == True:
             # Save pending reference in office preferences

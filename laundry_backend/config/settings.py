@@ -107,3 +107,8 @@ SPECTACULAR_SETTINGS = {
 }
 
 LOGIN_URL = '/admin/login/'
+
+PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY', 'sk_test_placeholder')
+PAYSTACK_PLAN_STARTER = os.environ.get('PAYSTACK_PLAN_STARTER', 'PLN_starter_placeholder')
+PAYSTACK_PLAN_PRO = os.environ.get('PAYSTACK_PLAN_PRO', 'PLN_pro_placeholder')
+PAYSTACK_PLAN_PREMIUM = os.environ.get('PAYSTACK_PLAN_PREMIUM', 'PLN_premium_placeholder')
