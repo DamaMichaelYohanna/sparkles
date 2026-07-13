@@ -1,0 +1,63 @@
+{% extends 'landing/dashboard_base.html' %}
+
+{% block title %}Sparkles Global Dashboard - Waitlist{% endblock %}
+{% block header_title %}Waitlist Management{% endblock %}
+
+{% block content %}
+<section class="charts-section" style="grid-template-columns: 1fr;">
+    <div class="recent-orders-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3>Waitlist Entries</h3>
+            <span style="background: rgba(92, 99, 106, 0.1); color: var(--primary-dark); padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                Total: {{ waitlist|length }}
+            </span>
+        </div>
+        
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>Email Address</th>
+                    <th>Signed Up</th>
+                    <th>Notification Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in waitlist %}
+                <tr>
+                    <td style="font-weight: 600;">{{ entry.email }}</td>
+                    <td>{{ entry.created_at|date:"M d, Y, h:i A" }}</td>
+                    <td>
+                        {% if entry.is_notified %}
+                            <span style="background: #2ec4b6; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Notified</span>
+                        {% else %}
+                            <span style="background: #ff9f1c; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end;">
+                            <form action="{% url 'toggle_waitlist' entry.id %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: var(--primary);">
+                                    {% if entry.is_notified %}Mark Pending{% else %}Mark Notified{% endif %}
+                                </button>
+                            </form>
+                            <form action="{% url 'delete_waitlist' entry.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete {{ entry.email }} from the waitlist?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #e63946; color: white;">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No waitlist signups found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

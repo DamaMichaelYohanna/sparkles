@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Sum, Count
 from offices.models import LaundryOffice, User
@@ -77,3 +77,24 @@ class JoinWaitlistView(APIView):
             }, status=201)
         except Exception as e:
             return Response({"error": f"Failed to join waitlist: {str(e)}"}, status=500)
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def waitlist_dashboard(request):
+    waitlist = WaitlistEntry.objects.all().order_by('-created_at')
+    context = {'waitlist': waitlist}
+    return render(request, 'landing/waitlist.html', context)
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def toggle_waitlist_notified(request, pk):
+    if request.method == 'POST':
+        entry = get_object_or_404(WaitlistEntry, pk=pk)
+        entry.is_notified = not entry.is_notified
+        entry.save()
+    return redirect('waitlist_dashboard')
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def delete_waitlist_entry(request, pk):
+    if request.method == 'POST':
+        entry = get_object_or_404(WaitlistEntry, pk=pk)
+        entry.delete()
+    return redirect('waitlist_dashboard')
