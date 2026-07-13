@@ -50,13 +50,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  void _verifyPayment(String reference) async {
+  void _verifyPayment(String reference, StateSetter setDialogState) async {
+    setDialogState(() => _isCheckingStatus = true);
     setState(() => _isCheckingStatus = true);
+    print('[Billing] Verifying transaction reference: $reference');
     try {
       final api = ref.read(apiServiceProvider);
       final res = await api.verifySubscription(reference);
+      print('[Billing] Verification response received: $res');
       
       if (mounted) {
+        setDialogState(() => _isCheckingStatus = false);
         setState(() => _isCheckingStatus = false);
         // Clear checking dialog/state and refresh profile
         ref.refresh(userProfileProvider);
@@ -69,7 +73,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         Navigator.of(context).pop(); // Close check status dialog
       }
     } catch (e) {
+      print('[Billing] Verification failed/pending: $e');
       if (mounted) {
+        setDialogState(() => _isCheckingStatus = false);
         setState(() => _isCheckingStatus = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -82,6 +88,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showVerifyDialog(String reference) {
+    print('[Billing] Displaying verify dialog for reference: $reference');
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -110,6 +117,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onPressed: _isCheckingStatus
                       ? null
                       : () {
+                          print('[Billing] Closed verification status dialog manually.');
                           Navigator.of(context).pop();
                         },
                   child: const Text('Close'),
@@ -118,8 +126,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onPressed: _isCheckingStatus
                       ? null
                       : () {
-                          setDialogState(() {});
-                          _verifyPayment(reference);
+                          _verifyPayment(reference, setDialogState);
                         },
                   child: const Text('Verify Payment'),
                 ),
@@ -336,29 +343,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                               return;
                                             }
 
-                                            // Show loading
+                                            print('[Billing] Initializing payment loader for tier: ${plan['id']}');
+                                            bool loaderShowed = true;
                                             showDialog(
-                                              context: context,
+                                              context: context, // Screen context
                                               barrierDismissible: false,
                                               builder: (dialogContext) => const Center(child: CircularProgressIndicator()),
-                                            );
+                                            ).then((_) {
+                                              loaderShowed = false;
+                                            });
 
                                             try {
                                               final api = ref.read(apiServiceProvider);
+                                              print('[Billing] Triggering backend billing initialization...');
                                               final res = await api.initializeSubscription(plan['id'] as String);
+                                              print('[Billing] Billing successfully initialized: $res');
                                               
                                               if (mounted) {
-                                                Navigator.of(context).pop(); // Close loading dialog
+                                                if (loaderShowed) {
+                                                  Navigator.of(context).pop(); // Close loading dialog
+                                                  loaderShowed = false;
+                                                }
                                                 
                                                 final url = res['authorization_url'];
                                                 final refStr = res['reference'];
                                                 
+                                                print('[Billing] Opening Paystack checkout URL: $url');
                                                 await _launchUrl(url);
                                                 _showVerifyDialog(refStr);
                                               }
                                             } catch (e) {
+                                              print('[Billing] Failed to initialize subscription: $e');
                                               if (mounted) {
-                                                Navigator.of(context).pop(); // Close loading dialog
+                                                if (loaderShowed) {
+                                                  Navigator.of(context).pop(); // Close loading dialog
+                                                  loaderShowed = false;
+                                                }
                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                   SnackBar(
                                                     content: Text('Failed to initialize upgrade: ${e.toString().replaceAll('Exception:', '').trim()}'),
