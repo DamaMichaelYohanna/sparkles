@@ -98,6 +98,22 @@ body {
     color: var(--primary-dark) !important;
 }
 
+.btn-waitlist-nav {
+    background: var(--accent-dark);
+    color: var(--white) !important;
+    padding: 0.6rem 1.25rem;
+    border-radius: 50px;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, background-color 0.25s ease, box-shadow 0.2s ease;
+}
+
+.btn-waitlist-nav:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
 .btn-api {
     background: var(--accent-dark);
     color: var(--white) !important;
@@ -797,7 +813,7 @@ footer {
         font-size: 1.4rem;
     }
     
-    .nav-links a:not(.btn-api) {
+    .nav-links a:not(.btn-api):not(.btn-waitlist-nav) {
         display: none; /* Hide standard links on mobile */
     }
     
