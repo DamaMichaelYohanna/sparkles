@@ -1,6 +1,9 @@
+import logging
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, Count, F
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 from rest_framework import generics, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -264,6 +267,7 @@ class PaystackWebhookView(APIView):
         if not settings.DEBUG:
             paystack_signature = request.headers.get('x-paystack-signature')
             if not paystack_signature:
+                logger.warning("[Webhook] Missing x-paystack-signature header.")
                 return Response({"error": "Missing signature header"}, status=401)
                 
             import hmac
@@ -272,15 +276,17 @@ class PaystackWebhookView(APIView):
             computed_sig = hmac.new(secret, request._request.body, hashlib.sha512).hexdigest()
             
             if not hmac.compare_digest(computed_sig, paystack_signature):
+                logger.warning("[Webhook] Invalid Paystack signature provided.")
                 return Response({"error": "Invalid signature"}, status=401)
 
         event = request.data.get('event')
         data = request.data.get('data', {})
+        logger.info("[Webhook] Received event: %s", event)
         
         if event == 'charge.success':
             reference = data.get('reference')
             customer_email = data.get('customer', {}).get('email')
-            print(f"Payment successful for reference: {reference}, email: {customer_email}")
+            logger.info("[Webhook] Successful charge event. Ref: %s, Customer: %s", reference, customer_email)
             
             # Look up office by pending reference first
             office = LaundryOffice.objects.filter(preferences__pending_subscription__reference=reference).first()
@@ -313,11 +319,13 @@ class PaystackWebhookView(APIView):
                     office.preferences = {}
                 office.preferences['subscription_status'] = 'active'
                 office.save()
-                print(f"Webhook: Activated/Renewed subscription to {office.subscription_tier} for office: {office.name}")
+                logger.info("[Webhook] Activated/Renewed subscription to tier '%s' for office: %s", office.subscription_tier, office.name)
+            else:
+                logger.warning("[Webhook] Charge success webhook received but no matching office found (Ref: %s, Email: %s)", reference, customer_email)
                 
         elif event in ['subscription.disable', 'subscription.cancel']:
             customer_email = data.get('customer', {}).get('email')
-            print(f"Subscription disabled/cancelled for customer: {customer_email}")
+            logger.warning("[Webhook] Subscription disabled/cancelled event for customer: %s", customer_email)
             if customer_email:
                 user_obj = User.objects.filter(email=customer_email, is_office_admin=True).first()
                 if user_obj and user_obj.office:
@@ -327,7 +335,7 @@ class PaystackWebhookView(APIView):
                         office.preferences = {}
                     office.preferences['subscription_status'] = 'disabled'
                     office.save()
-                    print(f"Webhook: Downgraded office {office.name} to FREE due to cancel/renewal failure.")
+                    logger.warning("[Webhook] Downgraded office %s to FREE due to cancellation/disable notification.", office.name)
             
         return Response(status=200)
 
@@ -338,10 +346,12 @@ class InitializeSubscriptionView(APIView):
         import uuid
         user = request.user
         if not user.office:
+            logger.warning("[Billing] Init Failed: User '%s' is not associated with an office.", user.email)
             return Response({"error": "No office associated with user"}, status=400)
             
         tier = request.data.get('tier')
         if tier not in ['starter', 'pro', 'premium']:
+            logger.warning("[Billing] Init Failed: Invalid subscription tier '%s' requested by '%s'.", tier, user.email)
             return Response({"error": "Invalid subscription tier"}, status=400)
             
         prices = {
@@ -351,6 +361,8 @@ class InitializeSubscriptionView(APIView):
         }
         amount_kobo = prices[tier]
         reference = f"sub_{uuid.uuid4().hex[:12]}"
+        
+        logger.info("[Billing] Initializing Paystack transaction for user '%s', office '%s', tier '%s', ref '%s'.", user.email, user.office.name, tier, reference)
         
         # Load subscription plan code from settings
         from django.conf import settings
@@ -373,13 +385,14 @@ class InitializeSubscriptionView(APIView):
                 'amount': amount_kobo // 100
             }
             office.save()
+            logger.info("[Billing] Paystack checkout URL created for user '%s': %s", user.email, res['data']['authorization_url'])
             return Response({
                 "status": "success",
                 "authorization_url": res['data']['authorization_url'],
                 "reference": reference
             })
         else:
-            print(f"Paystack Init Failed: {res}")
+            logger.error("[Billing] Paystack checkout initialization failed: %s", res)
             return Response({"error": res.get('message', 'Failed to initialize payment')}, status=400)
 
 class VerifySubscriptionView(APIView):
@@ -389,14 +402,18 @@ class VerifySubscriptionView(APIView):
         user = request.user
         reference = request.query_params.get('reference')
         if not reference:
+            logger.warning("[Billing] Verify Failed: Missing reference parameter in request from user '%s'.", user.email)
             return Response({"error": "Reference parameter is required"}, status=400)
             
         office = user.office
         if not office:
+            logger.warning("[Billing] Verify Failed: User '%s' has no office.", user.email)
             return Response({"error": "No office associated with user"}, status=400)
             
+        logger.info("[Billing] Verifying transaction reference '%s' for office '%s'.", reference, office.name)
         pending = office.preferences.get('pending_subscription')
         if not pending or pending.get('reference') != reference:
+            logger.warning("[Billing] Verify Failed: Reference '%s' does not match pending reference for office '%s'.", reference, office.name)
             return Response({"error": "No pending subscription found for this reference"}, status=400)
             
         from .paystack import verify_payment
@@ -408,12 +425,14 @@ class VerifySubscriptionView(APIView):
             # Clear pending subscription
             office.preferences.pop('pending_subscription', None)
             office.save()
+            logger.info("[Billing] Payment successfully verified. Office '%s' upgraded to tier '%s'.", office.name, tier)
             return Response({
                 "status": "success",
                 "message": f"Subscription successfully upgraded to {tier}.",
                 "tier": tier
             })
         else:
+            logger.warning("[Billing] Payment verification pending/failed for reference '%s'. Paystack Response: %s", reference, res)
             return Response({"error": "Payment verification failed or payment not completed"}, status=400)
 
 class CurrentUserView(APIView):

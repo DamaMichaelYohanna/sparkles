@@ -1,3 +1,4 @@
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +13,8 @@ from .serializers import (
 
 from .permissions import TierLimitPermission
 
+logger = logging.getLogger(__name__)
+
 def make_aware(dt):
     if dt is None:
         return None
@@ -23,6 +26,7 @@ class SyncAPIView(APIView):
     def get(self, request):
         office = request.user.office
         if not office:
+            logger.warning("Sync GET warning: User '%s' is not associated with any office.", request.user.email)
             return Response({"error": "User is not associated with an office."}, status=400)
 
         last_sync = request.query_params.get('last_sync_timestamp')
@@ -63,6 +67,7 @@ class SyncAPIView(APIView):
     def post(self, request):
         office = request.user.office
         if not office:
+            logger.warning("Sync POST warning: User '%s' is not associated with any office.", request.user.email)
             return Response({"error": "User is not associated with an office."}, status=400)
 
         data = request.data
@@ -71,6 +76,17 @@ class SyncAPIView(APIView):
         categories_data = data.get('categories', [])
         service_types_data = data.get('service_types', [])
         item_pricing_data = data.get('item_pricing', [])
+
+        logger.info(
+            "Sync POST started for user '%s', office '%s'. Payload: %d orders, %d items, %d categories, %d service types, %d item pricings", 
+            request.user.email, 
+            office.name, 
+            len(orders_data), 
+            len(order_items_data), 
+            len(categories_data), 
+            len(service_types_data), 
+            len(item_pricing_data)
+        )
 
         processed_orders = 0
         processed_items = 0
@@ -287,6 +303,14 @@ class SyncAPIView(APIView):
                     except (Order.DoesNotExist, ItemPricing.DoesNotExist):
                         pass
 
+        logger.info(
+            "Sync POST completed for user '%s', office '%s'. Processed: %d orders, %d items, %d configs", 
+            request.user.email, 
+            office.name, 
+            processed_orders, 
+            processed_items, 
+            processed_configs
+        )
         return Response({
             "status": "success",
             "processed_orders": processed_orders,
