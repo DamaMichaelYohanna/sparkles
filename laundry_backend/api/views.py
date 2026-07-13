@@ -259,6 +259,21 @@ class PaystackWebhookView(APIView):
     permission_classes = [] # Webhooks shouldn't require our JWT auth
     
     def post(self, request, *args, **kwargs):
+        from django.conf import settings
+        # Secure Webhook: Verify Paystack signature in production/non-debug mode
+        if not settings.DEBUG:
+            paystack_signature = request.headers.get('x-paystack-signature')
+            if not paystack_signature:
+                return Response({"error": "Missing signature header"}, status=401)
+                
+            import hmac
+            import hashlib
+            secret = getattr(settings, 'PAYSTACK_SECRET_KEY', '').encode('utf-8')
+            computed_sig = hmac.new(secret, request._request.body, hashlib.sha512).hexdigest()
+            
+            if not hmac.compare_digest(computed_sig, paystack_signature):
+                return Response({"error": "Invalid signature"}, status=401)
+
         event = request.data.get('event')
         data = request.data.get('data', {})
         
