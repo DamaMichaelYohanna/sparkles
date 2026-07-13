@@ -179,6 +179,7 @@ class SyncAPIView(APIView):
             
             try:
                 order_obj = Order.objects.get(id=order_id, office=office)
+                was_completed = order_obj.current_status.is_completed_state
                 # Last write wins
                 incoming_updated_at = make_aware(parse(order_dict.get('updated_at', '')))
                 if incoming_updated_at > order_obj.updated_at:
@@ -187,6 +188,7 @@ class SyncAPIView(APIView):
                     else:
                         order_obj.customer_name = order_dict.get('customer_name', order_obj.customer_name)
                         order_obj.customer_phone = order_dict.get('customer_phone', order_obj.customer_phone)
+                        order_obj.customer_is_whatsapp = order_dict.get('customer_is_whatsapp', order_obj.customer_is_whatsapp)
                         order_obj.total_price = order_dict.get('total_price', order_obj.total_price)
                         order_obj.amount_paid = order_dict.get('amount_paid', order_obj.amount_paid)
                         order_obj.discount_amount = order_dict.get('discount_amount', order_obj.discount_amount)
@@ -207,6 +209,11 @@ class SyncAPIView(APIView):
                     order_obj.updated_at = incoming_updated_at
                     order_obj.save()
                     processed_orders += 1
+                    
+                    # Trigger WhatsApp if transitioned to completed during sync
+                    if order_obj.current_status.is_completed_state and not was_completed:
+                        from .whatsapp import send_whatsapp_order_completed
+                        send_whatsapp_order_completed(order_obj)
             except Order.DoesNotExist:
                 if not order_dict.get('is_deleted', False):
                     # Create new
@@ -219,11 +226,12 @@ class SyncAPIView(APIView):
                             sequence_order=OrderStatus.objects.filter(office=office).count() + 1,
                             is_completed_state=(status_val.lower() == 'completed')
                         )
-                    Order.objects.create(
+                    new_order = Order.objects.create(
                         id=order_id,
                         office=office,
                         customer_name=order_dict.get('customer_name', 'Unknown'),
                         customer_phone=order_dict.get('customer_phone', ''),
+                        customer_is_whatsapp=order_dict.get('customer_is_whatsapp', False),
                         total_price=order_dict.get('total_price', 0),
                         amount_paid=order_dict.get('amount_paid', 0),
                         discount_amount=order_dict.get('discount_amount', 0),
@@ -232,6 +240,11 @@ class SyncAPIView(APIView):
                         updated_at=make_aware(parse(order_dict.get('updated_at'))) if order_dict.get('updated_at') else None
                     )
                     processed_orders += 1
+                    
+                    # Trigger WhatsApp if created as completed during sync
+                    if new_order.current_status.is_completed_state:
+                        from .whatsapp import send_whatsapp_order_completed
+                        send_whatsapp_order_completed(new_order)
 
         # Process Order Items
         for item_dict in order_items_data:

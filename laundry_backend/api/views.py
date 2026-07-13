@@ -54,11 +54,24 @@ class BaseTenantView:
                 action=f"{model.__name__.upper()}_CREATED",
                 details=f"Created ID {instance.id}"
             )
+            
+            # Trigger WhatsApp if created as completed
+            if instance.current_status.is_completed_state:
+                from .whatsapp import send_whatsapp_order_completed
+                send_whatsapp_order_completed(instance)
 
     def perform_update(self, serializer):
+        model = self.serializer_class.Meta.model
+        was_completed = False
+        if model == Order:
+            try:
+                old_order = Order.objects.get(pk=serializer.instance.pk)
+                was_completed = old_order.current_status.is_completed_state
+            except Order.DoesNotExist:
+                pass
+
         instance = serializer.save()
         user = self.request.user
-        model = self.serializer_class.Meta.model
         
         # Audit Trail Logging
         if model in [Order] and user.office:
@@ -68,6 +81,11 @@ class BaseTenantView:
                 action=f"{model.__name__.upper()}_UPDATED",
                 details=f"Updated ID {instance.id}"
             )
+            
+            # Trigger WhatsApp if transitioned to completed
+            if instance.current_status.is_completed_state and not was_completed:
+                from .whatsapp import send_whatsapp_order_completed
+                send_whatsapp_order_completed(instance)
 
 
 # LaundryOffice
