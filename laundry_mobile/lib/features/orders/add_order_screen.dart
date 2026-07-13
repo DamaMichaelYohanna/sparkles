@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme.dart';
@@ -77,8 +78,13 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
                 labelText: 'Phone Number (Optional)',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(LucideIcons.phone),
+                counterText: '',
               ),
               keyboardType: TextInputType.phone,
+              maxLength: 11,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
               onChanged: (val) => ref.read(addOrderProvider.notifier).updateCustomerInfo(name: _nameController.text, phone: val),
             ),
             const SizedBox(height: 32),
@@ -208,6 +214,15 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
               onPressed: draftState.items.isEmpty || draftState.customerName.isEmpty
                   ? null
                   : () async {
+                      if (draftState.customerPhone.isNotEmpty && draftState.customerPhone.length != 11) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Nigerian phone numbers must be exactly 11 digits.'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                        return;
+                      }
                       try {
                         await ref.read(addOrderProvider.notifier).saveOrder();
                         if (context.mounted) {
