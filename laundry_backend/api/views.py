@@ -487,13 +487,18 @@ class BranchListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        branches = request.user.branches.all()
+        user = request.user
+        # Self-healing: Ensure user's active office is always in user.branches
+        if user.office and not user.branches.filter(id=user.office.id).exists():
+            user.branches.add(user.office)
+
+        branches = user.branches.all()
         data = [{
             "id": str(b.id),
             "name": b.name,
             "contact_info": b.contact_info,
             "subscription_tier": b.subscription_tier,
-            "is_active": request.user.office_id == b.id
+            "is_active": user.office_id == b.id
         } for b in branches]
         return Response(data)
 
@@ -526,6 +531,10 @@ class BranchListCreateView(APIView):
         from django.db import transaction
         try:
             with transaction.atomic():
+                # Self-healing before switching: Link user's active office to branches relation
+                if user.office and not user.branches.filter(id=user.office.id).exists():
+                    user.branches.add(user.office)
+
                 branch = LaundryOffice.objects.create(
                     name=name,
                     contact_info=contact_info,
