@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../core/local_db/database_helper.dart';
 import '../shell/shell_screen.dart';
 import 'register_screen.dart';
 import 'reset_password_screen.dart';
@@ -28,6 +30,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     setState(() => _isLoading = false);
     
     if (token != null) {
+      // Clear offline DB and synchronization cursor to avoid session contamination
+      await DatabaseHelper.instance.clearDatabase();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('last_sync_timestamp');
+
+      // Reset cache providers
+      ref.invalidate(userProfileProvider);
+      ref.invalidate(branchesProvider);
+      ref.invalidate(lastSyncTimestampProvider);
+      ref.invalidate(syncStatusProvider);
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const ShellScreen()),

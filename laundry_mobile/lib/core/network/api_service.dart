@@ -82,7 +82,7 @@ class ApiService {
       }
       return response.data as List<dynamic>;
     } catch (e) {
-      throw Exception('Failed to load orders: $e');
+      throw _handleException(e, 'Failed to load orders');
     }
   }
 
@@ -93,7 +93,7 @@ class ApiService {
       });
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      throw Exception('Failed to sync delta: $e');
+      throw _handleException(e, 'Failed to sync delta');
     }
   }
 
@@ -102,7 +102,7 @@ class ApiService {
       final response = await _dio.post('sync/', data: payload);
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      throw Exception('Failed to push delta: $e');
+      throw _handleException(e, 'Failed to push delta');
     }
   }
 
@@ -111,7 +111,7 @@ class ApiService {
       final response = await _dio.get('dashboard/operations/');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      throw Exception('Failed to load dashboard: $e');
+      throw _handleException(e, 'Failed to load dashboard');
     }
   }
 
@@ -120,7 +120,7 @@ class ApiService {
       final response = await _dio.get('users/me/');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      throw Exception('Failed to get current user profile: $e');
+      throw _handleException(e, 'Failed to get current user profile');
     }
   }
 
@@ -129,7 +129,7 @@ class ApiService {
       final response = await _dio.get('users/');
       return response.data as List<dynamic>;
     } catch (e) {
-      throw Exception('Failed to load sub-users: $e');
+      throw _handleException(e, 'Failed to load sub-users');
     }
   }
 
@@ -138,13 +138,7 @@ class ApiService {
       final response = await _dio.post('users/', data: data);
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      if (e is DioException && e.response != null) {
-        final detail = e.response?.data?['detail'] ?? e.response?.data?.toString();
-        if (detail != null) {
-          throw Exception(detail);
-        }
-      }
-      throw Exception('Failed to create user: $e');
+      throw _handleException(e, 'Failed to create user');
     }
   }
 
@@ -152,7 +146,7 @@ class ApiService {
     try {
       await _dio.delete('users/$id/');
     } catch (e) {
-      throw Exception('Failed to delete user: $e');
+      throw _handleException(e, 'Failed to delete user');
     }
   }
 
@@ -161,11 +155,7 @@ class ApiService {
       final response = await _dio.post('billing/initialize/', data: {'tier': tier});
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      if (e is DioException && e.response != null) {
-        final error = e.response?.data?['error'] ?? e.response?.data?.toString();
-        if (error != null) throw Exception(error);
-      }
-      throw Exception('Failed to initialize subscription: $e');
+      throw _handleException(e, 'Failed to initialize subscription');
     }
   }
 
@@ -174,11 +164,7 @@ class ApiService {
       final response = await _dio.get('billing/verify/', queryParameters: {'reference': reference});
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      if (e is DioException && e.response != null) {
-        final error = e.response?.data?['error'] ?? e.response?.data?.toString();
-        if (error != null) throw Exception(error);
-      }
-      throw Exception('Failed to verify subscription: $e');
+      throw _handleException(e, 'Failed to verify subscription');
     }
   }
 
@@ -187,11 +173,7 @@ class ApiService {
       final response = await _dio.patch('offices/$officeId/', data: data);
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      if (e is DioException && e.response != null) {
-        final detail = e.response?.data?['detail'] ?? e.response?.data?.toString();
-        if (detail != null) throw Exception(detail);
-      }
-      throw Exception('Failed to update office details: $e');
+      throw _handleException(e, 'Failed to update office details');
     }
   }
 
@@ -204,11 +186,7 @@ class ApiService {
       });
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      if (e is DioException && e.response != null) {
-        final error = e.response?.data?['error'] ?? e.response?.data?.toString();
-        if (error != null) throw Exception(error);
-      }
-      throw Exception('Failed to register: $e');
+      throw _handleException(e, 'Failed to register');
     }
   }
 
@@ -219,11 +197,19 @@ class ApiService {
       });
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      if (e is DioException && e.response != null) {
-        final error = e.response?.data?['error'] ?? e.response?.data?.toString();
-        if (error != null) throw Exception(error);
-      }
-      throw Exception('Failed to request password reset: $e');
+      throw _handleException(e, 'Failed to request password reset');
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyPasswordResetOTP(String email, String otp) async {
+    try {
+      final response = await _dio.post('password-reset/verify/', data: {
+        'email': email,
+        'otp': otp,
+      });
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw _handleException(e, 'Failed to verify verification code');
     }
   }
 
@@ -236,11 +222,94 @@ class ApiService {
       });
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      if (e is DioException && e.response != null) {
-        final error = e.response?.data?['error'] ?? e.response?.data?.toString();
-        if (error != null) throw Exception(error);
-      }
-      throw Exception('Failed to confirm password reset: $e');
+      throw _handleException(e, 'Failed to confirm password reset');
     }
+  }
+
+  Future<List<dynamic>> getBranches() async {
+    try {
+      final response = await _dio.get('branches/');
+      return response.data as List<dynamic>;
+    } catch (e) {
+      throw _handleException(e, 'Failed to fetch branches');
+    }
+  }
+
+  Future<Map<String, dynamic>> createBranch(String name, String contactInfo) async {
+    try {
+      final response = await _dio.post('branches/', data: {
+        'name': name,
+        'contact_info': contactInfo,
+      });
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw _handleException(e, 'Failed to create branch');
+    }
+  }
+
+  Future<Map<String, dynamic>> switchBranch(String officeId) async {
+    try {
+      final response = await _dio.post('branches/switch/', data: {
+        'office_id': officeId,
+      });
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw _handleException(e, 'Failed to switch branch');
+    }
+  }
+
+  Exception _handleException(dynamic e, String defaultMessage) {
+    if (e is DioException) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        return Exception('Connection timed out. Please check your internet connection and try again.');
+      } else if (e.type == DioExceptionType.connectionError) {
+        return Exception('No internet connection. Please check your network connection and try again.');
+      } else if (e.response != null) {
+        final data = e.response?.data;
+        if (data is Map) {
+          if (data.containsKey('error') && data['error'] != null) {
+            final errorVal = data['error'];
+            if (errorVal is Map) {
+              final messages = errorVal.values
+                  .map((v) => v is List ? v.join(', ') : v.toString())
+                  .join('\n');
+              if (messages.isNotEmpty) return Exception(messages);
+            }
+            return Exception(errorVal.toString());
+          }
+          if (data.containsKey('detail') && data['detail'] != null) {
+            return Exception(data['detail'].toString());
+          }
+          if (data.containsKey('message') && data['message'] != null) {
+            return Exception(data['message'].toString());
+          }
+          // Join validation error map (e.g., {"email": ["..."]})
+          final List<String> fieldErrors = [];
+          data.forEach((key, value) {
+            final field = key.toString();
+            final capitalizedField = field.isNotEmpty
+                ? '${field[0].toUpperCase()}${field.substring(1)}'
+                : field;
+            if (value is List) {
+              fieldErrors.add('$capitalizedField: ${value.join(", ")}');
+            } else if (value is Map) {
+              fieldErrors.add('$capitalizedField: ${value.values.join(", ")}');
+            } else if (value != null) {
+              fieldErrors.add('$capitalizedField: $value');
+            }
+          });
+          if (fieldErrors.isNotEmpty) {
+            return Exception(fieldErrors.join('\n'));
+          }
+        }
+        return Exception(e.response?.statusMessage ?? 'Server error (${e.response?.statusCode})');
+      }
+    }
+    if (e is Exception) {
+      return e;
+    }
+    return Exception('$defaultMessage: $e');
   }
 }

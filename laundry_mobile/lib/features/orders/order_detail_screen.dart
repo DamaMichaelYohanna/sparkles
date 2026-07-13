@@ -85,12 +85,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     if (paymentAmount <= 0) return;
     try {
       final newAmountPaid = _order.amountPaid + paymentAmount;
-      String newStatus = _order.status;
-
-      // Automatically complete status if paid in full
-      if (newAmountPaid >= _order.totalPrice && _order.status == 'Pending') {
-        newStatus = 'Completed';
-      }
+      final newStatus = _order.status;
 
       await DatabaseHelper.instance.updateOrderStatusAndPayment(
         _order.id,

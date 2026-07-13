@@ -509,6 +509,10 @@ class BranchListCreateView(APIView):
             
         current_branches_count = user.branches.count()
         tier = user.office.subscription_tier if user.office else 'free'
+        if not tier or tier.lower() not in ['starter', 'pro', 'premium']:
+            tier = 'free'
+        else:
+            tier = tier.lower()
         
         # Enforce tier-based branch limit
         if tier == 'free' and current_branches_count >= 1:
@@ -659,6 +663,32 @@ class ConfirmPasswordResetView(APIView):
                 "message": "Your password has been reset successfully."
             })
         except User.DoesNotExist:
-            return Response({"error": "Account not found."}, status=404)
+            return Response({"error": "User with this email does not exist."}, status=400)
         except Exception as e:
-            return Response({"error": f"Failed to reset password: {str(e)}"}, status=500)
+            return Response({"error": f"Password reset failed: {str(e)}"}, status=500)
+
+
+class VerifyOTPView(APIView):
+    permission_classes = [] # Public endpoint
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        otp = request.data.get('otp', '').strip()
+        
+        if not email or not otp:
+            return Response({"error": "Email and verification code are required."}, status=400)
+            
+        otp_record = PasswordResetOTP.objects.filter(
+            email=email,
+            otp=otp,
+            is_used=False,
+            expires_at__gt=timezone.now()
+        ).first()
+        
+        if not otp_record:
+            return Response({"error": "Invalid or expired verification code."}, status=400)
+            
+        return Response({
+            "status": "success",
+            "message": "Verification code is valid."
+        })

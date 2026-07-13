@@ -1,0 +1,339 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/theme.dart';
+import 'providers/finance_provider.dart';
+
+class FinanceScreen extends ConsumerWidget {
+  const FinanceScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncStats = ref.watch(financeStatsProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Finance Analysis'),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.download),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Report downloading...')),
+              );
+            },
+          ),
+          const SizedBox(width: 16),
+        ],
+      ),
+      body: asyncStats.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(child: Text('Error loading finance data: $error')),
+        data: (stats) => RefreshIndicator(
+          onRefresh: () async {
+            await ref.refresh(financeStatsProvider.future);
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeaderKpis(stats),
+                const SizedBox(height: 24),
+                _buildRevenueTrendsChart(stats),
+                const SizedBox(height: 24),
+                _buildRevenueByStatus(stats),
+                const SizedBox(height: 24),
+                _buildTopCustomers(stats),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderKpis(FinanceStats stats) {
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppTheme.primaryColor, Color(0xFF4A00E0)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primaryColor.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Total Revenue',
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '₦${stats.totalRevenue.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -1,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildMiniStat('Orders', stats.totalOrders.toString(), LucideIcons.shoppingBag),
+                  _buildMiniStat('AOV', '₦${stats.averageOrderValue.toStringAsFixed(0)}', LucideIcons.trendingUp),
+                ],
+              )
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniStat(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: Colors.white, size: 18),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRevenueTrendsChart(FinanceStats stats) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('7-Day Revenue Trend', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        Container(
+          height: 250,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: LineChart(
+            LineChartData(
+              gridData: FlGridData(show: false),
+              titlesData: FlTitlesData(
+                show: true,
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      const style = TextStyle(color: AppTheme.textSecondary, fontSize: 12);
+                      final now = DateTime.now();
+                      final date = now.subtract(Duration(days: 6 - value.toInt()));
+                      final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                      final text = days[date.weekday - 1];
+                      return Padding(padding: const EdgeInsets.only(top: 8), child: Text(text, style: style));
+                    },
+                    interval: 1,
+                  ),
+                ),
+                leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              ),
+              borderData: FlBorderData(show: false),
+              minX: 0,
+              maxX: 6,
+              minY: 0,
+              maxY: stats.weeklyTrend.isEmpty ? 1000 : (stats.weeklyTrend.reduce((a, b) => a > b ? a : b) * 1.5).clamp(100, double.infinity),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: stats.weeklyTrend.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+                  isCurved: true,
+                  color: AppTheme.primaryColor,
+                  barWidth: 4,
+                  isStrokeCapRound: true,
+                  dotData: FlDotData(show: true),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRevenueByStatus(FinanceStats stats) {
+    final completed = stats.revenueByStatus['Completed'] ?? 0.0;
+    final pending = stats.revenueByStatus['Pending'] ?? 0.0;
+    final overdue = stats.revenueByStatus['Overdue'] ?? 0.0;
+    final total = completed + pending + overdue;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Revenue by Status', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                height: 120,
+                width: 120,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 0,
+                    centerSpaceRadius: 40,
+                    sections: [
+                      PieChartSectionData(
+                        color: AppTheme.primaryColor,
+                        value: completed,
+                        title: '',
+                        radius: 20,
+                      ),
+                      PieChartSectionData(
+                        color: Colors.orange,
+                        value: pending,
+                        title: '',
+                        radius: 20,
+                      ),
+                      PieChartSectionData(
+                        color: Colors.redAccent,
+                        value: overdue,
+                        title: '',
+                        radius: 20,
+                      ),
+                      if (total == 0)
+                         PieChartSectionData(
+                          color: Colors.grey.shade200,
+                          value: 1,
+                          title: '',
+                          radius: 20,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLegendItem('Completed', completed, AppTheme.primaryColor),
+                    const SizedBox(height: 12),
+                    _buildLegendItem('Pending', pending, Colors.orange),
+                    const SizedBox(height: 12),
+                    _buildLegendItem('Overdue', overdue, Colors.redAccent),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegendItem(String label, double amount, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+        ),
+        Text(
+          '₦${amount.toStringAsFixed(0)}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTopCustomers(FinanceStats stats) {
+    if (stats.topCustomers.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Top Customers', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: stats.topCustomers.length,
+            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
+            itemBuilder: (context, index) {
+              final entry = stats.topCustomers.entries.elementAt(index);
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                  child: Text(
+                    '#\${index + 1}',
+                    style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                title: Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold)),
+                trailing: Text(
+                  '₦\${entry.value.toStringAsFixed(2)}',
+                  style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'branch_management_screen.dart';
 import 'office_details_screen.dart';
 import 'services_pricing_screen.dart';
 import 'staff_management_screen.dart';
@@ -26,6 +27,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await prefs.remove('access_token');
     await prefs.remove('refresh_token');
     await prefs.remove('last_sync_timestamp');
+
+    // Reset user-specific cache providers
+    ref.invalidate(userProfileProvider);
+    ref.invalidate(branchesProvider);
+    ref.invalidate(lastSyncTimestampProvider);
+    ref.invalidate(syncStatusProvider);
+
     await DatabaseHelper.instance.clearDatabase();
     if (context.mounted) {
       Navigator.of(context).pushAndRemoveUntil(
@@ -493,6 +501,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const OfficeDetailsScreen()),
+                    );
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(LucideIcons.gitBranch),
+                  title: const Text('Branches / Store Locations'),
+                  subtitle: const Text('Manage store locations and switch workspaces'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const BranchManagementScreen()),
                     );
                   },
                 ),

@@ -24,6 +24,10 @@ class TierLimitPermission(permissions.BasePermission):
             return True
             
         tier = user.office.subscription_tier
+        if not tier or tier.lower() not in ['starter', 'pro', 'premium']:
+            tier = 'free'
+        else:
+            tier = tier.lower()
         
         # 1. Enforce staff user limit on SubUserListCreateView
         if view.__class__.__name__ == 'SubUserListCreateView':

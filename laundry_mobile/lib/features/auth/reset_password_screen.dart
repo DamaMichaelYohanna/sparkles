@@ -16,7 +16,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  int _currentStep = 1; // 1: Enter email, 2: Enter OTP & new password
+  int _currentStep = 1; // 1: Enter email, 2: Enter OTP, 3: Enter new password
   bool _isLoading = false;
   bool _obscurePassword = true;
 
@@ -46,7 +46,47 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '').trim()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _verifyOTP() async {
+    final email = _emailController.text.trim();
+    final otp = _otpController.text.trim();
+
+    if (otp.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid 6-digit verification code.')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final api = ref.read(apiServiceProvider);
+      await api.verifyPasswordResetOTP(email, otp);
+      setState(() {
+        _isLoading = false;
+        _currentStep = 3;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Verification code verified successfully.')),
+        );
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '').trim()),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -57,13 +97,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     final otp = _otpController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
-
-    if (otp.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid 6-digit verification code.')),
-      );
-      return;
-    }
 
     if (password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -102,7 +135,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '').trim()),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -110,6 +146,24 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    IconData stepIcon;
+    String stepTitle;
+    String stepSubtitle;
+
+    if (_currentStep == 1) {
+      stepIcon = Icons.lock_reset_outlined;
+      stepTitle = 'Forgot Password?';
+      stepSubtitle = 'Enter your registered email address and we will send you a 6-digit verification code.';
+    } else if (_currentStep == 2) {
+      stepIcon = Icons.mark_email_read_outlined;
+      stepTitle = 'Verify Email Code';
+      stepSubtitle = 'We have sent a 6-digit OTP code to ${_emailController.text}. Enter the code below to verify.';
+    } else {
+      stepIcon = Icons.lock_open_outlined;
+      stepTitle = 'Create New Password';
+      stepSubtitle = 'Please enter your secure new password below.';
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -131,13 +185,13 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Icon(
-                _currentStep == 1 ? Icons.lock_reset_outlined : Icons.mark_email_read_outlined,
+                stepIcon,
                 size: 80,
                 color: AppTheme.primaryColor,
               ),
               const SizedBox(height: 24),
               Text(
-                _currentStep == 1 ? 'Forgot Password?' : 'Verify Email Code',
+                stepTitle,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 24,
@@ -147,9 +201,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                _currentStep == 1
-                    ? 'Enter your registered email address and we will send you a 6-digit verification code.'
-                    : 'We have sent a 6-digit OTP code to ${_emailController.text}. Enter the code and your new password below.',
+                stepSubtitle,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 14,
@@ -182,7 +234,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Send Verification Code', style: TextStyle(fontSize: 16)),
                 ),
-              ] else ...[
+              ] else if (_currentStep == 2) ...[
                 TextFormField(
                   controller: _otpController,
                   keyboardType: TextInputType.number,
@@ -201,7 +253,38 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _verifyOTP,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Verify Code', style: TextStyle(fontSize: 16)),
+                ),
                 const SizedBox(height: 16),
+                TextButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          setState(() {
+                            _currentStep = 1;
+                            _otpController.clear();
+                          });
+                        },
+                  child: const Text(
+                    "Change Email / Resend Code",
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ] else ...[
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -248,24 +331,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Reset Password', style: TextStyle(fontSize: 16)),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          setState(() {
-                            _currentStep = 1;
-                            _otpController.clear();
-                          });
-                        },
-                  child: const Text(
-                    "Change Email / Resend Code",
-                    style: TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                 ),
               ],
             ],

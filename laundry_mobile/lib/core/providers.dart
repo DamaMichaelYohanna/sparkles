@@ -120,3 +120,8 @@ class SyncStatusNotifier extends Notifier<SyncStatusState> {
 final syncStatusProvider = NotifierProvider<SyncStatusNotifier, SyncStatusState>(() {
   return SyncStatusNotifier();
 });
+
+final branchesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final api = ref.watch(apiServiceProvider);
+  return await api.getBranches();
+});
