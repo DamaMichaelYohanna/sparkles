@@ -112,3 +112,16 @@ PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY', 'sk_test_placeholder
 PAYSTACK_PLAN_STARTER = os.environ.get('PAYSTACK_PLAN_STARTER', 'PLN_starter_placeholder')
 PAYSTACK_PLAN_PRO = os.environ.get('PAYSTACK_PLAN_PRO', 'PLN_pro_placeholder')
 PAYSTACK_PLAN_PREMIUM = os.environ.get('PAYSTACK_PLAN_PREMIUM', 'PLN_premium_placeholder')
+
+# Email & Brevo SMTP Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp-relay.brevo.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.environ.get('BREVO_SMTP_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('BREVO_SMTP_KEY')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Sparkles <hello@sparkles.com>')
+
+# Local Development Fallback
+if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

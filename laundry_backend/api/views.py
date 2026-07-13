@@ -447,6 +447,10 @@ class RegisterOfficeView(APIView):
                 ItemPricing.objects.create(office=office, category=clothing, service_type=dry_clean, name="Suit Jacket", price=2500)
                 ItemPricing.objects.create(office=office, category=household, service_type=wash_iron, name="Bedsheet", price=2500)
                 
+            # Send welcome registration email
+            from .emails import send_welcome_registration
+            send_welcome_registration(email=user.email, office_name=office.name)
+            
             return Response({
                 "status": "success",
                 "message": "Office and admin account registered successfully.",

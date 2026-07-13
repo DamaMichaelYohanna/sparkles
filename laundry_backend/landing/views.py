@@ -70,6 +70,11 @@ class JoinWaitlistView(APIView):
             
         try:
             entry = WaitlistEntry.objects.create(email=email)
+            
+            # Send waitlist welcome email
+            from api.emails import send_waitlist_welcome
+            send_waitlist_welcome(email=entry.email)
+            
             return Response({
                 "status": "success",
                 "message": "Thank you! You have successfully joined the waitlist.",
@@ -90,6 +95,12 @@ def toggle_waitlist_notified(request, pk):
         entry = get_object_or_404(WaitlistEntry, pk=pk)
         entry.is_notified = not entry.is_notified
         entry.save()
+        
+        # Send invitation email if marked as notified
+        if entry.is_notified:
+            from api.emails import send_waitlist_notified
+            send_waitlist_notified(email=entry.email)
+            
     return redirect('waitlist_dashboard')
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
