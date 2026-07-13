@@ -56,4 +56,8 @@ urlpatterns = [
 
     # Registration
     path('register/', views.RegisterOfficeView.as_view(), name='api-register'),
+
+    # Branches
+    path('branches/', views.BranchListCreateView.as_view(), name='branch-list-create'),
+    path('branches/switch/', views.BranchSwitchView.as_view(), name='branch-switch'),
 ]

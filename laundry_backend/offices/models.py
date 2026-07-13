@@ -12,6 +12,11 @@ class User(AbstractUser):
         blank=True
     )
     is_office_admin = models.BooleanField(default=False)
+    branches = models.ManyToManyField(
+        'LaundryOffice',
+        related_name='branch_users',
+        blank=True
+    )
 
 class BaseModel(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

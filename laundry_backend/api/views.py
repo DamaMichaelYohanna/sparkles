@@ -451,6 +451,9 @@ class RegisterOfficeView(APIView):
                 user.set_password(password)
                 user.save()
                 
+                # Link primary branch
+                user.branches.add(office)
+                
                 # 3. Initialize default data (Categories, ServiceTypes, ItemPricing)
                 clothing = Category.objects.create(office=office, name="Clothing")
                 household = Category.objects.create(office=office, name="Household")
@@ -477,3 +480,101 @@ class RegisterOfficeView(APIView):
             }, status=201)
         except Exception as e:
             return Response({"error": f"Registration failed: {str(e)}"}, status=500)
+
+
+class BranchListCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        branches = request.user.branches.all()
+        data = [{
+            "id": str(b.id),
+            "name": b.name,
+            "contact_info": b.contact_info,
+            "subscription_tier": b.subscription_tier,
+            "is_active": request.user.office_id == b.id
+        } for b in branches]
+        return Response(data)
+
+    def post(self, request):
+        name = request.data.get('name')
+        contact_info = request.data.get('contact_info', '')
+        
+        if not name:
+            return Response({"error": "Branch name is required."}, status=400)
+            
+        user = request.user
+        if not user.is_office_admin:
+            return Response({"error": "Only office admins / owners can create new branches."}, status=403)
+            
+        current_branches_count = user.branches.count()
+        tier = user.office.subscription_tier if user.office else 'free'
+        
+        # Enforce tier-based branch limit
+        if tier == 'free' and current_branches_count >= 1:
+            return Response({"error": "Free tier allows a maximum of 1 branch. Please upgrade your subscription."}, status=403)
+        elif tier == 'starter' and current_branches_count >= 1:
+            return Response({"error": "Starter tier allows a maximum of 1 branch. Please upgrade your subscription to Pro or Premium."}, status=403)
+        elif tier == 'pro' and current_branches_count >= 3:
+            return Response({"error": "Pro tier allows a maximum of 3 branches. Please upgrade your subscription to Premium."}, status=403)
+            
+        from django.db import transaction
+        try:
+            with transaction.atomic():
+                branch = LaundryOffice.objects.create(
+                    name=name,
+                    contact_info=contact_info,
+                    subscription_tier=tier
+                )
+                
+                user.branches.add(branch)
+                user.office = branch
+                user.save()
+                
+                # Populate new branch with initial items
+                clothing = Category.objects.create(office=branch, name="Clothing")
+                household = Category.objects.create(office=branch, name="Household")
+                
+                wash_iron = ServiceType.objects.create(office=branch, name="Wash & Iron")
+                dry_clean = ServiceType.objects.create(office=branch, name="Dry Clean")
+                iron_only = ServiceType.objects.create(office=branch, name="Ironing Only")
+                
+                ItemPricing.objects.create(office=branch, category=clothing, service_type=wash_iron, name="Shirt", price=1500)
+                ItemPricing.objects.create(office=branch, category=clothing, service_type=wash_iron, name="Trousers", price=1200)
+                ItemPricing.objects.create(office=branch, category=clothing, service_type=dry_clean, name="Suit Jacket", price=2500)
+                ItemPricing.objects.create(office=branch, category=household, service_type=wash_iron, name="Bedsheet", price=2500)
+                
+            return Response({
+                "status": "success",
+                "message": f"Branch '{branch.name}' registered and set as active workspace successfully.",
+                "id": str(branch.id),
+                "name": branch.name,
+                "subscription_tier": branch.subscription_tier
+            }, status=201)
+        except Exception as e:
+            return Response({"error": f"Failed to register branch: {str(e)}"}, status=500)
+
+
+class BranchSwitchView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        office_id = request.data.get('office_id')
+        if not office_id:
+            return Response({"error": "Office ID is required."}, status=400)
+            
+        user = request.user
+        target_office = user.branches.filter(id=office_id).first()
+        if not target_office:
+            return Response({"error": "You do not have access to this branch office workspace."}, status=403)
+            
+        user.office = target_office
+        user.save()
+        
+        return Response({
+            "status": "success",
+            "message": f"Switched active workspace to branch: {target_office.name}",
+            "office_id": str(target_office.id),
+            "office_name": target_office.name,
+            "subscription_tier": target_office.subscription_tier
+        })
