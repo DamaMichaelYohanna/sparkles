@@ -62,7 +62,7 @@ class JoinWaitlistView(APIView):
         if not email:
             return Response({"error": "Email is required."}, status=400)
             
-        if not re.match(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$', email):
+        if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
             return Response({"error": "Please enter a valid email address."}, status=400)
             
         if WaitlistEntry.objects.filter(email=email).exists():
