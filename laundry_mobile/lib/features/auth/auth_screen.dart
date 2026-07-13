@@ -4,6 +4,7 @@ import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../shell/shell_screen.dart';
 import 'register_screen.dart';
+import 'reset_password_screen.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
@@ -124,6 +125,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     : const Text('Sign In', style: TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 16),
+              TextButton(
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
+                        );
+                      },
+                child: const Text(
+                  "Forgot Password?",
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               TextButton(
                 onPressed: _isLoading
                     ? null

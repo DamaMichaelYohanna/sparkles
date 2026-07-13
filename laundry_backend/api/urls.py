@@ -60,4 +60,8 @@ urlpatterns = [
     # Branches
     path('branches/', views.BranchListCreateView.as_view(), name='branch-list-create'),
     path('branches/switch/', views.BranchSwitchView.as_view(), name='branch-switch'),
+
+    # Password Reset
+    path('password-reset/request/', views.RequestPasswordResetView.as_view(), name='password-reset-request'),
+    path('password-reset/confirm/', views.ConfirmPasswordResetView.as_view(), name='password-reset-confirm'),
 ]

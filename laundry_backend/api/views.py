@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.exceptions import PermissionDenied
-from offices.models import LaundryOffice
+from offices.models import LaundryOffice, PasswordResetOTP
 from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem, ActionLog
 from .permissions import IsOfficeAdmin, TierLimitPermission
 from .serializers import (
@@ -578,3 +578,87 @@ class BranchSwitchView(APIView):
             "office_name": target_office.name,
             "subscription_tier": target_office.subscription_tier
         })
+
+
+import random
+
+class RequestPasswordResetView(APIView):
+    permission_classes = [] # Public endpoint
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        if not email:
+            return Response({"error": "Email is required."}, status=400)
+            
+        user_exists = User.objects.filter(email=email).exists()
+        
+        if user_exists:
+            # 1. Invalidate all older OTPs for this email to prevent multiple usage
+            PasswordResetOTP.objects.filter(email=email, is_used=False).update(is_used=True)
+            
+            # 2. Generate random 6-digit verification code
+            otp = f"{random.randint(100000, 999999)}"
+            
+            # 3. Create active verification OTP code valid for 15 minutes
+            expires_at = timezone.now() + timezone.timedelta(minutes=15)
+            PasswordResetOTP.objects.create(
+                email=email,
+                otp=otp,
+                expires_at=expires_at
+            )
+            
+            # 4. Dispatch the verification email
+            from .emails import send_password_reset_otp
+            send_password_reset_otp(email=email, otp=otp)
+            
+        return Response({
+            "status": "success",
+            "message": "If a matching account exists, a 6-digit verification code has been sent to your email."
+        })
+
+
+class ConfirmPasswordResetView(APIView):
+    permission_classes = [] # Public endpoint
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        otp = request.data.get('otp', '').strip()
+        password = request.data.get('password')
+        
+        if not email or not otp or not password:
+            return Response({"error": "Email, verification code, and new password are required."}, status=400)
+            
+        if len(password) < 6:
+            return Response({"error": "Password must be at least 6 characters long."}, status=400)
+            
+        from django.db import transaction
+        try:
+            with transaction.atomic():
+                # Query matching active OTP code with row locking
+                otp_record = PasswordResetOTP.objects.select_for_update().filter(
+                    email=email,
+                    otp=otp,
+                    is_used=False,
+                    expires_at__gt=timezone.now()
+                ).first()
+                
+                if not otp_record:
+                    return Response({"error": "Invalid or expired verification code."}, status=400)
+                    
+                # Mark as used immediately to avoid double spend/concurrency usage
+                otp_record.is_used = True
+                otp_record.save()
+                
+                # Fetch matching user and reset password
+                user = User.objects.get(email=email)
+                user.set_password(password)
+                user.save()
+                
+            return Response({
+                "status": "success",
+                "message": "Your password has been reset successfully."
+            })
+        except User.DoesNotExist:
+            return Response({"error": "Account not found."}, status=404)
+        except Exception as e:
+            return Response({"error": f"Failed to reset password: {str(e)}"}, status=500)

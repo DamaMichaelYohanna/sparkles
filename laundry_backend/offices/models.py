@@ -43,3 +43,17 @@ class OfficeImage(BaseModel):
     office = models.ForeignKey(LaundryOffice, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='office_images/')
     description = models.CharField(max_length=255, blank=True)
+
+class PasswordResetOTP(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField()
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name_plural = "Password Reset OTPs"
+
+    def __str__(self):
+        return f"{self.email} - {self.otp}"

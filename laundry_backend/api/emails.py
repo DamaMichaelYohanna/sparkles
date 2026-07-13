@@ -196,3 +196,39 @@ def send_welcome_registration(email, office_name):
     </html>
     """
     return _send_html_email(subject, email, html_content, text_content)
+
+def send_password_reset_otp(email, otp):
+    subject = "Sparkles Password Reset Verification Code"
+    text_content = f"Your password reset verification code is: {otp}. It expires in 15 minutes."
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background-color: #fafafa; margin: 0; padding: 0; }}
+            .container {{ max-width: 600px; margin: 40px auto; padding: 30px; border: 1px solid #eef0f2; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }}
+            .header {{ text-align: center; margin-bottom: 30px; border-bottom: 1px solid #eef0f2; padding-bottom: 20px; }}
+            .header h2 {{ margin: 0; color: #1a1a1a; font-weight: 800; letter-spacing: -0.5px; }}
+            .otp-box {{ background-color: #f4f5f7; padding: 15px; border-radius: 8px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; margin: 25px 0; color: #1a1a1a; border: 1px dashed #eef0f2; }}
+            .footer {{ margin-top: 40px; font-size: 12px; color: #6c757d; text-align: center; border-top: 1px solid #eef0f2; padding-top: 20px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>Sparkles Reset Verification</h2>
+            </div>
+            <p>Hello,</p>
+            <p>We received a request to reset your password. Use the following verification code to proceed:</p>
+            <div class="otp-box">{otp}</div>
+            <p>This code will expire in 15 minutes. If you did not make this request, you can safely ignore this email.</p>
+            <p>Best regards,<br><strong>The Sparkles Team</strong></p>
+            <div class="footer">
+                <p>&copy; 2026 Sparkles Inc. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return _send_html_email(subject, email, html_content, text_content)

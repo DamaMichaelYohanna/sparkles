@@ -211,4 +211,36 @@ class ApiService {
       throw Exception('Failed to register: $e');
     }
   }
+
+  Future<Map<String, dynamic>> requestPasswordReset(String email) async {
+    try {
+      final response = await _dio.post('password-reset/request/', data: {
+        'email': email,
+      });
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        final error = e.response?.data?['error'] ?? e.response?.data?.toString();
+        if (error != null) throw Exception(error);
+      }
+      throw Exception('Failed to request password reset: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> confirmPasswordReset(String email, String otp, String password) async {
+    try {
+      final response = await _dio.post('password-reset/confirm/', data: {
+        'email': email,
+        'otp': otp,
+        'password': password,
+      });
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        final error = e.response?.data?['error'] ?? e.response?.data?.toString();
+        if (error != null) throw Exception(error);
+      }
+      throw Exception('Failed to confirm password reset: $e');
+    }
+  }
 }
