@@ -136,7 +136,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (sheetContext) {
         final plans = [
           {
             'id': 'free',
@@ -326,7 +326,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     onPressed: isCurrent
                                         ? null
                                         : () async {
-                                            Navigator.of(context).pop(); // Close sheet
+                                            Navigator.of(sheetContext).pop(); // Close sheet
                                             
                                             // Handle free subscription tier directly or call upgrade initialize
                                             if (isFree) {
@@ -340,7 +340,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                             showDialog(
                                               context: context,
                                               barrierDismissible: false,
-                                              builder: (context) => const Center(child: CircularProgressIndicator()),
+                                              builder: (dialogContext) => const Center(child: CircularProgressIndicator()),
                                             );
 
                                             try {

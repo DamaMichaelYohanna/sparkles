@@ -364,6 +364,7 @@ class InitializeSubscriptionView(APIView):
                 "reference": reference
             })
         else:
+            print(f"Paystack Init Failed: {res}")
             return Response({"error": res.get('message', 'Failed to initialize payment')}, status=400)
 
 class VerifySubscriptionView(APIView):
