@@ -51,6 +51,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _verifyPayment(String reference, StateSetter setDialogState) async {
+    final navigator = Navigator.of(context);
     setDialogState(() => _isCheckingStatus = true);
     setState(() => _isCheckingStatus = true);
     print('[Billing] Verifying transaction reference: $reference');
@@ -70,7 +71,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop(); // Close check status dialog
+        navigator.pop(); // Close check status dialog safely
       }
     } catch (e) {
       print('[Billing] Verification failed/pending: $e');
@@ -342,7 +343,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                               );
                                               return;
                                             }
-
+                                            
+                                            final navigator = Navigator.of(context);
                                             print('[Billing] Initializing payment loader for tier: ${plan['id']}');
                                             bool loaderShowed = true;
                                             showDialog(
@@ -361,7 +363,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                               
                                               if (mounted) {
                                                 if (loaderShowed) {
-                                                  Navigator.of(context).pop(); // Close loading dialog
+                                                  navigator.pop(); // Close loading dialog safely
                                                   loaderShowed = false;
                                                 }
                                                 
@@ -376,7 +378,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                               print('[Billing] Failed to initialize subscription: $e');
                                               if (mounted) {
                                                 if (loaderShowed) {
-                                                  Navigator.of(context).pop(); // Close loading dialog
+                                                  navigator.pop(); // Close loading dialog safely
                                                   loaderShowed = false;
                                                 }
                                                 ScaffoldMessenger.of(context).showSnackBar(
