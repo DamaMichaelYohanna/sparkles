@@ -1127,3 +1127,124 @@ footer {
         padding: 4rem 0;
     }
 }
+
+/* Waitlist Section & Forms */
+.waitlist-section {
+    padding: 6rem 0;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--accent-dark) 100%);
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--grey-800);
+}
+
+.waitlist-container-centered {
+    max-width: 650px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+}
+
+.text-white {
+    color: var(--white) !important;
+}
+
+.text-white-mute {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.waitlist-form-centered {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.waitlist-input-lg {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 1rem 1.5rem;
+    color: var(--white);
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.waitlist-input-lg::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.waitlist-input-lg:focus {
+    outline: none;
+}
+
+.waitlist-btn-lg {
+    background: var(--white);
+    color: var(--primary-dark);
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+    font-size: 1rem;
+}
+
+.waitlist-btn-lg:hover {
+    background: var(--grey-100);
+    transform: scale(1.02);
+}
+
+.waitlist-message-centered {
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: opacity 0.3s ease;
+}
+
+.waitlist-success {
+    color: #4ade80; /* bright marketable green */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.waitlist-error {
+    color: #f87171; /* red alert */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 576px) {
+    .waitlist-form-centered {
+        flex-direction: column;
+        background: transparent;
+        border: none;
+        padding: 0;
+        gap: 0.75rem;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    
+    .waitlist-input-lg {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 30px;
+        padding: 1rem 1.5rem;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .waitlist-btn-lg {
+        width: 100%;
+        border-radius: 30px;
+        padding: 1rem;
+    }
+}

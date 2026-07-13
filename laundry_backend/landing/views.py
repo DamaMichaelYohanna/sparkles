@@ -48,3 +48,32 @@ def settings_view(request):
     # Placeholder for actual settings logic
     context = {}
     return render(request, 'landing/settings.html', context)
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .models import WaitlistEntry
+import re
+
+class JoinWaitlistView(APIView):
+    permission_classes = [] # Public access
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        if not email:
+            return Response({"error": "Email is required."}, status=400)
+            
+        if not re.match(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$', email):
+            return Response({"error": "Please enter a valid email address."}, status=400)
+            
+        if WaitlistEntry.objects.filter(email=email).exists():
+            return Response({"error": "This email is already on the waitlist."}, status=400)
+            
+        try:
+            entry = WaitlistEntry.objects.create(email=email)
+            return Response({
+                "status": "success",
+                "message": "Thank you! You have successfully joined the waitlist.",
+                "email": entry.email
+            }, status=201)
+        except Exception as e:
+            return Response({"error": f"Failed to join waitlist: {str(e)}"}, status=500)

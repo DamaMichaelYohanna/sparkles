@@ -473,6 +473,80 @@
         </div>
     </section>
 
+    <!-- Join Waitlist Section -->
+    <section id="waitlist" class="waitlist-section">
+        <div class="waitlist-container-centered">
+            <h2 class="section-title-centered text-white" style="margin-bottom: 1rem;">Get Early Access to Sparkles</h2>
+            <p class="section-subtitle-centered text-white-mute">
+                We are currently rolling out Sparkles to selected laundry offices. Join the waitlist to secure your early adopter discount and prioritize your office's onboarding.
+            </p>
+            <form id="waitlist-form-bottom" class="waitlist-form-centered">
+                <input type="email" placeholder="Enter your admin email address" required class="waitlist-input-lg">
+                <button type="submit" class="waitlist-btn-lg">Secure Your Spot</button>
+            </form>
+            <div id="waitlist-message-bottom" class="waitlist-message-centered"></div>
+        </div>
+    </section>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('waitlist-form-bottom');
+        const msgDiv = document.getElementById('waitlist-message-bottom');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = form.querySelector('input');
+            const email = input.value.trim();
+            const btn = form.querySelector('button');
+            
+            btn.disabled = true;
+            btn.textContent = 'Joining...';
+            msgDiv.innerHTML = '';
+            
+            fetch('/api/waitlist/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
+            .then(res => {
+                btn.disabled = false;
+                btn.textContent = 'Secure Your Spot';
+                
+                if (res.status === 201) {
+                    msgDiv.innerHTML = `<span class="waitlist-success"><i class="fa-solid fa-circle-check"></i> ${res.body.message}</span>`;
+                    form.reset();
+                } else {
+                    msgDiv.innerHTML = `<span class="waitlist-error"><i class="fa-solid fa-circle-exclamation"></i> ${res.body.error || 'Failed to join waitlist'}</span>`;
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.textContent = 'Secure Your Spot';
+                msgDiv.innerHTML = `<span class="waitlist-error"><i class="fa-solid fa-circle-exclamation"></i> Something went wrong. Please try again.</span>`;
+            });
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+    </script>
+
     <!-- Footer -->
     <footer>
         <div class="footer-container">

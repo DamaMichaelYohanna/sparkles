@@ -7,4 +7,5 @@ urlpatterns = [
     path('dashboard/offices/', views.offices_list, name='offices_list'),
     path('dashboard/users/', views.users_list, name='users_list'),
     path('dashboard/settings/', views.settings_view, name='settings_view'),
+    path('api/waitlist/', views.JoinWaitlistView.as_view(), name='api-waitlist'),
 ]
