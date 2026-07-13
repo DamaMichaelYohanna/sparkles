@@ -113,15 +113,6 @@ PAYSTACK_PLAN_STARTER = os.environ.get('PAYSTACK_PLAN_STARTER', 'PLN_starter_pla
 PAYSTACK_PLAN_PRO = os.environ.get('PAYSTACK_PLAN_PRO', 'PLN_pro_placeholder')
 PAYSTACK_PLAN_PREMIUM = os.environ.get('PAYSTACK_PLAN_PREMIUM', 'PLN_premium_placeholder')
 
-# Email & Resend SMTP Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.resend.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.environ.get('RESEND_SMTP_USER', 'resend')  # Resend SMTP user is always literally 'resend'
-EMAIL_HOST_PASSWORD = os.environ.get('RESEND_API_KEY')
+# Resend API Configuration
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Sparkles <onboarding@resend.dev>')
-
-# Local Development Fallback
-if not EMAIL_HOST_PASSWORD:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
