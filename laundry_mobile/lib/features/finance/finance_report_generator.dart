@@ -4,7 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import '../providers/finance_provider.dart';
+import 'providers/finance_provider.dart';
 
 /// Generates a branded PDF financial report and opens the OS share sheet.
 class FinanceReportGenerator {
@@ -76,7 +76,7 @@ class FinanceReportGenerator {
             decoration: pw.BoxDecoration(
               color: surface,
               borderRadius: pw.BorderRadius.circular(8),
-              border: pw.Border.all(color: accent.flatten().first, width: 2),
+              border: pw.Border.all(color: accent, width: 2),
             ),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -179,7 +179,7 @@ class FinanceReportGenerator {
                         style: pw.TextStyle(
                             font: fontMedium,
                             fontSize: 13,
-                            color: white.flatten().first)),
+                            color: white)),
                   ],
                 ),
                 pw.Column(
@@ -189,12 +189,12 @@ class FinanceReportGenerator {
                         style: pw.TextStyle(
                             font: fontRegular,
                             fontSize: 9,
-                            color: white.flatten().first)),
+                            color: white)),
                     pw.Text(reportDate,
                         style: pw.TextStyle(
                             font: fontBold,
                             fontSize: 12,
-                            color: white.flatten().first)),
+                            color: white)),
                   ],
                 ),
               ],

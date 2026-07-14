@@ -4,9 +4,14 @@ import 'package:laundry_mobile/core/models/order_model.dart';
 import 'package:laundry_mobile/core/providers.dart';
 import 'package:laundry_mobile/core/local_db/database_helper.dart';
 
+/// Performs a full sync first, then reads the DB.
+/// This keeps the FutureProvider in the [loading] state (skeleton UI)
+/// until we have fresh data — never shows stale/wrong numbers.
 final dashboardStatsProvider = FutureProvider.autoDispose<DashboardStats>((ref) async {
-  ref.watch(lastSyncTimestampProvider);
-  ref.watch(syncRepositoryProvider).triggerSync();
+  final syncRepo = ref.watch(syncRepositoryProvider);
+
+  // Await the sync so we only read the DB once fresh data has landed.
+  await syncRepo.awaitSync();
 
   final db = await DatabaseHelper.instance.database;
   final results = await db.query('orders', where: 'is_deleted = ?', whereArgs: [0]);

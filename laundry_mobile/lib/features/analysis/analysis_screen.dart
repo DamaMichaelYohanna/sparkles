@@ -7,20 +7,209 @@ import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../core/widgets/sync_badge.dart';
 import 'providers/analysis_provider.dart';
+import '../finance/providers/finance_provider.dart';
+import '../finance/finance_report_generator.dart';
+
+/// Reads subscription_tier from SharedPreferences (cached at login/profile fetch).
+final _tierProvider = FutureProvider<String>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  final cached = prefs.getString('subscription_tier');
+  if (cached != null && cached.isNotEmpty) return cached.toLowerCase();
+
+  final profileAsync = ref.read(userProfileProvider);
+  return profileAsync.maybeWhen(
+    data: (p) => (p['subscription_tier'] as String? ?? 'free').toLowerCase(),
+    orElse: () => 'free',
+  );
+});
 
 class AnalysisScreen extends ConsumerWidget {
   const AnalysisScreen({Key? key}) : super(key: key);
 
+  bool _canExport(String tier) =>
+      tier == 'pro' || tier == 'premium';
+
+  void _showUpgradeSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.fileBarChart,
+                color: AppTheme.primaryColor,
+                size: 36,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Financial Report Export',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Export a full branded PDF report with revenue\nbreakdown, trends, and top customers.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.textSecondary, height: 1.5),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF7C3AED), Color(0xFF4A00E0)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Column(
+                children: [
+                  Text('🔒 Pro & Premium Feature',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14)),
+                  SizedBox(height: 4),
+                  Text('Upgrade your plan to unlock PDF exports,\nadvanced analytics, and more.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: Colors.white70, fontSize: 12, height: 1.4)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Upgrade Plan',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _triggerExport(
+      BuildContext context, WidgetRef ref, FinanceStats stats) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 18, height: 18,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white),
+            ),
+            SizedBox(width: 12),
+            Text('Generating report…'),
+          ],
+        ),
+        duration: Duration(seconds: 10),
+      ),
+    );
+    try {
+      await FinanceReportGenerator.generateAndShare(stats, stats.officeName);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate report: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsyncValue = ref.watch(analysisStatsProvider);
+    final financeStatsAsync = ref.watch(financeStatsProvider);
+    final tierAsync = ref.watch(_tierProvider);
+    final tier = tierAsync.maybeWhen(
+      data: (t) => t,
+      orElse: () {
+        final profileAsync = ref.watch(userProfileProvider);
+        return profileAsync.maybeWhen(
+          data: (p) => (p['subscription_tier'] as String? ?? 'free').toLowerCase(),
+          orElse: () => 'free',
+        );
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Business Analysis'),
-        actions: const [
-          SyncBadge(),
-          SizedBox(width: 8),
+        actions: [
+          const SyncBadge(),
+          financeStatsAsync.maybeWhen(
+            data: (stats) => IconButton(
+              tooltip: _canExport(tier)
+                  ? 'Export PDF Report'
+                  : 'Pro & Premium only',
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(LucideIcons.download),
+                  if (!_canExport(tier))
+                    Positioned(
+                      right: -4, top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.lock,
+                            size: 9, color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
+              onPressed: () => _canExport(tier)
+                  ? _triggerExport(context, ref, stats)
+                  : _showUpgradeSheet(context),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: RefreshIndicator(

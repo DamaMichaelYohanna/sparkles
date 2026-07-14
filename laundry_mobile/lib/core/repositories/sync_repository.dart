@@ -19,11 +19,27 @@ class SyncRepository {
 
   bool _isSyncing = false;
   DateTime? _lastSyncTime;
+  Future<void>? _activeSyncFuture;
 
   SyncRepository(this._ref);
 
+  /// Fire-and-forget sync (used by non-dashboard screens).
   void triggerSync() {
-    _performDeltaSync();
+    _activeSyncFuture ??= _performDeltaSync().whenComplete(() {
+      _activeSyncFuture = null;
+    });
+  }
+
+  /// Awaitable sync — blocks until fresh data is written to the DB.
+  /// If a sync is already running it reuses that same future (no double request).
+  /// If the cooldown means we skip the network call it returns immediately so
+  /// the dashboard can at least show locally-stored data.
+  Future<void> awaitSync() {
+    if (_activeSyncFuture != null) return _activeSyncFuture!;
+    _activeSyncFuture = _performDeltaSync().whenComplete(() {
+      _activeSyncFuture = null;
+    });
+    return _activeSyncFuture!;
   }
 
   Future<List<OrderModel>> getOrders() async {
