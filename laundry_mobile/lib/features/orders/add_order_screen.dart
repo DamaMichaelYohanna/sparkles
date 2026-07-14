@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme.dart';
+import '../../core/local_db/database_helper.dart';
 import 'providers/add_order_provider.dart';
 import '../settings/providers/pricing_provider.dart';
 import '../../core/models/category_model.dart';
@@ -25,6 +26,32 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  void _showCustomerSelectionSheet(BuildContext context) async {
+    final customers = await DatabaseHelper.instance.getUniqueCustomers();
+    if (!context.mounted) return;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return _CustomerSelectionSheet(
+          customers: customers,
+          onSelected: (customer) {
+            _nameController.text = customer['name']!;
+            _phoneController.text = customer['phone']!;
+            ref.read(addOrderProvider.notifier).updateCustomerInfo(
+              name: customer['name']!,
+              phone: customer['phone']!,
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showItemSelectionSheet(BuildContext context) {
@@ -60,7 +87,20 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Customer Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Customer Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                TextButton.icon(
+                  onPressed: () => _showCustomerSelectionSheet(context),
+                  icon: const Icon(LucideIcons.users, size: 16),
+                  label: const Text('Returning Customer'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.primaryColor,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: _nameController,
@@ -419,6 +459,140 @@ class _ItemSelectionSheetState extends ConsumerState<_ItemSelectionSheet> {
             child: const Text('Add to Order', style: TextStyle(fontSize: 16)),
           ),
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+}
+
+class _CustomerSelectionSheet extends StatefulWidget {
+  final List<Map<String, String>> customers;
+  final ValueChanged<Map<String, String>> onSelected;
+
+  const _CustomerSelectionSheet({
+    required this.customers,
+    required this.onSelected,
+  });
+
+  @override
+  State<_CustomerSelectionSheet> createState() => _CustomerSelectionSheetState();
+}
+
+class _CustomerSelectionSheetState extends State<_CustomerSelectionSheet> {
+  String _searchQuery = '';
+  late List<Map<String, String>> _filteredCustomers;
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredCustomers = widget.customers;
+  }
+
+  void _filterCustomers(String query) {
+    setState(() {
+      _searchQuery = query;
+      if (query.isEmpty) {
+        _filteredCustomers = widget.customers;
+      } else {
+        _filteredCustomers = widget.customers.where((c) {
+          final name = c['name']!.toLowerCase();
+          final phone = c['phone']!.toLowerCase();
+          final q = query.toLowerCase();
+          return name.contains(q) || phone.contains(q);
+        }).toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Container(
+      padding: EdgeInsets.only(
+        top: 16,
+        left: 16,
+        right: 16,
+        bottom: MediaQuery.of(context).padding.bottom + bottomInset + 16,
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Select Returning Customer',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            decoration: InputDecoration(
+              hintText: 'Search by name or phone...',
+              prefixIcon: const Icon(LucideIcons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            onChanged: _filterCustomers,
+          ),
+          const SizedBox(height: 16),
+          if (_filteredCustomers.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(LucideIcons.users, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 12),
+                    Text(
+                      _searchQuery.isEmpty ? 'No previous customers found' : 'No matching customers found',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.separated(
+                itemCount: _filteredCustomers.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final customer = _filteredCustomers[index];
+                  final name = customer['name']!;
+                  final phone = customer['phone']!;
+                  final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                    leading: CircleAvatar(
+                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                      foregroundColor: AppTheme.primaryColor,
+                      child: Text(initial, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(phone.isNotEmpty ? phone : 'No phone number'),
+                    onTap: () {
+                      widget.onSelected(customer);
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );

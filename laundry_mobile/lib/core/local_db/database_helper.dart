@@ -246,6 +246,20 @@ CREATE TABLE item_pricing (
     await batch.commit(noResult: true);
   }
 
+  Future<List<Map<String, String>>> getUniqueCustomers() async {
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT DISTINCT customer_name, customer_phone 
+      FROM orders 
+      WHERE customer_name IS NOT NULL AND customer_name != '' AND is_deleted = 0
+      ORDER BY customer_name COLLATE NOCASE ASC
+    ''');
+    return result.map((row) => {
+      'name': (row['customer_name'] ?? '') as String,
+      'phone': (row['customer_phone'] ?? '') as String,
+    }).toList();
+  }
+
   Future<void> clearDatabase() async {
     final db = await database;
     await db.transaction((txn) async {
