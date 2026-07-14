@@ -2,10 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import 'finance_report_generator.dart';
 import 'providers/finance_provider.dart';
+
+/// Reads subscription_tier from SharedPreferences (cached at login/profile fetch).
+/// Falls back to checking the live userProfileProvider so it always has a value.
+final _tierProvider = FutureProvider<String>((ref) async {
+  // Try cached value first (instant, no network)
+  final prefs = await SharedPreferences.getInstance();
+  final cached = prefs.getString('subscription_tier');
+  if (cached != null && cached.isNotEmpty) return cached.toLowerCase();
+
+  // Fallback: read from live profile
+  final profileAsync = ref.read(userProfileProvider);
+  return profileAsync.maybeWhen(
+    data: (p) => (p['subscription_tier'] as String? ?? 'free').toLowerCase(),
+    orElse: () => 'free',
+  );
+});
 
 class FinanceScreen extends ConsumerWidget {
   const FinanceScreen({Key? key}) : super(key: key);
@@ -152,16 +169,25 @@ advanced analytics, and more.',
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncStats = ref.watch(financeStatsProvider);
-    final profileAsync = ref.watch(userProfileProvider);
-    final tier = profileAsync.maybeWhen(
-      data: (p) => (p['subscription_tier'] as String? ?? 'free').toLowerCase(),
-      orElse: () => 'free',
+    // Read tier from cache (instant) — no loading flicker
+    final tierAsync = ref.watch(_tierProvider);
+    final tier = tierAsync.maybeWhen(
+      data: (t) => t,
+      orElse: () {
+        // While loading, also try live profile as synchronous fallback
+        final profileAsync = ref.watch(userProfileProvider);
+        return profileAsync.maybeWhen(
+          data: (p) => (p['subscription_tier'] as String? ?? 'free').toLowerCase(),
+          orElse: () => 'free',
+        );
+      },
     );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Finance Analysis'),
         actions: [
+          // Always show the button once stats are loaded; lock badge gates non-Pro
           asyncStats.maybeWhen(
             data: (stats) => IconButton(
               tooltip: _canExport(tier)

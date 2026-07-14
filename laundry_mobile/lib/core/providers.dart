@@ -42,7 +42,7 @@ final pendingSyncCountProvider = StreamProvider.autoDispose<int>((ref) async* {
   }
 });
 
-final userProfileProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final userProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final api = ref.watch(apiServiceProvider);
   final profile = await api.getCurrentUserProfile();
   
@@ -53,6 +53,9 @@ final userProfileProvider = FutureProvider.autoDispose<Map<String, dynamic>>((re
   if (profile['office_contact_info'] != null) {
     await prefs.setString('office_contact', profile['office_contact_info']);
   }
+  // Cache tier so Finance screen can read it synchronously (no flicker)
+  final tier = profile['subscription_tier']?.toString() ?? 'free';
+  await prefs.setString('subscription_tier', tier);
   
   return profile;
 });
