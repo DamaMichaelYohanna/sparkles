@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers.dart';
 import '../../../core/models/order_model.dart';
 
@@ -9,6 +10,7 @@ class FinanceStats {
   final Map<String, double> revenueByStatus;
   final List<double> weeklyTrend; // Last 7 days
   final Map<String, double> topCustomers;
+  final String officeName;
 
   FinanceStats({
     required this.totalRevenue,
@@ -17,10 +19,11 @@ class FinanceStats {
     required this.revenueByStatus,
     required this.weeklyTrend,
     required this.topCustomers,
+    this.officeName = 'My Laundry Co.',
   });
 }
 
-final financeStatsProvider = FutureProvider.autoDispose<FinanceStats>((ref) async {
+final financeStatsProvider = FutureProvider<FinanceStats>((ref) async {
   final syncRepo = ref.watch(syncRepositoryProvider);
   final orders = await syncRepo.getOrders();
 
@@ -64,6 +67,9 @@ final financeStatsProvider = FutureProvider.autoDispose<FinanceStats>((ref) asyn
     
   final top5Customers = Map.fromEntries(topCustomersEntries.take(5));
 
+  final prefs = await SharedPreferences.getInstance();
+  final officeName = prefs.getString('office_name') ?? 'My Laundry Co.';
+
   return FinanceStats(
     totalRevenue: totalRev,
     averageOrderValue: orders.isEmpty ? 0 : totalRev / orders.length,
@@ -71,5 +77,6 @@ final financeStatsProvider = FutureProvider.autoDispose<FinanceStats>((ref) asyn
     revenueByStatus: revByStatus,
     weeklyTrend: weekly,
     topCustomers: top5Customers,
+    officeName: officeName,
   );
 });
