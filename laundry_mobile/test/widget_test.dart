@@ -1,19 +1,28 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Smoke test — verifies the app compiles and renders without errors.
+// We test AuthScreen directly to avoid the async session-check timers in
+// SplashRouterScreen which are incompatible with the synchronous test pump.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:laundry_mobile/main.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:laundry_mobile/core/theme.dart';
+import 'package:laundry_mobile/features/auth/auth_screen.dart';
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: LaundryApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          title: 'Sparkles',
+          theme: AppTheme.lightTheme,
+          home: const AuthScreen(),
+          debugShowCheckedModeBanner: false,
+        ),
+      ),
+    );
+    // Verify login screen renders its key elements
+    expect(find.text('Sparkles'), findsOneWidget);
+    expect(find.text('Sign in to your office'), findsOneWidget);
+    expect(find.text('Sign In'), findsOneWidget);
   });
 }

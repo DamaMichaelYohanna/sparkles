@@ -29,10 +29,42 @@ class ApiService {
         }
         return handler.next(options);
       },
-      onError: (DioException e, handler) {
+      onError: (DioException e, handler) async {
+        // Silent refresh: if 401 and we have a refresh token, retry once
+        if (e.response?.statusCode == 401) {
+          final prefs = await SharedPreferences.getInstance();
+          final refreshToken = prefs.getString('refresh_token');
+          if (refreshToken != null) {
+            try {
+              final refreshDio = Dio(BaseOptions(
+                baseUrl: _baseUrl,
+                connectTimeout: const Duration(seconds: 30),
+                receiveTimeout: const Duration(seconds: 30),
+                headers: {'Content-Type': 'application/json'},
+              ));
+              final resp = await refreshDio.post(
+                'token/refresh/',
+                data: {'refresh': refreshToken},
+              );
+              final newAccess = resp.data['access'] as String;
+              // ROTATE_REFRESH_TOKENS=True means we may get a new refresh too
+              final newRefresh = resp.data['refresh'] as String?;
+              await prefs.setString('access_token', newAccess);
+              if (newRefresh != null) {
+                await prefs.setString('refresh_token', newRefresh);
+              }
+              // Retry the original request with the new token
+              final retryOptions = e.requestOptions;
+              retryOptions.headers['Authorization'] = 'Bearer $newAccess';
+              final retryResponse = await _dio.fetch(retryOptions);
+              return handler.resolve(retryResponse);
+            } catch (_) {
+              // Refresh failed — fall through to original error (app will handle logout)
+            }
+          }
+        }
         print('API Error: ${e.response?.statusCode} - ${e.message}');
         if (e.response?.statusCode == 403) {
-          // Handle TierLimitPermission or general 403s
           final message = e.response?.data?['detail'] ?? "Subscription limit reached or access denied.";
           return handler.next(DioException(
             requestOptions: e.requestOptions,
@@ -44,6 +76,26 @@ class ApiService {
         return handler.next(e);
       },
     ));
+  }
+
+  /// Attempt a silent token refresh using the stored refresh token.
+  /// Returns true if successful, false if the user needs to log in again.
+  Future<bool> silentRefresh() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString('refresh_token');
+    if (refreshToken == null) return false;
+    try {
+      final response = await _dio.post('token/refresh/', data: {'refresh': refreshToken});
+      final newAccess = response.data['access'] as String;
+      final newRefresh = response.data['refresh'] as String?;
+      await prefs.setString('access_token', newAccess);
+      if (newRefresh != null) {
+        await prefs.setString('refresh_token', newRefresh);
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<String?> login(String username, String password) async {

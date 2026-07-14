@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme.dart';
-import 'features/auth/auth_screen.dart';
+import 'features/auth/splash_router_screen.dart';
 
 void main() {
   runApp(const ProviderScope(child: LaundryApp()));
@@ -15,7 +15,7 @@ class LaundryApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sparkles',
       theme: AppTheme.lightTheme,
-      home: const AuthScreen(),
+      home: const SplashRouterScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
