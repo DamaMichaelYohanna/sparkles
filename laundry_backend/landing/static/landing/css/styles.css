@@ -132,14 +132,16 @@ body {
 
 /* Hero Section (Redesigned with playstore option and screenshots) */
 .hero {
-    min-height: 100vh;
+    height: 100vh;
+    min-height: 600px;
     display: flex;
     align-items: center;
-    padding: 8rem 0 5rem 0;
+    padding: 5.5rem 0 2rem 0;
     background: radial-gradient(circle at 80% 20%, rgba(92, 99, 106, 0.05) 0%, transparent 50%),
                 linear-gradient(180deg, var(--grey-100) 0%, var(--white) 100%);
     position: relative;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .hero-container {
@@ -150,6 +152,7 @@ body {
     grid-template-columns: 1.1fr 0.9fr;
     gap: 4rem;
     align-items: center;
+    height: 100%;
 }
 
 .hero-text-content {
@@ -188,11 +191,11 @@ body {
 }
 
 .hero-title {
-    font-size: 3.5rem;
+    font-size: clamp(2.5rem, 5vh, 3.5rem);
     font-weight: 800;
     line-height: 1.15;
     color: var(--accent-dark);
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     letter-spacing: -2px;
 }
 
@@ -202,10 +205,10 @@ body {
 }
 
 .hero-subtitle {
-    font-size: 1.15rem;
+    font-size: clamp(1rem, 2vh, 1.15rem);
     color: var(--grey-500);
-    margin-bottom: 2.5rem;
-    line-height: 1.65;
+    margin-bottom: 1.75rem;
+    line-height: 1.6;
     max-width: 550px;
 }
 
@@ -213,7 +216,7 @@ body {
 .badge-group {
     display: flex;
     gap: 1rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.75rem;
     flex-wrap: wrap;
 }
 
@@ -290,8 +293,8 @@ body {
 }
 
 .phone-mockup {
-    width: 320px;
-    height: 640px;
+    height: min(580px, 60vh);
+    width: calc(min(580px, 60vh) * 0.5);
     background: #000;
     border-radius: 44px;
     padding: 12px;
@@ -1118,6 +1121,8 @@ footer {
         border-radius: 21px;
     }
     .hero {
+        height: auto;
+        min-height: 100vh;
         padding: 6rem 0 3rem 0;
     }
     .hero-title {
