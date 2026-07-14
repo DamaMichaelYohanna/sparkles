@@ -7,6 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../settings/profile_screen.dart';
 import 'widgets/kpi_card.dart';
 import '../../core/widgets/sync_badge.dart';
 
@@ -23,10 +24,15 @@ class DashboardScreen extends ConsumerWidget {
         actions: [
           const SyncBadge(),
           IconButton(
-            icon: const Icon(LucideIcons.bell),
-            onPressed: () {},
+            icon: const Icon(LucideIcons.user),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
         ],
       ),
       body: statsAsync.when(
