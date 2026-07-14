@@ -7,19 +7,19 @@ import '../../../core/models/item_pricing_model.dart';
 
 final dbHelperProvider = Provider((ref) => DatabaseHelper.instance);
 
-final categoriesProvider = FutureProvider.autoDispose<List<CategoryModel>>((ref) async {
+final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
   final db = await ref.watch(dbHelperProvider).database;
   final results = await db.query('categories', where: 'is_deleted = ?', whereArgs: [0]);
   return results.map((e) => CategoryModel.fromDb(e)).toList();
 });
 
-final serviceTypesProvider = FutureProvider.autoDispose<List<ServiceTypeModel>>((ref) async {
+final serviceTypesProvider = FutureProvider<List<ServiceTypeModel>>((ref) async {
   final db = await ref.watch(dbHelperProvider).database;
   final results = await db.query('service_types', where: 'is_deleted = ?', whereArgs: [0]);
   return results.map((e) => ServiceTypeModel.fromDb(e)).toList();
 });
 
-final itemPricingProvider = FutureProvider.autoDispose<List<ItemPricingModel>>((ref) async {
+final itemPricingProvider = FutureProvider<List<ItemPricingModel>>((ref) async {
   final db = await ref.watch(dbHelperProvider).database;
   final results = await db.query('item_pricing', where: 'is_deleted = ?', whereArgs: [0]);
   return results.map((e) => ItemPricingModel.fromDb(e)).toList();
@@ -155,6 +155,6 @@ class ConfigurationController {
   }
 }
 
-final configurationControllerProvider = Provider.autoDispose<ConfigurationController>((ref) {
+final configurationControllerProvider = Provider<ConfigurationController>((ref) {
   return ConfigurationController(ref, ref.watch(dbHelperProvider));
 });
