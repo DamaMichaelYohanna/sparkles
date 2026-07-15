@@ -9,7 +9,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-test-key')
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    '.vercel.app',
+    'sparkles.com.ng',
+    'www.sparkles.com.ng',
+    'localhost',
+    '127.0.0.1',
+]
+
+# Required for POST requests from the custom domain (CSRF protection)
+CSRF_TRUSTED_ORIGINS = [
+    'https://sparkles.com.ng',
+    'https://www.sparkles.com.ng',
+    'https://*.vercel.app',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',

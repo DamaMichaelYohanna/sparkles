@@ -126,7 +126,7 @@ def send_waitlist_notified(email):
             <p>You can now register your laundry office and start managing branches, staff, and pricing immediately.</p>
             <p>To get started, simply download our companion mobile application and register your office directly inside the app, or visit our portal below:</p>
             <div class="btn-wrapper">
-                <a href="https://sparkles-green.vercel.app/" class="btn">Access Portal</a>
+                <a href="https://www.sparkles.com.ng/" class="btn">Access Portal</a>
             </div>
             <p>If you have any questions or need assistance setting up your workspace, reply directly to this email. Our onboarding team is happy to help!</p>
             <p>Best regards,<br><strong>The Sparkles Team</strong></p>
