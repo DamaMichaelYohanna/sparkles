@@ -227,7 +227,7 @@ def _send_html_email(subject, to_email, html_content, text_content):
     """Send HTML email via Resend SDK; falls back to logger in local dev."""
     try:
         api_key   = getattr(settings, 'RESEND_API_KEY', None)
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Sparkles <onboarding@resend.dev>')
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Sparkles <support@sparkles.com.ng>')
 
         if not api_key:
             logger.info(

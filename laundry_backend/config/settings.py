@@ -139,7 +139,7 @@ PAYSTACK_PLAN_PREMIUM = os.environ.get('PAYSTACK_PLAN_PREMIUM', 'PLN_premium_pla
 
 # Resend API Configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Sparkles <onboarding@resend.dev>')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Sparkles <support@sparkles.com.ng>')
 
 # Meta WhatsApp Cloud API Configuration
 WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')

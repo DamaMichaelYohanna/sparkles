@@ -82,4 +82,5 @@ This ensures that `WhiteNoise` can properly collect and serve the Django static 
 ## External API Keys
 To fully utilize the integrations, add the following environment variables to your backend:
 - `PAYSTACK_SECRET_KEY`: For SaaS billing and webhook verification.
+- `DEFAULT_FROM_EMAIL`: Must use an email address on your verified Resend domain, for example `Sparkles <support@sparkles.com.ng>`.
 - `WHATSAPP_API_URL` / `WHATSAPP_API_KEY`: For triggering customer notifications.
