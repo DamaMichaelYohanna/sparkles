@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib import messages
 from django.db.models import Sum, Count
 from offices.models import LaundryOffice, User
 from operations.models import Order
@@ -41,8 +42,41 @@ def dashboard(request):
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def offices_list(request):
     offices = LaundryOffice.objects.all().order_by('-created_at')
-    context = {'offices': offices}
+    context = {
+        'offices': offices,
+    }
     return render(request, 'landing/offices.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def subscriptions_view(request):
+    if request.method == 'POST':
+        office_id = request.POST.get('office_id')
+        subscription_tier = request.POST.get('subscription_tier')
+
+        if office_id and subscription_tier:
+            office = get_object_or_404(LaundryOffice, pk=office_id)
+            valid_tiers = {choice for choice, _ in LaundryOffice.SUBSCRIPTION_TIERS}
+
+            if subscription_tier in valid_tiers:
+                office.subscription_tier = subscription_tier
+                office.save(update_fields=['subscription_tier', 'updated_at'])
+                messages.success(request, f"Updated {office.name} to {office.get_subscription_tier_display()} subscription.")
+            else:
+                messages.error(request, 'Invalid subscription tier selected.')
+
+    offices = LaundryOffice.objects.all().order_by('-created_at')
+    tier_counts = {
+        tier: offices.filter(subscription_tier=tier).count()
+        for tier, _ in LaundryOffice.SUBSCRIPTION_TIERS
+    }
+    context = {
+        'offices': offices,
+        'subscription_tiers': LaundryOffice.SUBSCRIPTION_TIERS,
+        'tier_counts': tier_counts,
+        'total_subscriptions': offices.count(),
+    }
+    return render(request, 'landing/subscriptions.html', context)
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def users_list(request):

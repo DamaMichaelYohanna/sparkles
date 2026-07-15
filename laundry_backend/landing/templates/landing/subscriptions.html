@@ -1,0 +1,87 @@
+{% extends 'landing/dashboard_base.html' %}
+
+{% block title %}Sparkles Global Dashboard - Subscriptions{% endblock %}
+{% block header_title %}Subscription Management{% endblock %}
+
+{% block content %}
+<section class="kpi-grid">
+    <div class="kpi-card">
+        <h3>Total Offices</h3>
+        <div class="value">{{ total_subscriptions }}</div>
+    </div>
+    <div class="kpi-card">
+        <h3>Free</h3>
+        <div class="value">{{ tier_counts.free }}</div>
+    </div>
+    <div class="kpi-card">
+        <h3>Starter</h3>
+        <div class="value">{{ tier_counts.starter }}</div>
+    </div>
+    <div class="kpi-card">
+        <h3>Pro / Premium</h3>
+        <div class="value">{{ tier_counts.pro|add:tier_counts.premium }}</div>
+    </div>
+</section>
+
+<section class="charts-section" style="grid-template-columns: 1fr;">
+    <div class="recent-orders-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <div>
+                <h3 style="margin-bottom: 0.35rem;">Subscription Desk</h3>
+                <p style="margin: 0; color: var(--grey-500); font-size: 0.9rem;">Update each office plan from one place.</p>
+            </div>
+            <a href="{% url 'offices_list' %}" class="btn-api" style="padding: 0.5rem 1rem; border: none; font-size: 0.85rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;">View Offices</a>
+        </div>
+
+        {% if messages %}
+        <div style="display: grid; gap: 0.75rem; margin-bottom: 1.25rem;">
+            {% for message in messages %}
+                <div style="padding: 0.9rem 1rem; border-radius: 12px; font-size: 0.92rem; font-weight: 600; {% if message.tags == 'success' %}background: rgba(25, 135, 84, 0.08); color: #198754; border: 1px solid rgba(25, 135, 84, 0.18);{% else %}background: rgba(220, 53, 69, 0.08); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.18);{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>Office</th>
+                    <th>Current Plan</th>
+                    <th>Change Plan</th>
+                    <th>Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for office in offices %}
+                <tr>
+                    <td style="font-weight: 600;">{{ office.name }}</td>
+                    <td>
+                        <span style="background: var(--grey-200); padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">
+                            {{ office.get_subscription_tier_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <form method="post" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            {% csrf_token %}
+                            <input type="hidden" name="office_id" value="{{ office.id }}">
+                            <select name="subscription_tier" style="padding: 0.55rem 0.75rem; border: 1px solid var(--grey-200); border-radius: 10px; background: var(--white); font-family: var(--font-main); color: var(--grey-800);">
+                                {% for tier_value, tier_label in subscription_tiers %}
+                                    <option value="{{ tier_value }}" {% if office.subscription_tier == tier_value %}selected{% endif %}>{{ tier_label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn-api" style="padding: 0.55rem 0.9rem; border: none; font-size: 0.82rem; cursor: pointer;">Save</button>
+                        </form>
+                    </td>
+                    <td>{{ office.updated_at|date:"M d, Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No offices available for subscription management.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

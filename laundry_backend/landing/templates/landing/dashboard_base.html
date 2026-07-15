@@ -20,6 +20,7 @@
             <nav class="sidebar-nav">
                 <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">📊 Overview</a>
                 <a href="{% url 'offices_list' %}" class="{% if request.resolver_match.url_name == 'offices_list' %}active{% endif %}">🏢 Offices</a>
+                <a href="{% url 'subscriptions_view' %}" class="{% if request.resolver_match.url_name == 'subscriptions_view' %}active{% endif %}">💳 Subscriptions</a>
                 <a href="{% url 'users_list' %}" class="{% if request.resolver_match.url_name == 'users_list' %}active{% endif %}">👥 Users</a>
                 <a href="{% url 'waitlist_dashboard' %}" class="{% if request.resolver_match.url_name == 'waitlist_dashboard' %}active{% endif %}">📝 Waitlist</a>
                 <a href="{% url 'settings_view' %}" class="{% if request.resolver_match.url_name == 'settings_view' %}active{% endif %}">⚙️ Settings</a>

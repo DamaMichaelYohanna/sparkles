@@ -6,9 +6,12 @@
 {% block content %}
 <section class="charts-section" style="grid-template-columns: 1fr;">
     <div class="recent-orders-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3>Office Directory</h3>
-            <button class="btn-api" style="padding: 0.5rem 1rem; border: none; font-size: 0.85rem; cursor: pointer;">+ Add Office</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <div>
+                <h3 style="margin-bottom: 0.35rem;">Office Directory</h3>
+                <p style="margin: 0; color: var(--grey-500); font-size: 0.9rem;">View all registered offices here. Subscription controls live in the dedicated section.</p>
+            </div>
+            <a href="{% url 'subscriptions_view' %}" class="btn-api" style="padding: 0.5rem 1rem; border: none; font-size: 0.85rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;">Manage Subscriptions</a>
         </div>
         
         <table class="dashboard-table">
