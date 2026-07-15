@@ -89,8 +89,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_build', 'static')
 
-# WhiteNoise: serve compressed & cached static files in production (DEBUG=False)
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# WhiteNoise configuration
+# CompressedStaticFilesStorage: serves gzip-compressed files without requiring a manifest
+# WHITENOISE_USE_FINDERS: discovers static files directly from app static/ dirs at runtime
+# (eliminates the need to run collectstatic at Vercel build time)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
