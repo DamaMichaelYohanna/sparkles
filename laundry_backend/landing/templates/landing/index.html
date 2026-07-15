@@ -7,22 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
         content="Sparkles - Professional multi-tenant operating system and management tool for modern laundry businesses.">
-    
+
     <!-- Open Graph / Facebook / LinkedIn Site Preview -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.sparkles.com.ng/">
     <meta property="og:title" content="Sparkles - Operating System for Modern Laundry Businesses">
-    <meta property="og:description" content="Manage branches, staff, payments, and send WhatsApp notifications automatically when orders are completed. Try the Sparkles companion app today.">
+    <meta property="og:description"
+        content="Manage branches, staff, payments, and send WhatsApp notifications automatically when orders are completed. Try the Sparkles companion app today.">
     <meta property="og:image" content="https://www.sparkles.com.ng/{% static 'landing/images/logo.png' %}">
 
     <!-- Twitter Card Site Preview -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://www.sparkles.com.ng/">
     <meta property="twitter:title" content="Sparkles - Operating System for Modern Laundry Businesses">
-    <meta property="twitter:description" content="Manage branches, staff, payments, and send WhatsApp notifications automatically when orders are completed. Try the Sparkles companion app today.">
+    <meta property="twitter:description"
+        content="Manage branches, staff, payments, and send WhatsApp notifications automatically when orders are completed. Try the Sparkles companion app today.">
     <meta property="twitter:image" content="https://www.sparkles.com.ng/{% static 'landing/images/logo.png' %}">
 
-    <title>Sparkles - Operating System for Modern Laundry Businesses</title>
+    <title>Sparkles - System for Modern Laundry Businesses</title>
     <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@600;700;800&display=swap"
@@ -43,8 +45,8 @@
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#pricing">Pricing</a>
-                <a href="#about">About Us</a>
-                <a href="#app-showcase">App Preview</a>
+                <a href="/term">Terms & Conditions</a>
+                <a href="/privacy">Privacy Policy</a>
                 <a href="#waitlist" class="btn-waitlist-nav">Join Waitlist</a>
             </div>
         </div>
@@ -458,7 +460,8 @@
             </p>
 
             <div class="badge-group center-badge-group">
-                <a href="{% static 'landing/downloads/sparkles.apk' %}" download class="download-btn playstore light-button">
+                <a href="{% static 'landing/downloads/sparkles.apk' %}" download
+                    class="download-btn playstore light-button">
                     <svg viewBox="0 0 512 512" class="btn-icon">
                         <path fill="currentColor"
                             d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58-33.3-60.7 60.7 60.7 60.7 58-33.3c16.1-9.2 27.1-24.9 27.1-42.4s-11-33.2-27.1-42.4zM325.3 277.7l60.1 60.1L104.6 499l220.7-221.3z" />
@@ -493,7 +496,8 @@
         <div class="waitlist-container-centered">
             <h2 class="section-title-centered text-white" style="margin-bottom: 1rem;">Get Early Access to Sparkles</h2>
             <p class="section-subtitle-centered text-white-mute">
-                We are currently rolling out Sparkles to selected laundry offices. Join the waitlist to secure your early adopter discount and prioritize your office's onboarding.
+                We are currently rolling out Sparkles to selected laundry offices. Join the waitlist to secure your
+                early adopter discount and prioritize your office's onboarding.
             </p>
             <form id="waitlist-form-bottom" class="waitlist-form-centered">
                 <input type="email" placeholder="Enter your admin email address" required class="waitlist-input-lg">
@@ -504,80 +508,80 @@
     </section>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('waitlist-form-bottom');
-        const msgDiv = document.getElementById('waitlist-message-bottom');
-        
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const input = form.querySelector('input');
-            const email = input.value.trim();
-            const btn = form.querySelector('button');
-            
-            btn.disabled = true;
-            btn.textContent = 'Joining...';
-            msgDiv.innerHTML = '';
-            
-            fetch('/join-waitlist/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({ email: email })
-            })
-            .then(response => response.json().then(data => ({ status: response.status, body: data })))
-            .then(res => {
-                btn.disabled = false;
-                btn.textContent = 'Secure Your Spot';
-                
-                if (res.status === 201) {
-                    msgDiv.innerHTML = `<span class="waitlist-success"><i class="fa-solid fa-circle-check"></i> ${res.body.message}</span>`;
-                    form.reset();
-                } else {
-                    msgDiv.innerHTML = `<span class="waitlist-error"><i class="fa-solid fa-circle-exclamation"></i> ${res.body.error || 'Failed to join waitlist'}</span>`;
-                }
-            })
-            .catch(err => {
-                btn.disabled = false;
-                btn.textContent = 'Secure Your Spot';
-                msgDiv.innerHTML = `<span class="waitlist-error"><i class="fa-solid fa-circle-exclamation"></i> Something went wrong. Please try again.</span>`;
-            });
-        });
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('waitlist-form-bottom');
+            const msgDiv = document.getElementById('waitlist-message-bottom');
 
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const input = form.querySelector('input');
+                const email = input.value.trim();
+                const btn = form.querySelector('button');
+
+                btn.disabled = true;
+                btn.textContent = 'Joining...';
+                msgDiv.innerHTML = '';
+
+                fetch('/join-waitlist/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                    .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                    .then(res => {
+                        btn.disabled = false;
+                        btn.textContent = 'Secure Your Spot';
+
+                        if (res.status === 201) {
+                            msgDiv.innerHTML = `<span class="waitlist-success"><i class="fa-solid fa-circle-check"></i> ${res.body.message}</span>`;
+                            form.reset();
+                        } else {
+                            msgDiv.innerHTML = `<span class="waitlist-error"><i class="fa-solid fa-circle-exclamation"></i> ${res.body.error || 'Failed to join waitlist'}</span>`;
+                        }
+                    })
+                    .catch(err => {
+                        btn.disabled = false;
+                        btn.textContent = 'Secure Your Spot';
+                        msgDiv.innerHTML = `<span class="waitlist-error"><i class="fa-solid fa-circle-exclamation"></i> Something went wrong. Please try again.</span>`;
+                    });
+            });
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
                     }
                 }
+                return cookieValue;
             }
-            return cookieValue;
-        }
 
-        // Back to Top Button Logic
-        const backToTopBtn = document.getElementById('back-to-top');
-        if (backToTopBtn) {
-            window.addEventListener('scroll', function() {
-                if (window.scrollY > 300) {
-                    backToTopBtn.classList.add('show');
-                } else {
-                    backToTopBtn.classList.remove('show');
-                }
-            });
-            backToTopBtn.addEventListener('click', function() {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
+            // Back to Top Button Logic
+            const backToTopBtn = document.getElementById('back-to-top');
+            if (backToTopBtn) {
+                window.addEventListener('scroll', function () {
+                    if (window.scrollY > 300) {
+                        backToTopBtn.classList.add('show');
+                    } else {
+                        backToTopBtn.classList.remove('show');
+                    }
                 });
-            });
-        }
-    });
+                backToTopBtn.addEventListener('click', function () {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+            }
+        });
     </script>
 
     <!-- Footer -->
@@ -605,7 +609,7 @@
                 </div>
                 <div class="footer-col">
                     <h4>Legal</h4>
-                    <a href="#">Privacy Policy</a>
+                    <a href="/privacy/">Privacy Policy</a>
                     <a href="/terms/">Terms of Service</a>
                 </div>
             </div>

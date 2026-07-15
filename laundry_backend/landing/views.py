@@ -10,6 +10,9 @@ def landing_page(request):
 def terms_of_service(request):
     return render(request, 'landing/terms.html')
 
+def privacy_policy(request):
+    return render(request, 'landing/privacy.html')
+
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def dashboard(request):
