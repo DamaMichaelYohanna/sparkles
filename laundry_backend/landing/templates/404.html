@@ -1,0 +1,358 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Sparkles</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0f10;
+            --panel: #171718;
+            --panel-soft: rgba(255, 255, 255, 0.04);
+            --border: rgba(255, 255, 255, 0.12);
+            --text: #ffffff;
+            --muted: #c7c7c7;
+            --muted-soft: #8b8b8b;
+            --accent: #d1d5db;
+            --accent-strong: #f3f4f6;
+            --shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 34%),
+                radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.04), transparent 20%),
+                linear-gradient(180deg, #131314 0%, #0b0b0c 100%);
+            color: var(--text);
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+
+        .page {
+            width: min(100%, 1120px);
+            min-height: calc(100vh - 48px);
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            align-items: center;
+            gap: 28px;
+        }
+
+        .hero {
+            padding: 28px 0;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+            margin-bottom: 28px;
+        }
+
+        .brand img {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+        }
+
+        .brand span {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 18px;
+        }
+
+        .kicker::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffffff, #8b8b8b);
+            box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.08);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(3rem, 9vw, 7rem);
+            line-height: 0.9;
+            letter-spacing: -0.08em;
+            font-weight: 800;
+            color: var(--accent-strong);
+        }
+
+        .headline {
+            margin-top: 18px;
+            font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+            line-height: 1.65;
+            color: var(--muted);
+            max-width: 620px;
+        }
+
+        .headline strong {
+            color: var(--text);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 52px;
+            padding: 0 20px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f3f4f6, #bcbcbc);
+            color: #111111;
+            box-shadow: 0 16px 34px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .hint {
+            margin-top: 18px;
+            color: var(--muted-soft);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .card {
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%),
+                var(--panel);
+            padding: 28px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: auto -20% -35% auto;
+            width: 240px;
+            height: 240px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.14), transparent 68%);
+            filter: blur(6px);
+            pointer-events: none;
+        }
+
+        .mock {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 22px;
+        }
+
+        .mock-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: #ffffff;
+            opacity: 0.35;
+        }
+
+        .screen {
+            aspect-ratio: 4 / 3;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
+                #111111;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screen img {
+            width: 84px;
+            height: 84px;
+            object-fit: contain;
+            margin-bottom: 18px;
+            filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.3));
+        }
+
+        .screen h2 {
+            margin: 0;
+            font-size: 1.15rem;
+            letter-spacing: -0.04em;
+        }
+
+        .screen p {
+            margin: 10px 0 0;
+            color: var(--muted);
+            line-height: 1.65;
+            max-width: 26ch;
+        }
+
+        .screen .code {
+            margin-top: 18px;
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--accent-strong);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .screen .code::before {
+            content: '404';
+            color: #111111;
+            background: #f3f4f6;
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+        }
+
+        @media (max-width: 900px) {
+            .page {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .hero {
+                padding-bottom: 0;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            body {
+                padding: 16px;
+            }
+
+            .brand {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <div class="brand">
+                <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles logo">
+                <span>Sparkles</span>
+            </div>
+
+            <div class="kicker">Page not found</div>
+            <h1>404</h1>
+            <p class="headline">
+                The page you are looking for is not here anymore, but the Sparkles workspace is still ready.
+                <strong>Let us get you back on track.</strong>
+            </p>
+
+            <div class="actions">
+                <a class="btn btn-primary" href="/">Back to Home</a>
+                <a class="btn btn-secondary" href="/#waitlist">Join Waitlist</a>
+            </div>
+
+            <p class="hint">
+                If you typed the address manually, double-check it. If not, try heading home and continue from there.
+            </p>
+        </section>
+
+        <aside class="card" aria-label="Sparkles 404 illustration">
+            <div class="mock">
+                <div class="mock-top">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                <div class="screen">
+                    <div>
+                        <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles logo mark">
+                        <h2>Lost in the wrong place</h2>
+                        <p>
+                            We couldn’t find that route, but your laundry business tools are just one click away.
+                        </p>
+                        <div class="code">Sparkles can help you recover</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+</body>
+</html>
