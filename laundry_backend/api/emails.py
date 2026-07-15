@@ -6,13 +6,13 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 # Shared design constants
 # ─────────────────────────────────────────────────────────────────────────────
-_BRAND_BG      = "#0f0f1a"
-_CARD_BG       = "#1a1a2e"
-_ACCENT        = "#6366f1"
-_ACCENT_LIGHT  = "#a5b4fc"
-_TEXT_MAIN     = "#e2e8f0"
-_TEXT_MUTED    = "#94a3b8"
-_BORDER        = "rgba(255,255,255,0.07)"
+_BRAND_BG      = "#111111"
+_CARD_BG       = "#1b1b1b"
+_ACCENT        = "#6b7280"
+_ACCENT_LIGHT  = "#f3f4f6"
+_TEXT_MAIN     = "#ffffff"
+_TEXT_MUTED    = "#cbd5e1"
+_BORDER        = "rgba(255,255,255,0.12)"
 
 _BASE_STYLES = f"""
     <style>
@@ -39,7 +39,7 @@ _BASE_STYLES = f"""
         }}
         /* Header strip */
         .card-header {{
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+            background: linear-gradient(135deg, #000000 0%, #2a2a2a 50%, #000000 100%);
             padding: 36px 40px 32px;
             text-align: center;
             border-bottom: 1px solid {_BORDER};
@@ -54,7 +54,7 @@ _BASE_STYLES = f"""
             width: 32px;
             height: 32px;
             border-radius: 8px;
-            background: linear-gradient(135deg, {_ACCENT}, #8b5cf6);
+            background: linear-gradient(135deg, #f5f5f5, #7c7c7c);
             display: inline-block;
         }}
         .logo-text {{
@@ -70,7 +70,7 @@ _BASE_STYLES = f"""
         .headline {{
             font-size: 22px;
             font-weight: 800;
-            color: #ffffff;
+            color: {_TEXT_MAIN};
             line-height: 1.3;
             margin-bottom: 8px;
         }}
@@ -91,7 +91,7 @@ _BASE_STYLES = f"""
         .btn {{
             display: inline-block;
             padding: 14px 36px;
-            background: linear-gradient(135deg, {_ACCENT}, #8b5cf6);
+            background: linear-gradient(135deg, #f5f5f5, #c4c4c4);
             color: #ffffff !important;
             text-decoration: none;
             border-radius: 50px;
@@ -101,8 +101,8 @@ _BASE_STYLES = f"""
         }}
         /* Info card / highlight box */
         .info-box {{
-            background: rgba(99,102,241,0.08);
-            border: 1px solid rgba(99,102,241,0.25);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.16);
             border-radius: 12px;
             padding: 20px 24px;
             margin: 20px 0;
@@ -125,7 +125,7 @@ _BASE_STYLES = f"""
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            background: linear-gradient(135deg, {_ACCENT}, #8b5cf6);
+            background: linear-gradient(135deg, #f5f5f5, #7c7c7c);
             color: #fff;
             font-size: 12px;
             font-weight: 700;
@@ -135,8 +135,8 @@ _BASE_STYLES = f"""
         }}
         /* OTP box */
         .otp-box {{
-            background: rgba(99,102,241,0.10);
-            border: 1px dashed rgba(99,102,241,0.4);
+            background: rgba(255,255,255,0.06);
+            border: 1px dashed rgba(255,255,255,0.28);
             border-radius: 12px;
             text-align: center;
             padding: 24px;
@@ -149,8 +149,8 @@ _BASE_STYLES = f"""
         /* Badge chip */
         .badge {{
             display: inline-block;
-            background: rgba(99,102,241,0.15);
-            border: 1px solid rgba(99,102,241,0.3);
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.18);
             color: {_ACCENT_LIGHT};
             border-radius: 50px;
             padding: 4px 14px;
@@ -168,7 +168,7 @@ _BASE_STYLES = f"""
         }}
         /* Footer */
         .card-footer {{
-            background: rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.03);
             border-top: 1px solid {_BORDER};
             padding: 20px 40px;
             text-align: center;
@@ -180,7 +180,7 @@ _BASE_STYLES = f"""
             line-height: 1.6;
         }}
         .card-footer a {{
-            color: #6366f1;
+            color: #e5e7eb;
             text-decoration: none;
         }}
     </style>
@@ -256,14 +256,13 @@ def _send_html_email(subject, to_email, html_content, text_content):
 # 1. Waitlist — Confirmation (sent immediately when someone joins the waitlist)
 # ─────────────────────────────────────────────────────────────────────────────
 def send_waitlist_welcome(email):
-    subject = "You're on the Sparkles Waitlist 🎉"
+    subject = "Your Sparkles waitlist request is confirmed"
 
     text_content = (
         "Hello,\n\n"
-        "Thank you for joining the Sparkles waitlist! You're in.\n\n"
-        "We are currently onboarding selected laundry offices. By securing your spot early,\n"
-        "you qualify for our 50% early-adopter discount and priority onboarding support.\n\n"
-        "We will reach out personally as soon as your slot is ready.\n\n"
+        "Thank you for joining the Sparkles waitlist. Your request has been received and confirmed.\n\n"
+        "We are opening access gradually and will get back to you if a slot becomes available.\n\n"
+        "We appreciate your interest and hope to welcome you soon.\n\n"
         "Best regards,\n"
         "The Sparkles Team\n"
         "https://www.sparkles.com.ng"
@@ -271,37 +270,24 @@ def send_waitlist_welcome(email):
 
     inner = """
         <div class="badge">Waitlist Confirmed</div>
-        <h1 class="headline">You're officially on the list! 🎉</h1>
-        <p class="subline">We'll reach out as soon as your slot is ready.</p>
+        <h1 class="headline">You're on the list</h1>
+        <p class="subline">We'll reach out if a spot opens up.</p>
 
         <p>
-            Thank you for your interest in Sparkles — the operating system for modern laundry businesses.
-            We're thrilled to have you on board.
+            Thanks for your interest in Sparkles. We have received your request and added your email to
+            the waitlist.
         </p>
 
         <div class="info-box">
             <p>
-                <strong>🏷️ Early-Adopter Perk</strong><br><br>
-                By securing your spot now, you qualify for a <strong>50% discount</strong> on your first
-                subscription and <strong>priority onboarding support</strong> from our team.
+                We are opening access in stages and will contact you when a slot becomes available.
+                We hope to work with you soon.
             </p>
-        </div>
-
-        <p>
-            We are carefully rolling out access to ensure every new office gets a smooth, supported
-            onboarding experience. You will receive a personalised invitation email the moment your
-            slot opens up.
-        </p>
-
-        <p>In the meantime, feel free to explore what Sparkles can do for your business:</p>
-
-        <div class="btn-wrapper">
-            <a href="https://www.sparkles.com.ng/#features" class="btn">Explore Features →</a>
         </div>
 
         <hr class="divider">
         <p style="font-size:13px;">
-            Questions? Just reply to this email — we read every message.
+            If a space opens for your office, we will reach out directly.
         </p>
         <p><strong>The Sparkles Team</strong></p>
     """
@@ -313,57 +299,36 @@ def send_waitlist_welcome(email):
 # 2. Waitlist — Invitation (sent when admin marks a waitlist entry as notified)
 # ─────────────────────────────────────────────────────────────────────────────
 def send_waitlist_notified(email):
-    subject = "Your Sparkles Invitation is Ready 🚀"
+    subject = "Sparkles waitlist update"
 
     text_content = (
         "Hello!\n\n"
-        "Great news — your onboarding slot is now active.\n\n"
-        "You can register your laundry office and start managing branches, staff, and "
-        "pricing immediately.\n\n"
-        "Download the Sparkles app or visit our portal to get started:\n"
-        "https://www.sparkles.com.ng\n\n"
-        "If you need help, just reply to this email.\n\n"
+        "We are reaching out to let you know that your waitlist entry is still active.\n\n"
+        "If a slot opens for your office, we will contact you directly.\n\n"
+        "Thank you for being patient with us.\n\n"
         "Best regards,\n"
         "The Sparkles Team"
     )
 
     inner = """
-        <div class="badge">You're Invited</div>
-        <h1 class="headline">Your invitation is live! 🚀</h1>
-        <p class="subline">Your Sparkles onboarding slot is now active and ready.</p>
+        <div class="badge">Waitlist Update</div>
+        <h1 class="headline">We have your details</h1>
+        <p class="subline">We may be in touch when a slot opens.</p>
 
         <p>
-            We have opened up onboarding for early adopters and your account is next.
-            You can now register your laundry office and start managing everything from day one.
+            Your email is on our waitlist. When we are able to take the next group of clients, we will
+            get back to you directly.
         </p>
 
-        <ul class="steps">
-            <li>
-                <span class="step-num">1</span>
-                <span>Download the <strong>Sparkles mobile app</strong> on Android or iOS.</span>
-            </li>
-            <li>
-                <span class="step-num">2</span>
-                <span><strong>Register your office</strong> directly inside the app using this email address.</span>
-            </li>
-            <li>
-                <span class="step-num">3</span>
-                <span>Configure your <strong>services, pricing, and staff</strong> from the Settings screen.</span>
-            </li>
-            <li>
-                <span class="step-num">4</span>
-                <span>Start <strong>tracking orders, payments, and WhatsApp notifications</strong> automatically!</span>
-            </li>
-        </ul>
-
-        <div class="btn-wrapper">
-            <a href="https://www.sparkles.com.ng/" class="btn">Open Sparkles Portal →</a>
+        <div class="info-box">
+            <p>
+                We appreciate your interest and hope to reach out with a place for you soon.
+            </p>
         </div>
 
         <hr class="divider">
         <p style="font-size:13px;">
-            Need help getting set up? Simply reply to this email — our onboarding team will
-            personally assist you within 24 hours.
+            Thank you for your patience.
         </p>
         <p><strong>The Sparkles Team</strong></p>
     """

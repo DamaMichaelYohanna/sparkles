@@ -7,3 +7,8 @@ class WaitlistEntryAdmin(admin.ModelAdmin):
     list_filter = ('is_notified', 'created_at')
     search_fields = ('email',)
     ordering = ('-created_at',)
+    actions = ['delete_selected_waitlist_entries']
+
+    @admin.action(description='Delete selected waitlist entries')
+    def delete_selected_waitlist_entries(self, request, queryset):
+        queryset.delete()
