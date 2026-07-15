@@ -5,8 +5,8 @@ import 'dart:io';
 class ApiService {
   late final Dio _dio;
 
-  // Production URL on Vercel
-  final String _baseUrl = 'https://sparkles-green.vercel.app/api/';
+  // Production URL — sparkles.com.ng
+  final String _baseUrl = 'https://www.sparkles.com.ng/api/';
 
   ApiService() {
     print(">>> API_SERVICE INITIALIZED WITH 60s TIMEOUT <<<");
