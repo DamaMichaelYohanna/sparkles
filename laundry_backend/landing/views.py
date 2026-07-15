@@ -7,6 +7,10 @@ from operations.models import Order
 def landing_page(request):
     return render(request, 'landing/index.html')
 
+def terms_of_service(request):
+    return render(request, 'landing/terms.html')
+
+
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def dashboard(request):
     total_offices = LaundryOffice.objects.count()

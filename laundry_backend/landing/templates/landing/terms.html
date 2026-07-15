@@ -1,0 +1,260 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sparkles Terms of Service — Dama Software Solution LTD.">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.sparkles.com.ng/terms/">
+    <meta property="og:title" content="Terms of Service — Sparkles">
+    <meta property="og:description" content="Read the Terms of Service for Sparkles, a product of Dama Software Solution LTD.">
+
+    <title>Terms of Service — Sparkles</title>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'landing/css/styles.css' %}">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* ── Page-level overrides ───────────────────────────────── */
+        .terms-hero {
+            padding: 120px 0 56px;
+            text-align: center;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .terms-hero .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #a5b4fc;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .terms-hero h1 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            color: #f8fafc;
+            margin: 0 auto 12px;
+            line-height: 1.2;
+        }
+
+        .terms-hero p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        .terms-hero p strong {
+            color: #cbd5e1;
+        }
+
+        /* ── Document body ──────────────────────────────────────── */
+        .terms-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 72px 24px 96px;
+        }
+
+        .terms-section {
+            margin-bottom: 44px;
+        }
+
+        .terms-section h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #a5b4fc;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .terms-section h2::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 18px;
+            border-radius: 4px;
+            background: linear-gradient(180deg, #6366f1, #8b5cf6);
+            flex-shrink: 0;
+        }
+
+        .terms-section p {
+            color: #94a3b8;
+            font-size: 0.97rem;
+            line-height: 1.8;
+        }
+
+        .terms-divider {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin: 0 0 44px;
+        }
+
+        .terms-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #6366f1;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            margin-bottom: 48px;
+            transition: color 0.2s;
+        }
+
+        .terms-back-link:hover {
+            color: #a5b4fc;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles Logo" class="logo-img">
+                Sparkles
+            </div>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/#features">Features</a>
+                <a href="/#pricing">Pricing</a>
+                <a href="/#about">About Us</a>
+                <a href="/#waitlist" class="btn-waitlist-nav">Join Waitlist</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="terms-hero">
+        <div class="badge">
+            <i class="fa-solid fa-shield-halved"></i>
+            Legal
+        </div>
+        <h1>Terms of Service</h1>
+        <p>Last updated: <strong>July 2026</strong> &nbsp;·&nbsp; Effective immediately upon use</p>
+    </section>
+
+    <!-- Terms Content -->
+    <main class="terms-content">
+        <a href="/" class="terms-back-link">
+            <i class="fa-solid fa-arrow-left"></i> Back to Home
+        </a>
+
+        <div class="terms-section">
+            <h2>1. Acceptance of Terms</h2>
+            <p>
+                By accessing or using Sparkles, you agree to be bound by these Terms of Service.
+                If you do not agree to these terms, you may not use the service.
+            </p>
+        </div>
+        <hr class="terms-divider">
+
+        <div class="terms-section">
+            <h2>2. Ownership</h2>
+            <p>
+                Sparkles is a product owned and operated by <strong style="color:#cbd5e1;">Dama Software Solution LTD</strong>.
+                All rights, title, and interest in and to the software, including all intellectual property rights,
+                remain the exclusive property of Dama Software Solution LTD.
+            </p>
+        </div>
+        <hr class="terms-divider">
+
+        <div class="terms-section">
+            <h2>3. Provision of Service</h2>
+            <p>
+                Sparkles is provided as a laundry management system. Dama Software Solution LTD reserves
+                the right to modify, update, or discontinue the service at its sole discretion without prior notice.
+            </p>
+        </div>
+        <hr class="terms-divider">
+
+        <div class="terms-section">
+            <h2>4. User Obligations</h2>
+            <p>
+                You are responsible for maintaining the confidentiality of your account credentials and for all
+                activities that occur under your account. You agree not to use Sparkles for any unlawful or
+                unauthorized purpose.
+            </p>
+        </div>
+        <hr class="terms-divider">
+
+        <div class="terms-section">
+            <h2>5. Termination</h2>
+            <p>
+                Dama Software Solution LTD reserves the right to suspend or terminate your access to Sparkles
+                immediately, without prior notice or liability, for any breach of these Terms of Service.
+            </p>
+        </div>
+        <hr class="terms-divider">
+
+        <div class="terms-section">
+            <h2>6. Limitation of Liability</h2>
+            <p>
+                To the maximum extent permitted by law, Dama Software Solution LTD shall not be liable for any
+                indirect, incidental, special, consequential, or punitive damages, including loss of profits, data,
+                or goodwill, arising out of your use or inability to use Sparkles.
+            </p>
+        </div>
+        <hr class="terms-divider">
+
+        <div class="terms-section">
+            <h2>7. Governing Law</h2>
+            <p>
+                These Terms shall be governed and construed in accordance with the laws of the jurisdiction in which
+                Dama Software Solution LTD operates, without regard to its conflict of law provisions.
+            </p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="footer-logo">
+                    <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles" class="logo-img">
+                    Sparkles
+                </div>
+                <p class="footer-tagline">The operating system for modern laundry businesses.</p>
+                <p style="color:#475569;font-size:0.8rem;margin-top:4px;">A product of Dama Software Solution LTD.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <a href="/#about">About Us</a>
+                <a href="/#features">Features</a>
+                <a href="/api/schema/swagger-ui/">API Documentation</a>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <a href="#">Privacy Policy</a>
+                <a href="/terms/" aria-current="page">Terms of Service</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Dama Software Solution LTD. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+
+</html>
