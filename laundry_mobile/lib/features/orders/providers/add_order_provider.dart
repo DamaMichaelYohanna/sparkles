@@ -16,29 +16,45 @@ final itemPricingListProvider = FutureProvider.autoDispose<List<ItemPricingModel
 });
 
 class DraftOrderState {
+  final String? existingOrderId;
   final String customerName;
   final String customerPhone;
   final List<OrderItemModel> items;
   final double orderDiscount;
+  final String status;
+  final double amountPaid;
+  final DateTime? createdAt;
 
   DraftOrderState({
+    this.existingOrderId,
     this.customerName = '',
     this.customerPhone = '',
     this.items = const [],
     this.orderDiscount = 0.0,
+    this.status = 'Pending',
+    this.amountPaid = 0.0,
+    this.createdAt,
   });
 
   DraftOrderState copyWith({
+    String? existingOrderId,
     String? customerName,
     String? customerPhone,
     List<OrderItemModel>? items,
     double? orderDiscount,
+    String? status,
+    double? amountPaid,
+    DateTime? createdAt,
   }) {
     return DraftOrderState(
+      existingOrderId: existingOrderId ?? this.existingOrderId,
       customerName: customerName ?? this.customerName,
       customerPhone: customerPhone ?? this.customerPhone,
       items: items ?? this.items,
       orderDiscount: orderDiscount ?? this.orderDiscount,
+      status: status ?? this.status,
+      amountPaid: amountPaid ?? this.amountPaid,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
   
@@ -53,6 +69,23 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
   @override
   DraftOrderState build() {
     return DraftOrderState();
+  }
+
+  void initializeFromOrder(OrderModel order, List<OrderItemModel> items) {
+    state = DraftOrderState(
+      existingOrderId: order.id,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      items: items,
+      orderDiscount: order.discountAmount,
+      status: order.status,
+      amountPaid: order.amountPaid,
+      createdAt: order.createdAt,
+    );
+  }
+
+  void resetState() {
+    state = DraftOrderState();
   }
 
   void updateCustomerInfo({String? name, String? phone}) {
@@ -114,22 +147,39 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
       throw Exception("Customer name and at least one item are required.");
     }
 
-    final orderId = const Uuid().v4();
+    final isEditing = state.existingOrderId != null;
+    final orderId = state.existingOrderId ?? const Uuid().v4();
     final now = DateTime.now();
 
     final order = OrderModel(
       id: orderId,
       customerName: state.customerName,
-      status: 'Pending',
+      status: state.status,
       totalPrice: state.total,
-      createdAt: now,
+      createdAt: state.createdAt ?? now,
       updatedAt: now,
       syncStatus: 'pending',
       discountAmount: state.orderDiscount,
+      customerPhone: state.customerPhone,
+      amountPaid: state.amountPaid,
     );
 
-    // Save order
-    await DatabaseHelper.instance.insertOrder(order.toDb()..addAll({'customer_phone': state.customerPhone, 'amount_paid': 0.0}));
+    final db = await DatabaseHelper.instance.database;
+
+    if (isEditing) {
+      // Update order table
+      await db.update(
+        'orders',
+        order.toDb()..addAll({'customer_phone': state.customerPhone, 'amount_paid': state.amountPaid}),
+        where: 'id = ?',
+        whereArgs: [orderId],
+      );
+      // Delete old items so we can overwrite them
+      await db.delete('order_items', where: 'order_id = ?', whereArgs: [orderId]);
+    } else {
+      // Save order as new
+      await DatabaseHelper.instance.insertOrder(order.toDb()..addAll({'customer_phone': state.customerPhone, 'amount_paid': 0.0}));
+    }
 
     // Save items
     for (var item in state.items) {

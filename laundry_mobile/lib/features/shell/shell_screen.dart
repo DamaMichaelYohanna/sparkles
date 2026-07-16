@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../orders/orders_screen.dart';
 import '../analysis/analysis_screen.dart';
@@ -78,6 +79,29 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
           ],
         ),
       ),
+      floatingActionButton: actualIndex == 1
+          ? null
+          : FloatingActionButton(
+              onPressed: _launchWhatsApp,
+              backgroundColor: const Color(0xFF25D366),
+              tooltip: 'Contact Us on WhatsApp',
+              child: const Icon(LucideIcons.messageCircle, color: Colors.white),
+            ),
     );
+  }
+
+  Future<void> _launchWhatsApp() async {
+    final Uri url = Uri.parse('https://wa.me/2348160535033');
+    try {
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        throw Exception('Could not launch WhatsApp');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to open WhatsApp: $e')),
+        );
+      }
+    }
   }
 }

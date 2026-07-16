@@ -4,6 +4,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:printing/printing.dart';
 import '../../core/local_db/database_helper.dart';
 import '../../core/models/order_model.dart';
+import '../../core/models/order_item_model.dart';
+import 'add_order_screen.dart';
+import 'providers/add_order_provider.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../core/utils/receipt_generator.dart';
@@ -149,6 +152,42 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to delete order: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _editOrder() async {
+    try {
+      final List<OrderItemModel> itemsModels = _items.map((map) {
+        return OrderItemModel(
+          id: map['id'] as String,
+          orderId: map['order_id'] as String,
+          itemPricingId: map['item_pricing_id'] as String,
+          quantity: map['quantity'] as int,
+          unitPrice: (map['unit_price'] as num).toDouble(),
+          discountAmount: (map['discount_amount'] as num).toDouble(),
+          subtotal: (map['subtotal'] as num).toDouble(),
+          createdAt: DateTime.parse(map['created_at'] as String),
+          updatedAt: DateTime.parse(map['updated_at'] as String),
+          syncStatus: map['sync_status'] as String,
+        );
+      }).toList();
+
+      ref.read(addOrderProvider.notifier).initializeFromOrder(_order, itemsModels);
+      
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const AddOrderScreen()),
+      );
+      
+      // Reload order details when returning from editing
+      await _loadOrderDetails();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load order for editing: $e')),
         );
       }
     }
@@ -336,6 +375,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       appBar: AppBar(
         title: const Text('Order Details'),
         actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.edit3, color: AppTheme.primaryColor),
+            onPressed: _editOrder,
+          ),
           IconButton(
             icon: const Icon(LucideIcons.printer, color: AppTheme.primaryColor),
             onPressed: _handleReceiptActions,

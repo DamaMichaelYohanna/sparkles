@@ -450,7 +450,8 @@ class CurrentUserView(APIView):
             "office_id": str(user.office.id) if user.office else None,
             "office_name": user.office.name if user.office else None,
             "office_contact_info": user.office.contact_info if user.office else "",
-            "subscription_tier": user.office.subscription_tier if user.office else 'free'
+            "subscription_tier": user.office.subscription_tier if user.office else 'free',
+            "office_preferences": user.office.preferences if user.office else {}
         })
 
 class RegisterOfficeView(APIView):

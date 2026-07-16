@@ -18,8 +18,16 @@ class AddOrderScreen extends ConsumerStatefulWidget {
 }
 
 class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _phoneController;
+
+  @override
+  void initState() {
+    super.initState();
+    final draft = ref.read(addOrderProvider);
+    _nameController = TextEditingController(text: draft.customerName);
+    _phoneController = TextEditingController(text: draft.customerPhone);
+  }
 
   @override
   void dispose() {
@@ -76,10 +84,13 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create New Order'),
+        title: Text(draftState.existingOrderId != null ? 'Edit Order' : 'Create New Order'),
         leading: IconButton(
           icon: const Icon(LucideIcons.x),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            ref.read(addOrderProvider.notifier).resetState();
+            Navigator.pop(context);
+          },
         ),
       ),
       body: SingleChildScrollView(
@@ -264,11 +275,12 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
                         return;
                       }
                       try {
+                        final isEditing = draftState.existingOrderId != null;
                         await ref.read(addOrderProvider.notifier).saveOrder();
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Order saved locally (Pending Sync)')),
+                            SnackBar(content: Text(isEditing ? 'Order updated successfully' : 'Order saved locally (Pending Sync)')),
                           );
                         }
                       } catch (e) {
@@ -283,7 +295,7 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Save Order', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text(draftState.existingOrderId != null ? 'Update Order' : 'Save Order', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ],
         ),

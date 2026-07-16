@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -16,6 +17,16 @@ class ReceiptGenerator {
     final companyName = prefs.getString('office_name') ?? 'My Laundry Co.';
     final companyAddress = prefs.getString('office_address') ?? '123 Clean St, Suite 4';
     final companyContact = prefs.getString('office_contact') ?? '+1 234 567 8900';
+
+    final logoBase64 = prefs.getString('office_logo_base64');
+    pw.MemoryImage? logoImage;
+    if (logoBase64 != null && logoBase64.isNotEmpty) {
+      try {
+        logoImage = pw.MemoryImage(base64Decode(logoBase64));
+      } catch (e) {
+        print('Error decoding receipt logo: $e');
+      }
+    }
 
     // Calculate subtotal and discounts
     double itemsTotalDiscount = 0.0;
@@ -40,20 +51,33 @@ class ReceiptGenerator {
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Column(
+                  pw.Row(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(
-                        companyName,
-                        style: pw.TextStyle(
-                          fontSize: 24,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.blue900,
+                      if (logoImage != null) ...[
+                        pw.Container(
+                          width: 45,
+                          height: 45,
+                          margin: const pw.EdgeInsets.only(right: 12),
+                          child: pw.Image(logoImage, fit: pw.BoxFit.contain),
                         ),
+                      ],
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            companyName,
+                            style: pw.TextStyle(
+                              fontSize: 18,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.blue900,
+                            ),
+                          ),
+                          pw.SizedBox(height: 3),
+                          pw.Text(companyAddress, style: const pw.TextStyle(fontSize: 8)),
+                          pw.Text(companyContact, style: const pw.TextStyle(fontSize: 8)),
+                        ],
                       ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(companyAddress, style: const pw.TextStyle(fontSize: 10)),
-                      pw.Text(companyContact, style: const pw.TextStyle(fontSize: 10)),
                     ],
                   ),
                   pw.Column(
@@ -121,15 +145,36 @@ class ReceiptGenerator {
                     ),
                     pw.Expanded(
                       flex: 1,
-                      child: pw.Text('Price (₦)', style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10), textAlign: pw.TextAlign.right),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.end,
+                        children: [
+                          pw.Text('Price (', style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                          _nairaSign(style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                          pw.Text(')', style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        ],
+                      ),
                     ),
                     pw.Expanded(
                       flex: 1,
-                      child: pw.Text('Discount (₦)', style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10), textAlign: pw.TextAlign.right),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.end,
+                        children: [
+                          pw.Text('Disc (', style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                          _nairaSign(style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                          pw.Text(')', style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        ],
+                      ),
                     ),
                     pw.Expanded(
                       flex: 1,
-                      child: pw.Text('Subtotal (₦)', style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10), textAlign: pw.TextAlign.right),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.end,
+                        children: [
+                          pw.Text('Sub (', style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                          _nairaSign(style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                          pw.Text(')', style: pw.TextStyle(color: PdfColors.white, fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -201,16 +246,16 @@ class ReceiptGenerator {
                     width: 200,
                     child: pw.Column(
                       children: [
-                        _buildSummaryRow('Subtotal', '₦${orderSubtotal.toStringAsFixed(2)}'),
+                        _buildSummaryRow('Subtotal', orderSubtotal),
                         if (totalDiscount > 0)
-                          _buildSummaryRow('Discount', '- ₦${totalDiscount.toStringAsFixed(2)}', isDiscount: true),
+                          _buildSummaryRow('Discount', totalDiscount, isDiscount: true),
                         pw.Divider(thickness: 0.5, color: PdfColors.grey400),
-                        _buildSummaryRow('Total Price', '₦${order.totalPrice.toStringAsFixed(2)}', isBold: true),
-                        _buildSummaryRow('Amount Paid', '₦${order.amountPaid.toStringAsFixed(2)}'),
+                        _buildSummaryRow('Total Price', order.totalPrice, isBold: true),
+                        _buildSummaryRow('Amount Paid', order.amountPaid),
                         pw.Divider(thickness: 1, color: PdfColors.blue900),
                         _buildSummaryRow(
                           'Balance Due',
-                          '₦${(order.totalPrice - order.amountPaid).toStringAsFixed(2)}',
+                          (order.totalPrice - order.amountPaid),
                           isBold: true,
                           color: (order.totalPrice - order.amountPaid) > 0 ? PdfColors.red700 : PdfColors.green700,
                         ),
@@ -241,7 +286,12 @@ class ReceiptGenerator {
     return pdf.save();
   }
 
-  static pw.Widget _buildSummaryRow(String label, String value, {bool isBold = false, bool isDiscount = false, PdfColor? color}) {
+  static pw.Widget _buildSummaryRow(String label, double amount, {bool isBold = false, bool isDiscount = false, PdfColor? color}) {
+    final style = pw.TextStyle(
+      fontSize: 9,
+      fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
+      color: color ?? (isDiscount ? PdfColors.red700 : PdfColors.black),
+    );
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 2),
       child: pw.Row(
@@ -254,16 +304,40 @@ class ReceiptGenerator {
               fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
           ),
-          pw.Text(
-            value,
-            style: pw.TextStyle(
-              fontSize: 9,
-              fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
-              color: color ?? (isDiscount ? PdfColors.red700 : PdfColors.black),
-            ),
+          pw.Row(
+            mainAxisSize: pw.MainAxisSize.min,
+            children: [
+              if (isDiscount) pw.Text('- ', style: style),
+              _nairaSign(style: style),
+              pw.SizedBox(width: 1),
+              pw.Text(amount.toStringAsFixed(2), style: style),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  static pw.Widget _nairaSign({pw.TextStyle? style}) {
+    final double size = style?.fontSize ?? 10.0;
+    final double strokeWidth = size * 0.07;
+    final double gap = size * 0.15;
+    final double lineLength = size * 0.65;
+    
+    return pw.Stack(
+      alignment: pw.Alignment.center,
+      children: [
+        pw.Text('N', style: style),
+        pw.Column(
+          mainAxisAlignment: pw.MainAxisAlignment.center,
+          mainAxisSize: pw.MainAxisSize.min,
+          children: [
+            pw.Container(width: lineLength, height: strokeWidth, color: style?.color ?? PdfColors.black),
+            pw.SizedBox(height: gap),
+            pw.Container(width: lineLength, height: strokeWidth, color: style?.color ?? PdfColors.black),
+          ],
+        ),
+      ],
     );
   }
 }

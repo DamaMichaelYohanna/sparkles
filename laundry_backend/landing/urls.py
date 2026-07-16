@@ -14,4 +14,6 @@ urlpatterns = [
     path('dashboard/waitlist/<uuid:pk>/toggle/', views.toggle_waitlist_notified, name='toggle_waitlist'),
     path('dashboard/waitlist/<uuid:pk>/delete/', views.delete_waitlist_entry, name='delete_waitlist'),
     path('join-waitlist/', views.JoinWaitlistView.as_view(), name='api-waitlist'),
+    path('sitemap.xml', views.sitemap_xml, name='sitemap-xml'),
+    path('robots.txt', views.robots_txt, name='robots-txt'),
 ]

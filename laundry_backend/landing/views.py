@@ -150,3 +150,34 @@ def delete_waitlist_entry(request, pk):
         entry = get_object_or_404(WaitlistEntry, pk=pk)
         entry.delete()
     return redirect('waitlist_dashboard')
+
+from django.http import HttpResponse
+from django.urls import reverse
+
+def sitemap_xml(request):
+    urls = [
+        reverse('landing-page'),
+        reverse('terms-of-service'),
+        reverse('privacy-policy'),
+    ]
+    
+    xml_content = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml_content += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    
+    for url in urls:
+        abs_url = request.build_absolute_uri(url)
+        xml_content += '  <url>\n'
+        xml_content += f'    <loc>{abs_url}</loc>\n'
+        xml_content += '    <changefreq>weekly</changefreq>\n'
+        xml_content += '    <priority>0.8</priority>\n'
+        xml_content += '  </url>\n'
+        
+    xml_content += '</urlset>\n'
+    return HttpResponse(xml_content, content_type='application/xml')
+
+def robots_txt(request):
+    sitemap_url = request.build_absolute_uri(reverse('sitemap-xml'))
+    content = "User-agent: *\n"
+    content += "Allow: /\n\n"
+    content += f"Sitemap: {sitemap_url}\n"
+    return HttpResponse(content, content_type='text/plain')
