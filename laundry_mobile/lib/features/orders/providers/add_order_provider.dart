@@ -142,6 +142,11 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
     }
   }
 
+  void removeItem(int index) {
+    final updatedList = List<OrderItemModel>.from(state.items)..removeAt(index);
+    state = state.copyWith(items: updatedList);
+  }
+
   Future<void> saveOrder() async {
     if (state.customerName.isEmpty || state.items.isEmpty) {
       throw Exception("Customer name and at least one item are required.");

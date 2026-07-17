@@ -193,16 +193,29 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
                     } catch (_) {}
                   }
 
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(displayName),
-                    subtitle: Text(
-                      'Qty: ${item.quantity} x ₦${item.unitPrice}' +
-                      (item.discountAmount > 0
-                          ? ' (Discount: -₦${item.discountAmount.toStringAsFixed(0)})'
-                          : ''),
+                  return Dismissible(
+                    key: Key(item.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      color: Colors.redAccent,
+                      child: const Icon(LucideIcons.trash2, color: Colors.white),
                     ),
-                    trailing: Text('₦${item.subtotal}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    onDismissed: (direction) {
+                      ref.read(addOrderProvider.notifier).removeItem(index);
+                    },
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(displayName),
+                      subtitle: Text(
+                        'Qty: ${item.quantity} x ₦${item.unitPrice}' +
+                        (item.discountAmount > 0
+                            ? ' (Discount: -₦${item.discountAmount.toStringAsFixed(0)})'
+                            : ''),
+                      ),
+                      trailing: Text('₦${item.subtotal}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
                   );
                 },
               ),

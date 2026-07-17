@@ -36,7 +36,15 @@ final pendingSyncCountProvider = StreamProvider.autoDispose<int>((ref) async* {
   while (true) {
     final ordersResult = await db.rawQuery("SELECT COUNT(*) as count FROM orders WHERE sync_status = 'pending'");
     final orderItemsResult = await db.rawQuery("SELECT COUNT(*) as count FROM order_items WHERE sync_status = 'pending'");
-    final count = (Sqflite.firstIntValue(ordersResult) ?? 0) + (Sqflite.firstIntValue(orderItemsResult) ?? 0);
+    final categoriesResult = await db.rawQuery("SELECT COUNT(*) as count FROM categories WHERE sync_status = 'pending'");
+    final servicesResult = await db.rawQuery("SELECT COUNT(*) as count FROM service_types WHERE sync_status = 'pending'");
+    final pricingResult = await db.rawQuery("SELECT COUNT(*) as count FROM item_pricing WHERE sync_status = 'pending'");
+    
+    final count = (Sqflite.firstIntValue(ordersResult) ?? 0) + 
+                  (Sqflite.firstIntValue(orderItemsResult) ?? 0) +
+                  (Sqflite.firstIntValue(categoriesResult) ?? 0) +
+                  (Sqflite.firstIntValue(servicesResult) ?? 0) +
+                  (Sqflite.firstIntValue(pricingResult) ?? 0);
     yield count;
     await Future.delayed(const Duration(seconds: 4));
   }
@@ -53,12 +61,29 @@ final userProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   if (profile['office_contact_info'] != null) {
     await prefs.setString('office_contact', profile['office_contact_info']);
   }
+  
+  // Extract and cache address and logo_base64 from office_preferences
+  final preferences = profile['office_preferences'] as Map<String, dynamic>?;
+  if (preferences != null) {
+    final address = preferences['address'] as String?;
+    if (address != null) {
+      await prefs.setString('office_address', address);
+    }
+    final logoBase64 = preferences['logo_base64'] as String?;
+    if (logoBase64 != null) {
+      await prefs.setString('office_logo_base64', logoBase64);
+    } else {
+      await prefs.remove('office_logo_base64');
+    }
+  }
+
   // Cache tier so Finance screen can read it synchronously (no flicker)
   final tier = profile['subscription_tier']?.toString() ?? 'free';
   await prefs.setString('subscription_tier', tier);
   
   return profile;
 });
+
 
 final isAdminProvider = Provider.autoDispose<bool>((ref) {
   final profileAsync = ref.watch(userProfileProvider);

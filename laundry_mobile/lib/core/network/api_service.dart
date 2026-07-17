@@ -70,7 +70,7 @@ class ApiService {
             requestOptions: e.requestOptions,
             response: e.response,
             type: e.type,
-            error: Exception("TierLimitError: $message"),
+            error: UserFriendlyException(message),
           ));
         }
         return handler.next(e);
@@ -315,10 +315,24 @@ class ApiService {
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.sendTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        return Exception('Connection timed out. Please check your internet connection and try again.');
+        return UserFriendlyException('Connection timed out. Please check your internet connection and try again.');
       } else if (e.type == DioExceptionType.connectionError) {
-        return Exception('No internet connection. Please check your network connection and try again.');
+        return UserFriendlyException('No internet connection. Please check your network connection and try again.');
       } else if (e.response != null) {
+        final statusCode = e.response?.statusCode;
+        
+        if (statusCode == 500) {
+          return UserFriendlyException('Something went wrong on our servers. Please try again in a few moments.');
+        } else if (statusCode == 502 || statusCode == 503 || statusCode == 504) {
+          return UserFriendlyException('Server is temporarily unreachable. Please try again shortly.');
+        } else if (statusCode == 404) {
+          return UserFriendlyException('Requested resource not found. Please verify and try again.');
+        } else if (statusCode == 401) {
+          return UserFriendlyException('Session expired or unauthorized. Please sign out and sign in again.');
+        } else if (statusCode == 403) {
+          return UserFriendlyException('Access denied. You do not have permission to perform this action.');
+        }
+        
         final data = e.response?.data;
         if (data is Map) {
           if (data.containsKey('error') && data['error'] != null) {
@@ -327,20 +341,22 @@ class ApiService {
               final messages = errorVal.values
                   .map((v) => v is List ? v.join(', ') : v.toString())
                   .join('\n');
-              if (messages.isNotEmpty) return Exception(messages);
+              if (messages.isNotEmpty) return UserFriendlyException(messages);
             }
-            return Exception(errorVal.toString());
+            return UserFriendlyException(errorVal.toString());
           }
           if (data.containsKey('detail') && data['detail'] != null) {
-            return Exception(data['detail'].toString());
+            return UserFriendlyException(data['detail'].toString());
           }
           if (data.containsKey('message') && data['message'] != null) {
-            return Exception(data['message'].toString());
+            return UserFriendlyException(data['message'].toString());
           }
           // Join validation error map (e.g., {"email": ["..."]})
           final List<String> fieldErrors = [];
           data.forEach((key, value) {
             final field = key.toString();
+            if (field == 'id' || field == 'office_id') return;
+            
             final capitalizedField = field.isNotEmpty
                 ? '${field[0].toUpperCase()}${field.substring(1)}'
                 : field;
@@ -353,15 +369,34 @@ class ApiService {
             }
           });
           if (fieldErrors.isNotEmpty) {
-            return Exception(fieldErrors.join('\n'));
+            return UserFriendlyException(fieldErrors.join('\n'));
           }
         }
-        return Exception(e.response?.statusMessage ?? 'Server error (${e.response?.statusCode})');
+        return UserFriendlyException(e.response?.statusMessage ?? 'Server error ($statusCode). Please try again.');
       }
     }
+    
+    String errorString = e.toString();
+    if (errorString.contains('SocketException') || 
+        errorString.contains('HandshakeException') ||
+        errorString.contains('HttpException')) {
+      return UserFriendlyException('Network connectivity error. Please check your internet connection.');
+    }
+    
     if (e is Exception) {
+      final message = errorString.replaceAll('Exception:', '').trim();
+      if (message.isNotEmpty) return UserFriendlyException(message);
       return e;
     }
-    return Exception('$defaultMessage: $e');
+    
+    return UserFriendlyException('$defaultMessage. Please check your connection and try again.');
   }
+}
+
+class UserFriendlyException implements Exception {
+  final String message;
+  UserFriendlyException(this.message);
+
+  @override
+  String toString() => message;
 }

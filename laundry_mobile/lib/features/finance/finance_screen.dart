@@ -74,8 +74,7 @@ class FinanceScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Export a full branded PDF report with revenue
-breakdown, trends, and top customers.',
+              'Export a full branded PDF report with revenue breakdown, trends, and top customers.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppTheme.textSecondary, height: 1.5),
             ),
@@ -97,8 +96,7 @@ breakdown, trends, and top customers.',
                           fontWeight: FontWeight.bold,
                           fontSize: 14)),
                   SizedBox(height: 4),
-                  Text('Upgrade your plan to unlock PDF exports,
-advanced analytics, and more.',
+                  Text('Upgrade your plan to unlock PDF exports, advanced analytics, and more.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           color: Colors.white70, fontSize: 12, height: 1.4)),

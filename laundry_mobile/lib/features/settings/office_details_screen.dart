@@ -35,7 +35,7 @@ class _OfficeDetailsScreenState extends ConsumerState<OfficeDetailsScreen> {
     final profile = ref.read(userProfileProvider).value;
     setState(() {
       _nameController.text = profile?['office_name'] ?? prefs.getString('office_name') ?? 'My Laundry Co.';
-      _addressController.text = prefs.getString('office_address') ?? '123 Clean St, Suite 4';
+      _addressController.text = (profile?['office_preferences']?['address'] as String?) ?? prefs.getString('office_address') ?? '123 Clean St, Suite 4';
       _contactController.text = profile?['office_contact_info'] ?? prefs.getString('office_contact') ?? '+1 234 567 8900';
       _logoBase64 = prefs.getString('office_logo_base64') ?? (profile?['office_preferences']?['logo_base64'] as String?);
       _isLoading = false;
@@ -89,6 +89,7 @@ class _OfficeDetailsScreenState extends ConsumerState<OfficeDetailsScreen> {
         
         final existingPreferences = Map<String, dynamic>.from(profile?['office_preferences'] ?? {});
         existingPreferences['logo_base64'] = _logoBase64;
+        existingPreferences['address'] = _addressController.text;
         
         if (officeId != null) {
           final api = ref.read(apiServiceProvider);

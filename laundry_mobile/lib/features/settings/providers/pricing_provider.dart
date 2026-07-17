@@ -4,6 +4,7 @@ import '../../../core/local_db/database_helper.dart';
 import '../../../core/models/category_model.dart';
 import '../../../core/models/service_type_model.dart';
 import '../../../core/models/item_pricing_model.dart';
+import '../../../core/providers.dart';
 
 final dbHelperProvider = Provider((ref) => DatabaseHelper.instance);
 
@@ -41,6 +42,7 @@ class ConfigurationController {
     );
     await dbHelper.insertCategory(category.toDb());
     ref.invalidate(categoriesProvider);
+    ref.read(syncRepositoryProvider).triggerSync();
   }
 
   Future<void> editCategory(CategoryModel category, String newName) async {
@@ -53,6 +55,7 @@ class ConfigurationController {
     );
     await dbHelper.insertCategory(updated.toDb());
     ref.invalidate(categoriesProvider);
+    ref.read(syncRepositoryProvider).triggerSync();
   }
 
   Future<void> deleteCategory(CategoryModel category) async {
@@ -66,6 +69,7 @@ class ConfigurationController {
     );
     await dbHelper.insertCategory(updated.toDb());
     ref.invalidate(categoriesProvider);
+    ref.read(syncRepositoryProvider).triggerSync();
   }
 
   Future<void> addServiceType(String name, String description) async {
@@ -79,6 +83,7 @@ class ConfigurationController {
     );
     await dbHelper.insertServiceType(serviceType.toDb());
     ref.invalidate(serviceTypesProvider);
+    ref.read(syncRepositoryProvider).triggerSync();
   }
 
   Future<void> editServiceType(ServiceTypeModel serviceType, String newName, String newDesc) async {
@@ -92,6 +97,7 @@ class ConfigurationController {
     );
     await dbHelper.insertServiceType(updated.toDb());
     ref.invalidate(serviceTypesProvider);
+    ref.read(syncRepositoryProvider).triggerSync();
   }
 
   Future<void> deleteServiceType(ServiceTypeModel serviceType) async {
@@ -106,6 +112,7 @@ class ConfigurationController {
     );
     await dbHelper.insertServiceType(updated.toDb());
     ref.invalidate(serviceTypesProvider);
+    ref.read(syncRepositoryProvider).triggerSync();
   }
 
   Future<void> addItemPricing(String name, double price, String categoryId, String serviceTypeId) async {
@@ -121,6 +128,7 @@ class ConfigurationController {
     );
     await dbHelper.insertItemPricing(pricing.toDb());
     ref.invalidate(itemPricingProvider);
+    ref.read(syncRepositoryProvider).triggerSync();
   }
 
   Future<void> editItemPricing(ItemPricingModel pricing, String newName, double newPrice, String newCategoryId, String newServiceTypeId) async {
@@ -136,6 +144,7 @@ class ConfigurationController {
     );
     await dbHelper.insertItemPricing(updated.toDb());
     ref.invalidate(itemPricingProvider);
+    ref.read(syncRepositoryProvider).triggerSync();
   }
 
   Future<void> deleteItemPricing(ItemPricingModel pricing) async {
@@ -152,9 +161,11 @@ class ConfigurationController {
     );
     await dbHelper.insertItemPricing(updated.toDb());
     ref.invalidate(itemPricingProvider);
+    ref.read(syncRepositoryProvider).triggerSync();
   }
 }
 
 final configurationControllerProvider = Provider<ConfigurationController>((ref) {
   return ConfigurationController(ref, ref.watch(dbHelperProvider));
 });
+
