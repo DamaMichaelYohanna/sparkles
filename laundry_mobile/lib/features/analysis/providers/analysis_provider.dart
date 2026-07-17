@@ -101,8 +101,9 @@ final analysisStatsProvider = Provider.autoDispose<AsyncValue<AnalysisStats>>((r
       final endOfWeek = startOfWeek.add(const Duration(days: 7));
 
       for (var order in orders) {
-        if (order.createdAt.isAfter(startOfWeek) && order.createdAt.isBefore(endOfWeek)) {
-          int weekday = order.createdAt.weekday; // 1 = Mon, 7 = Sun
+        final localCreated = order.createdAt.toLocal();
+        if (localCreated.isAfter(startOfWeek) && localCreated.isBefore(endOfWeek)) {
+          int weekday = localCreated.weekday; // 1 = Mon, 7 = Sun
           weeklyTrend[weekday - 1] += order.totalPrice;
         }
       }
@@ -121,18 +122,19 @@ final analysisStatsProvider = Provider.autoDispose<AsyncValue<AnalysisStats>>((r
       final startOfYear = DateTime(now.year, 1, 1);
 
       for (var order in orders) {
+        final localCreated = order.createdAt.toLocal();
         // This Week
-        if (order.createdAt.isAfter(startOfWeek.subtract(const Duration(seconds: 1))) && order.createdAt.isBefore(now)) {
+        if (localCreated.isAfter(startOfWeek.subtract(const Duration(seconds: 1))) && localCreated.isBefore(now)) {
           weeklyOrdersCount++;
           weeklyOrdersValue += order.totalPrice;
         }
         // This Month
-        if (order.createdAt.isAfter(startOfMonth.subtract(const Duration(seconds: 1))) && order.createdAt.isBefore(now)) {
+        if (localCreated.isAfter(startOfMonth.subtract(const Duration(seconds: 1))) && localCreated.isBefore(now)) {
           monthlyOrdersCount++;
           monthlyOrdersValue += order.totalPrice;
         }
         // This Year
-        if (order.createdAt.isAfter(startOfYear.subtract(const Duration(seconds: 1))) && order.createdAt.isBefore(now)) {
+        if (localCreated.isAfter(startOfYear.subtract(const Duration(seconds: 1))) && localCreated.isBefore(now)) {
           yearlyOrdersCount++;
           yearlyOrdersValue += order.totalPrice;
         }
@@ -148,9 +150,10 @@ final analysisStatsProvider = Provider.autoDispose<AsyncValue<AnalysisStats>>((r
       double lastWeekRevenue = 0.0;
 
       for (var order in orders) {
-        if (order.createdAt.isAfter(startOfWeek) && order.createdAt.isBefore(now)) {
+        final localCreated = order.createdAt.toLocal();
+        if (localCreated.isAfter(startOfWeek) && localCreated.isBefore(now)) {
           thisWeekRevenue += order.totalPrice;
-        } else if (order.createdAt.isAfter(startOfLastWeek) && order.createdAt.isBefore(endOfLastWeek)) {
+        } else if (localCreated.isAfter(startOfLastWeek) && localCreated.isBefore(endOfLastWeek)) {
           lastWeekRevenue += order.totalPrice;
         }
       }

@@ -17,10 +17,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('access_token');
-    await prefs.remove('refresh_token');
-    await prefs.remove('last_sync_timestamp');
-    await prefs.remove('subscription_tier');
+    await prefs.clear();
 
     // Reset user-specific cache providers
     ref.invalidate(userProfileProvider);

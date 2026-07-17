@@ -41,11 +41,11 @@ class OrderModel {
       totalPrice: double.tryParse(json['total_price']?.toString() ?? '0.0') ?? 0.0,
       amountPaid: double.tryParse(json['amount_paid']?.toString() ?? '0.0') ?? 0.0,
       createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']).toLocal() 
-          : DateTime.now(),
+          ? DateTime.parse(json['created_at']).toUtc() 
+          : DateTime.now().toUtc(),
       updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at']).toLocal() 
-          : DateTime.now(),
+          ? DateTime.parse(json['updated_at']).toUtc() 
+          : DateTime.now().toUtc(),
       isDeleted: json['is_deleted'] ?? false,
       discountAmount: double.tryParse(json['discount_amount']?.toString() ?? '0.0') ?? 0.0,
     );
@@ -59,8 +59,8 @@ class OrderModel {
       status: map['current_status'] as String,
       totalPrice: map['total_price'] as double,
       amountPaid: map['amount_paid'] as double? ?? 0.0,
-      createdAt: DateTime.parse(map['created_at'] as String).toLocal(),
-      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String).toLocal() : DateTime.now(),
+      createdAt: DateTime.parse(map['created_at'] as String).toUtc(),
+      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String).toUtc() : DateTime.now().toUtc(),
       isDeleted: (map['is_deleted'] as int? ?? 0) == 1,
       syncStatus: map['sync_status'] as String? ?? 'synced',
       discountAmount: map['discount_amount'] as double? ?? 0.0,
@@ -84,5 +84,8 @@ class OrderModel {
   }
 
   String get displayId => id.length > 8 ? id.substring(0, 8).toUpperCase() : id.toUpperCase();
-  String get displayDate => "${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}";
+  String get displayDate {
+    final localDate = createdAt.toLocal();
+    return "${localDate.year}-${localDate.month.toString().padLeft(2, '0')}-${localDate.day.toString().padLeft(2, '0')}";
+  }
 }

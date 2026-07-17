@@ -1,56 +1,6 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'landing/base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Sparkles - Professional multi-tenant operating system and management tool for modern laundry businesses.">
-
-    <!-- Open Graph / Facebook / LinkedIn Site Preview -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://www.sparkles.com.ng/">
-    <meta property="og:title" content="Sparkles - Operating System for Modern Laundry Businesses">
-    <meta property="og:description"
-        content="Manage branches, staff, payments, and send WhatsApp notifications automatically when orders are completed. Try the Sparkles companion app today.">
-    <meta property="og:image" content="https://www.sparkles.com.ng/{% static 'landing/images/logo.png' %}">
-
-    <!-- Twitter Card Site Preview -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://www.sparkles.com.ng/">
-    <meta property="twitter:title" content="Sparkles - Operating System for Modern Laundry Businesses">
-    <meta property="twitter:description"
-        content="Manage branches, staff, payments, and send WhatsApp notifications automatically when orders are completed. Try the Sparkles companion app today.">
-    <meta property="twitter:image" content="https://www.sparkles.com.ng/{% static 'landing/images/logo.png' %}">
-
-    <title>Sparkles - System for Modern Laundry Businesses</title>
-    <!-- Google Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@600;700;800&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'landing/css/styles.css' %}">
-    <!-- FontAwesome for professional icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-</head>
-
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles Logo" class="logo-img">
-                Sparkles
-            </div>
-            <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#pricing">Pricing</a>
-                <a href="/terms">Terms & Conditions</a>
-                <a href="/privacy">Privacy Policy</a>
-                <a href="#waitlist" class="btn-waitlist-nav">Join Waitlist</a>
-            </div>
-        </div>
-    </nav>
+{% block content %}
 
     <!-- Hero Section -->
     <header class="hero">
@@ -506,7 +456,9 @@
             <div id="waitlist-message-bottom" class="waitlist-message-centered"></div>
         </div>
     </section>
+{% endblock %}
 
+{% block extra_scripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('waitlist-form-bottom');
@@ -563,67 +515,6 @@
                 }
                 return cookieValue;
             }
-
-            // Back to Top Button Logic
-            const backToTopBtn = document.getElementById('back-to-top');
-            if (backToTopBtn) {
-                window.addEventListener('scroll', function () {
-                    if (window.scrollY > 300) {
-                        backToTopBtn.classList.add('show');
-                    } else {
-                        backToTopBtn.classList.remove('show');
-                    }
-                });
-                backToTopBtn.addEventListener('click', function () {
-                    window.scrollTo({
-                        top: 0,
-                        behavior: 'smooth'
-                    });
-                });
-            }
         });
     </script>
-
-    <!-- Footer -->
-    <footer>
-        <div class="footer-container">
-            <div class="footer-brand">
-                <span class="footer-logo">
-                    <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles Logo" class="logo-img">
-                    Sparkles
-                </span>
-                <p>The enterprise operating system for modern multi-branch laundry services and offices.</p>
-            </div>
-            <div class="footer-links">
-                <div class="footer-col">
-                    <h4>Product</h4>
-                    <a href="#features">Features</a>
-                    <a href="#app-showcase">Preview</a>
-                    <a href="/dashboard/">Admin Dashboard</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Company</h4>
-                    <a href="#about">About Us</a>
-                    <a href="#">Security Details</a>
-                    <a href="/api/schema/swagger-ui/">API Documentation</a>
-                </div>
-                <div class="footer-col">
-                    <h4>Legal</h4>
-                    <a href="/privacy/">Privacy Policy</a>
-                    <a href="/terms/">Terms of Service</a>
-                    <a href="/privacy/#delete-data">Request Data Deletion</a>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 Sparkles Inc. All rights reserved.</p>
-        </div>
-    </footer>
-
-    <!-- Back to Top Button -->
-    <button id="back-to-top" class="back-to-top" aria-label="Back to top">
-        <i class="fa-solid fa-arrow-up"></i>
-    </button>
-</body>
-
-</html>
+{% endblock %}

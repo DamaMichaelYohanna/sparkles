@@ -115,8 +115,8 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
       unitPrice: pricing.price,
       discountAmount: discountAmount,
       subtotal: subtotal < 0 ? 0.0 : subtotal,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      createdAt: DateTime.now().toUtc(),
+      updatedAt: DateTime.now().toUtc(),
       syncStatus: 'pending',
     );
 
@@ -136,7 +136,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
         discountAmount: newDiscount,
         subtotal: newSubtotal < 0 ? 0.0 : newSubtotal,
         createdAt: existingItem.createdAt,
-        updatedAt: DateTime.now(),
+        updatedAt: DateTime.now().toUtc(),
         syncStatus: 'pending',
       );
       final updatedList = List<OrderItemModel>.from(state.items)..[existingIndex] = updatedItem;
@@ -158,7 +158,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
 
     final isEditing = state.existingOrderId != null;
     final orderId = state.existingOrderId ?? const Uuid().v4();
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
 
     final order = OrderModel(
       id: orderId,

@@ -36,8 +36,8 @@ class ConfigurationController {
     final category = CategoryModel(
       id: const Uuid().v4(),
       name: name,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      createdAt: DateTime.now().toUtc(),
+      updatedAt: DateTime.now().toUtc(),
       syncStatus: 'pending',
     );
     await dbHelper.insertCategory(category.toDb());
@@ -50,7 +50,7 @@ class ConfigurationController {
       id: category.id,
       name: newName,
       createdAt: category.createdAt,
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toUtc(),
       syncStatus: 'pending',
     );
     await dbHelper.insertCategory(updated.toDb());
@@ -63,7 +63,7 @@ class ConfigurationController {
       id: category.id,
       name: category.name,
       createdAt: category.createdAt,
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toUtc(),
       isDeleted: true,
       syncStatus: 'pending',
     );
@@ -77,8 +77,8 @@ class ConfigurationController {
       id: const Uuid().v4(),
       name: name,
       description: description,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      createdAt: DateTime.now().toUtc(),
+      updatedAt: DateTime.now().toUtc(),
       syncStatus: 'pending',
     );
     await dbHelper.insertServiceType(serviceType.toDb());
@@ -92,7 +92,7 @@ class ConfigurationController {
       name: newName,
       description: newDesc,
       createdAt: serviceType.createdAt,
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toUtc(),
       syncStatus: 'pending',
     );
     await dbHelper.insertServiceType(updated.toDb());
@@ -106,7 +106,7 @@ class ConfigurationController {
       name: serviceType.name,
       description: serviceType.description,
       createdAt: serviceType.createdAt,
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toUtc(),
       isDeleted: true,
       syncStatus: 'pending',
     );
@@ -122,8 +122,8 @@ class ConfigurationController {
       price: price,
       categoryId: categoryId,
       serviceTypeId: serviceTypeId,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      createdAt: DateTime.now().toUtc(),
+      updatedAt: DateTime.now().toUtc(),
       syncStatus: 'pending',
     );
     await dbHelper.insertItemPricing(pricing.toDb());
@@ -139,7 +139,7 @@ class ConfigurationController {
       categoryId: newCategoryId,
       serviceTypeId: newServiceTypeId,
       createdAt: pricing.createdAt,
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toUtc(),
       syncStatus: 'pending',
     );
     await dbHelper.insertItemPricing(updated.toDb());
@@ -155,7 +155,7 @@ class ConfigurationController {
       categoryId: pricing.categoryId,
       serviceTypeId: pricing.serviceTypeId,
       createdAt: pricing.createdAt,
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toUtc(),
       isDeleted: true,
       syncStatus: 'pending',
     );

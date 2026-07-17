@@ -99,7 +99,7 @@ class SyncAPIView(APIView):
             try:
                 cat_obj = Category.objects.get(id=cat_id, office=office)
                 incoming_updated_at = make_aware(parse(cat_dict.get('updated_at', '')))
-                if incoming_updated_at > cat_obj.updated_at:
+                if incoming_updated_at > cat_obj.updated_at or cat_dict.get('is_deleted', False):
                     if cat_dict.get('is_deleted', False):
                         cat_obj.is_deleted = True
                     else:
@@ -125,7 +125,7 @@ class SyncAPIView(APIView):
             try:
                 srv_obj = ServiceType.objects.get(id=srv_id, office=office)
                 incoming_updated_at = make_aware(parse(srv_dict.get('updated_at', '')))
-                if incoming_updated_at > srv_obj.updated_at:
+                if incoming_updated_at > srv_obj.updated_at or srv_dict.get('is_deleted', False):
                     if srv_dict.get('is_deleted', False):
                         srv_obj.is_deleted = True
                     else:
@@ -153,7 +153,7 @@ class SyncAPIView(APIView):
             try:
                 ip_obj = ItemPricing.objects.get(id=ip_id, office=office)
                 incoming_updated_at = make_aware(parse(ip_dict.get('updated_at', '')))
-                if incoming_updated_at > ip_obj.updated_at:
+                if incoming_updated_at > ip_obj.updated_at or ip_dict.get('is_deleted', False):
                     if ip_dict.get('is_deleted', False):
                         ip_obj.is_deleted = True
                     else:
@@ -198,7 +198,7 @@ class SyncAPIView(APIView):
                 was_completed = order_obj.current_status.is_completed_state
                 # Last write wins
                 incoming_updated_at = make_aware(parse(order_dict.get('updated_at', '')))
-                if incoming_updated_at > order_obj.updated_at:
+                if incoming_updated_at > order_obj.updated_at or order_dict.get('is_deleted', False):
                     if order_dict.get('is_deleted', False):
                         order_obj.is_deleted = True
                     else:
@@ -272,7 +272,7 @@ class SyncAPIView(APIView):
             try:
                 item_obj = OrderItem.objects.get(id=item_id, order__office=office)
                 incoming_updated_at = make_aware(parse(item_dict.get('updated_at', '')))
-                if incoming_updated_at > item_obj.updated_at:
+                if incoming_updated_at > item_obj.updated_at or item_dict.get('is_deleted', False):
                     if item_dict.get('is_deleted', False):
                         item_obj.is_deleted = True
                     else:

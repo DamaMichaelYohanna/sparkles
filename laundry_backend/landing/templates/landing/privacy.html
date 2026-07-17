@@ -1,46 +1,25 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'landing/base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Sparkles Privacy Policy — learn how Dama Software Solution LTD collects, uses, and protects your data.">
+{% block title %}Privacy Policy — Sparkles{% endblock %}
+{% block meta_description %}Sparkles Privacy Policy — learn how Dama Software Solution LTD collects, uses, and protects your data.{% endblock %}
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://www.sparkles.com.ng/privacy/">
-    <meta property="og:title" content="Privacy Policy — Sparkles">
-    <meta property="og:description"
-        content="Learn how Sparkles, a product of Dama Software Solution LTD, collects, uses, and safeguards your personal data.">
-
-    <title>Privacy Policy — Sparkles</title>
-
-    <!-- Google Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@600;700;800&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'landing/css/styles.css' %}">
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+{% block extra_head %}
     <style>
         /* ── Hero ───────────────────────────────────────────────── */
         .terms-hero {
             padding: 120px 0 56px;
             text-align: center;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            background: #fafafa;
+            border-bottom: 1px solid #eef0f2;
         }
 
         .terms-hero .badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: #6ee7b7;
+            background: rgba(92, 99, 106, 0.08);
+            border: 1px solid rgba(92, 99, 106, 0.2);
+            color: #3a3f44;
             padding: 6px 16px;
             border-radius: 50px;
             font-size: 0.78rem;
@@ -53,17 +32,17 @@
         .terms-hero h1 {
             font-size: clamp(2rem, 4vw, 3rem);
             font-weight: 800;
-            color: #f8fafc;
+            color: #1a1a1a;
             margin: 0 auto 12px;
             line-height: 1.2;
         }
 
         .terms-hero p {
-            color: #94a3b8;
+            color: #6c757d;
             font-size: 0.95rem;
         }
 
-        .terms-hero p strong { color: #cbd5e1; }
+        .terms-hero p strong { color: #333333; }
 
         /* ── Document body ──────────────────────────────────────── */
         .terms-content {
@@ -79,7 +58,7 @@
         .terms-section h2 {
             font-size: 1.05rem;
             font-weight: 700;
-            color: #6ee7b7;
+            color: #1a1a1a;
             letter-spacing: 0.04em;
             text-transform: uppercase;
             margin-bottom: 14px;
@@ -94,13 +73,13 @@
             width: 3px;
             height: 18px;
             border-radius: 4px;
-            background: linear-gradient(180deg, #10b981, #059669);
+            background: linear-gradient(180deg, #5c636a, #3a3f44);
             flex-shrink: 0;
         }
 
         .terms-section p,
         .terms-section li {
-            color: #94a3b8;
+            color: #6c757d;
             font-size: 0.97rem;
             line-height: 1.8;
         }
@@ -121,14 +100,14 @@
             content: '▸';
             position: absolute;
             left: 0;
-            color: #10b981;
+            color: #3a3f44;
             font-size: 0.75rem;
             top: 4px;
         }
 
         .terms-divider {
             border: none;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid #eef0f2;
             margin: 0 0 44px;
         }
 
@@ -136,7 +115,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            color: #10b981;
+            color: #3a3f44;
             font-weight: 600;
             font-size: 0.9rem;
             text-decoration: none;
@@ -144,11 +123,11 @@
             transition: color 0.2s;
         }
 
-        .terms-back-link:hover { color: #6ee7b7; }
+        .terms-back-link:hover { color: #5c636a; }
 
         .contact-card {
-            background: rgba(16, 185, 129, 0.07);
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            background: #fafafa;
+            border: 1px solid #eef0f2;
             border-radius: 12px;
             padding: 24px 28px;
             margin-top: 12px;
@@ -157,32 +136,15 @@
         .contact-card p { margin: 0; }
 
         .contact-card a {
-            color: #6ee7b7;
+            color: #3a3f44;
             text-decoration: none;
         }
 
         .contact-card a:hover { text-decoration: underline; }
     </style>
-</head>
+{% endblock %}
 
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles Logo" class="logo-img">
-                Sparkles
-            </div>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <a href="/#features">Features</a>
-                <a href="/#pricing">Pricing</a>
-                <a href="/#about">About Us</a>
-                <a href="/#waitlist" class="btn-waitlist-nav">Join Waitlist</a>
-            </div>
-        </div>
-    </nav>
-
+{% block content %}
     <!-- Hero -->
     <section class="terms-hero">
         <div class="badge">
@@ -214,11 +176,11 @@
             <h2>2. Information We Collect</h2>
             <p>We collect the following categories of data to operate and improve Sparkles:</p>
             <ul>
-                <li><strong style="color:#cbd5e1;">Account data</strong> — name, business name, email address, and password (stored as a secure hash).</li>
-                <li><strong style="color:#cbd5e1;">Business data</strong> — order records, customer names, pricing, service types, branch details, and staff accounts you create inside the app.</li>
-                <li><strong style="color:#cbd5e1;">Billing data</strong> — subscription tier and Paystack payment reference numbers. We do not store your full card details; card data is handled exclusively by Paystack.</li>
-                <li><strong style="color:#cbd5e1;">Usage data</strong> — log timestamps, sync activity, and basic diagnostic information used to maintain service reliability.</li>
-                <li><strong style="color:#cbd5e1;">Device data</strong> — operating system version and app version, collected anonymously for compatibility purposes.</li>
+                <li><strong style="color:#333333;">Account data</strong> — name, business name, email address, and password (stored as a secure hash).</li>
+                <li><strong style="color:#333333;">Business data</strong> — order records, customer names, pricing, service types, branch details, and staff accounts you create inside the app.</li>
+                <li><strong style="color:#333333;">Billing data</strong> — subscription tier and Paystack payment reference numbers. We do not store your full card details; card data is handled exclusively by Paystack.</li>
+                <li><strong style="color:#333333;">Usage data</strong> — log timestamps, sync activity, and basic diagnostic information used to maintain service reliability.</li>
+                <li><strong style="color:#333333;">Device data</strong> — operating system version and app version, collected anonymously for compatibility purposes.</li>
             </ul>
         </div>
         <hr class="terms-divider">
@@ -235,7 +197,7 @@
                 <li>Respond to support enquiries and resolve technical issues.</li>
                 <li>Improve platform features based on aggregated, anonymised usage patterns.</li>
             </ul>
-            <p style="margin-top:12px;">We do <strong style="color:#cbd5e1;">not</strong> sell, rent, or trade your personal data to third parties for marketing purposes.</p>
+            <p style="margin-top:12px;">We do <strong style="color:#333333;">not</strong> sell, rent, or trade your personal data to third parties for marketing purposes.</p>
         </div>
         <hr class="terms-divider">
 
@@ -259,10 +221,10 @@
             <p>We share your data only with the following third-party service providers, and only to the extent
                 necessary to deliver the service:</p>
             <ul>
-                <li><strong style="color:#cbd5e1;">Paystack</strong> — payment processing and subscription billing.</li>
-                <li><strong style="color:#cbd5e1;">Resend</strong> — transactional email delivery.</li>
-                <li><strong style="color:#cbd5e1;">Meta (WhatsApp Cloud API)</strong> — order-completion WhatsApp notifications sent to your customers.</li>
-                <li><strong style="color:#cbd5e1;">Vercel / cloud hosting</strong> — infrastructure for serving the application.</li>
+                <li><strong style="color:#333333;">Paystack</strong> — payment processing and subscription billing.</li>
+                <li><strong style="color:#333333;">Resend</strong> — transactional email delivery.</li>
+                <li><strong style="color:#333333;">Meta (WhatsApp Cloud API)</strong> — order-completion WhatsApp notifications sent to your customers.</li>
+                <li><strong style="color:#333333;">Vercel / cloud hosting</strong> — infrastructure for serving the application.</li>
             </ul>
             <p style="margin-top:12px;">We may disclose your data if required to do so by law or in response to a valid legal request.</p>
         </div>
@@ -277,7 +239,7 @@
                 purposes (e.g. financial records).
             </p>
             <p style="margin-top:12px;">
-                <strong>How to request data deletion:</strong> You can request the deletion of your account and all associated personal and business data at any time by sending an email to <a href="mailto:support@sparkles.com.ng?subject=Data%20Deletion%20Request" style="color:#6ee7b7; text-decoration:underline;">support@sparkles.com.ng</a>. Please include your registered email address and business name. Once processed, all database records will be permanently deleted and cannot be recovered.
+                <strong>How to request data deletion:</strong> You can request the deletion of your account and all associated personal and business data at any time by sending an email to <a href="mailto:support@sparkles.com.ng?subject=Data%20Deletion%20Request" style="color:#3a3f44; text-decoration:underline;">support@sparkles.com.ng</a>. Please include your registered email address and business name. Once processed, all database records will be permanently deleted and cannot be recovered.
             </p>
         </div>
         <hr class="terms-divider">
@@ -332,42 +294,11 @@
             <p>If you have any questions, concerns, or requests regarding this Privacy Policy, please reach out:</p>
             <div class="contact-card">
                 <p>
-                    <strong style="color:#cbd5e1;">Dama Software Solution LTD</strong><br>
+                    <strong style="color:#333333;">Dama Software Solution LTD</strong><br>
                     Email: <a href="mailto:support@sparkles.com.ng">support@sparkles.com.ng</a><br>
                     Website: <a href="https://www.sparkles.com.ng">www.sparkles.com.ng</a>
                 </p>
             </div>
         </div>
     </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-brand">
-                <div class="footer-logo">
-                    <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles" class="logo-img">
-                    Sparkles
-                </div>
-                <p class="footer-tagline">The operating system for modern laundry businesses.</p>
-                <p style="color:#475569;font-size:0.8rem;margin-top:4px;">A product of Dama Software Solution LTD.</p>
-            </div>
-            <div class="footer-col">
-                <h4>Company</h4>
-                <a href="/#about">About Us</a>
-                <a href="/#features">Features</a>
-                <a href="/api/schema/swagger-ui/">API Documentation</a>
-            </div>
-            <div class="footer-col">
-                <h4>Legal</h4>
-                <a href="/privacy/" aria-current="page">Privacy Policy</a>
-                <a href="/terms/">Terms of Service</a>
-                <a href="/privacy/#delete-data">Request Data Deletion</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 Dama Software Solution LTD. All rights reserved.</p>
-        </div>
-    </footer>
-</body>
-
-</html>
+{% endblock %}

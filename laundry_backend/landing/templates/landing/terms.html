@@ -1,44 +1,25 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'landing/base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sparkles Terms of Service — Dama Software Solution LTD.">
+{% block title %}Terms of Service — Sparkles{% endblock %}
+{% block meta_description %}Sparkles Terms of Service — Dama Software Solution LTD.{% endblock %}
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://www.sparkles.com.ng/terms/">
-    <meta property="og:title" content="Terms of Service — Sparkles">
-    <meta property="og:description" content="Read the Terms of Service for Sparkles, a product of Dama Software Solution LTD.">
-
-    <title>Terms of Service — Sparkles</title>
-
-    <!-- Google Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@600;700;800&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'landing/css/styles.css' %}">
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+{% block extra_head %}
     <style>
         /* ── Page-level overrides ───────────────────────────────── */
         .terms-hero {
             padding: 120px 0 56px;
             text-align: center;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            background: #fafafa;
+            border-bottom: 1px solid #eef0f2;
         }
 
         .terms-hero .badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(99, 102, 241, 0.15);
-            border: 1px solid rgba(99, 102, 241, 0.35);
-            color: #a5b4fc;
+            background: rgba(92, 99, 106, 0.08);
+            border: 1px solid rgba(92, 99, 106, 0.2);
+            color: #3a3f44;
             padding: 6px 16px;
             border-radius: 50px;
             font-size: 0.78rem;
@@ -51,18 +32,18 @@
         .terms-hero h1 {
             font-size: clamp(2rem, 4vw, 3rem);
             font-weight: 800;
-            color: #f8fafc;
+            color: #1a1a1a;
             margin: 0 auto 12px;
             line-height: 1.2;
         }
 
         .terms-hero p {
-            color: #94a3b8;
+            color: #6c757d;
             font-size: 0.95rem;
         }
 
         .terms-hero p strong {
-            color: #cbd5e1;
+            color: #333333;
         }
 
         /* ── Document body ──────────────────────────────────────── */
@@ -79,7 +60,7 @@
         .terms-section h2 {
             font-size: 1.05rem;
             font-weight: 700;
-            color: #a5b4fc;
+            color: #1a1a1a;
             letter-spacing: 0.04em;
             text-transform: uppercase;
             margin-bottom: 14px;
@@ -94,19 +75,41 @@
             width: 3px;
             height: 18px;
             border-radius: 4px;
-            background: linear-gradient(180deg, #6366f1, #8b5cf6);
+            background: linear-gradient(180deg, #5c636a, #3a3f44);
             flex-shrink: 0;
         }
 
-        .terms-section p {
-            color: #94a3b8;
+        .terms-section p,
+        .terms-section li {
+            color: #6c757d;
             font-size: 0.97rem;
             line-height: 1.8;
         }
 
+        .terms-section ul {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+            list-style: none;
+        }
+
+        .terms-section ul li {
+            position: relative;
+            padding-left: 18px;
+            margin-bottom: 6px;
+        }
+
+        .terms-section ul li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #3a3f44;
+            font-size: 0.75rem;
+            top: 4px;
+        }
+
         .terms-divider {
             border: none;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid #eef0f2;
             margin: 0 0 44px;
         }
 
@@ -114,7 +117,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            color: #6366f1;
+            color: #3a3f44;
             font-weight: 600;
             font-size: 0.9rem;
             text-decoration: none;
@@ -122,38 +125,19 @@
             transition: color 0.2s;
         }
 
-        .terms-back-link:hover {
-            color: #a5b4fc;
-        }
+        .terms-back-link:hover { color: #5c636a; }
     </style>
-</head>
+{% endblock %}
 
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles Logo" class="logo-img">
-                Sparkles
-            </div>
-            <div class="nav-links">
-                <a href="/">Home</a>
-                <a href="/#features">Features</a>
-                <a href="/#pricing">Pricing</a>
-                <a href="/#about">About Us</a>
-                <a href="/#waitlist" class="btn-waitlist-nav">Join Waitlist</a>
-            </div>
-        </div>
-    </nav>
-
+{% block content %}
     <!-- Hero -->
     <section class="terms-hero">
         <div class="badge">
-            <i class="fa-solid fa-shield-halved"></i>
+            <i class="fa-solid fa-file-contract"></i>
             Legal
         </div>
         <h1>Terms of Service</h1>
-        <p>Last updated: <strong>July 2026</strong> &nbsp;·&nbsp; Effective immediately upon use</p>
+        <p>Last updated: <strong>July 2026</strong> &nbsp;·&nbsp; Dama Software Solution LTD</p>
     </section>
 
     <!-- Terms Content -->
@@ -163,10 +147,11 @@
         </a>
 
         <div class="terms-section">
-            <h2>1. Acceptance of Terms</h2>
+            <h2>1. Terms of Use</h2>
             <p>
-                By accessing or using Sparkles, you agree to be bound by these Terms of Service.
-                If you do not agree to these terms, you may not use the service.
+                By using Sparkles, you agree to comply with and be bound by these Terms of Service. If you do not agree
+                to these terms, please do not use the application. Dama Software Solution LTD reserves the right to
+                update these terms at any time.
             </p>
         </div>
         <hr class="terms-divider">
@@ -174,7 +159,7 @@
         <div class="terms-section">
             <h2>2. Ownership</h2>
             <p>
-                Sparkles is a product owned and operated by <strong style="color:#cbd5e1;">Dama Software Solution LTD</strong>.
+                Sparkles is a product owned and operated by <strong style="color:#333333;">Dama Software Solution LTD</strong>.
                 All rights, title, and interest in and to the software, including all intellectual property rights,
                 remain the exclusive property of Dama Software Solution LTD.
             </p>
@@ -227,35 +212,4 @@
             </p>
         </div>
     </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-brand">
-                <div class="footer-logo">
-                    <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles" class="logo-img">
-                    Sparkles
-                </div>
-                <p class="footer-tagline">The operating system for modern laundry businesses.</p>
-                <p style="color:#475569;font-size:0.8rem;margin-top:4px;">A product of Dama Software Solution LTD.</p>
-            </div>
-            <div class="footer-col">
-                <h4>Company</h4>
-                <a href="/#about">About Us</a>
-                <a href="/#features">Features</a>
-                <a href="/api/schema/swagger-ui/">API Documentation</a>
-            </div>
-            <div class="footer-col">
-                <h4>Legal</h4>
-                <a href="/privacy/">Privacy Policy</a>
-                <a href="/terms/" aria-current="page">Terms of Service</a>
-                <a href="/privacy/#delete-data">Request Data Deletion</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 Dama Software Solution LTD. All rights reserved.</p>
-        </div>
-    </footer>
-</body>
-
-</html>
+{% endblock %}

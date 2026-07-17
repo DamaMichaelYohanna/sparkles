@@ -41,8 +41,9 @@ final dashboardStatsProvider = FutureProvider.autoDispose<DashboardStats>((ref) 
   final endOfWeek = startOfWeek.add(const Duration(days: 7));
 
   for (var order in orders) {
-    if (order.createdAt.isAfter(startOfWeek) && order.createdAt.isBefore(endOfWeek)) {
-      int weekday = order.createdAt.weekday; // 1 = Mon, 7 = Sun
+    final localCreated = order.createdAt.toLocal();
+    if (localCreated.isAfter(startOfWeek) && localCreated.isBefore(endOfWeek)) {
+      int weekday = localCreated.weekday; // 1 = Mon, 7 = Sun
       weeklyTrend[weekday - 1] += order.totalPrice;
     }
   }

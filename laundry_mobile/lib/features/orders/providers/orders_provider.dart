@@ -110,18 +110,19 @@ final filteredOrdersListProvider = Provider.autoDispose<AsyncValue<List<OrderMod
 
       // 3. Date Range Filter
       filtered = filtered.where((o) {
+        final localCreated = o.createdAt.toLocal();
         switch (filter.dateRange) {
           case 'Today':
-            return o.createdAt.year == now.year &&
-                o.createdAt.month == now.month &&
-                o.createdAt.day == now.day;
+            return localCreated.year == now.year &&
+                localCreated.month == now.month &&
+                localCreated.day == now.day;
           case 'This Week':
             final monday = now.subtract(Duration(days: now.weekday - 1));
             final startOfWeek = DateTime(monday.year, monday.month, monday.day);
             final endOfWeek = startOfWeek.add(const Duration(days: 7));
-            return o.createdAt.isAfter(startOfWeek) && o.createdAt.isBefore(endOfWeek);
+            return localCreated.isAfter(startOfWeek) && localCreated.isBefore(endOfWeek);
           case 'This Month':
-            return o.createdAt.year == now.year && o.createdAt.month == now.month;
+            return localCreated.year == now.year && localCreated.month == now.month;
           case 'Custom':
             if (filter.customDateRange == null) return true;
             final start = DateTime(
@@ -137,8 +138,8 @@ final filteredOrdersListProvider = Provider.autoDispose<AsyncValue<List<OrderMod
               59,
               59,
             );
-            return o.createdAt.isAfter(start.subtract(const Duration(seconds: 1))) &&
-                o.createdAt.isBefore(end.add(const Duration(seconds: 1)));
+            return localCreated.isAfter(start.subtract(const Duration(seconds: 1))) &&
+                localCreated.isBefore(end.add(const Duration(seconds: 1)));
           case 'All Time':
           default:
             return true;

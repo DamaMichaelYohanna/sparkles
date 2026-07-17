@@ -34,8 +34,8 @@ class OrderItemModel {
       unitPrice: double.tryParse(json['unit_price']?.toString() ?? '0.0') ?? 0.0,
       discountAmount: double.tryParse(json['discount_amount']?.toString() ?? '0.0') ?? 0.0,
       subtotal: double.tryParse(json['subtotal']?.toString() ?? '0.0') ?? 0.0,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : DateTime.now(),
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']).toUtc() : DateTime.now().toUtc(),
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']).toUtc() : DateTime.now().toUtc(),
       isDeleted: json['is_deleted'] ?? false,
     );
   }
@@ -49,8 +49,8 @@ class OrderItemModel {
       unitPrice: map['unit_price'] as double,
       discountAmount: map['discount_amount'] as double,
       subtotal: map['subtotal'] as double,
-      createdAt: DateTime.parse(map['created_at'] as String),
-      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : DateTime.now(),
+      createdAt: DateTime.parse(map['created_at'] as String).toUtc(),
+      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String).toUtc() : DateTime.now().toUtc(),
       isDeleted: (map['is_deleted'] as int? ?? 0) == 1,
       syncStatus: map['sync_status'] as String? ?? 'synced',
     );
