@@ -209,7 +209,7 @@ def _html_wrapper(inner_html: str) -> str:
         </div>
         <div class="card-footer">
             <p>
-                &copy; 2026 Dama Software Solution LTD. All rights reserved.<br>
+                &copy; 2026 Dama Technologies LTD. All rights reserved.<br>
                 <a href="https://www.sparkles.com.ng/privacy/">Privacy Policy</a>
                 &nbsp;&middot;&nbsp;
                 <a href="https://www.sparkles.com.ng/terms/">Terms of Service</a>
@@ -409,7 +409,7 @@ def send_welcome_registration(email, office_name):
             We typically respond within a few hours.
         </p>
         <p><strong>The Sparkles Team</strong><br>
-        <span style="color:#475569;font-size:13px;">Dama Software Solution LTD</span></p>
+        <span style="color:#475569;font-size:13px;">Dama Technologies LTD</span></p>
     """
 
     return _send_html_email(subject, email, _html_wrapper(inner), text_content)
