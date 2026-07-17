@@ -20,6 +20,8 @@ class AddOrderScreen extends ConsumerStatefulWidget {
 class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
+  late final TextEditingController _amountPaidController;
+  bool _isFullyPaidChecked = false;
 
   @override
   void initState() {
@@ -27,12 +29,21 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
     final draft = ref.read(addOrderProvider);
     _nameController = TextEditingController(text: draft.customerName);
     _phoneController = TextEditingController(text: draft.customerPhone);
+    
+    final total = draft.total;
+    final amountPaid = draft.amountPaid;
+    _isFullyPaidChecked = amountPaid >= total && total > 0;
+    
+    _amountPaidController = TextEditingController(
+      text: _isFullyPaidChecked ? total.toStringAsFixed(2) : amountPaid.toStringAsFixed(2)
+    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _amountPaidController.dispose();
     super.dispose();
   }
 
@@ -81,6 +92,18 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
     final pricingListAsync = ref.watch(itemPricingListProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final servicesAsync = ref.watch(serviceTypesProvider);
+
+    if (_isFullyPaidChecked) {
+      final totalStr = draftState.total.toStringAsFixed(2);
+      if (_amountPaidController.text != totalStr || draftState.amountPaid != draftState.total) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _amountPaidController.text = totalStr;
+            ref.read(addOrderProvider.notifier).updateAmountPaid(draftState.total);
+          }
+        });
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -234,6 +257,46 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
                 final discount = double.tryParse(val) ?? 0.0;
                 ref.read(addOrderProvider.notifier).updateOrderDiscount(discount);
               },
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _amountPaidController,
+                    decoration: const InputDecoration(
+                      labelText: 'Amount Paid (₦)',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(LucideIcons.wallet),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    enabled: !_isFullyPaidChecked,
+                    onChanged: (val) {
+                      final amount = double.tryParse(val) ?? 0.0;
+                      ref.read(addOrderProvider.notifier).updateAmountPaid(amount);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _isFullyPaidChecked,
+                      onChanged: (val) {
+                        setState(() {
+                          _isFullyPaidChecked = val ?? false;
+                          if (_isFullyPaidChecked) {
+                            ref.read(addOrderProvider.notifier).updateAmountPaid(draftState.total);
+                            _amountPaidController.text = draftState.total.toStringAsFixed(2);
+                          }
+                        });
+                      },
+                      activeColor: AppTheme.primaryColor,
+                    ),
+                    const Text('Fully Paid', style: TextStyle(fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 32),
           ],

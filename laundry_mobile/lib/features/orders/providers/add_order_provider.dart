@@ -99,6 +99,10 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
     state = state.copyWith(orderDiscount: discount);
   }
 
+  void updateAmountPaid(double amount) {
+    state = state.copyWith(amountPaid: amount);
+  }
+
   void addItem(ItemPricingModel pricing, int quantity, double discountAmount) {
     // Generate a temporary order ID if we haven't yet, or just use empty string for the draft.
     // The final order ID will be assigned when saving.
@@ -183,7 +187,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
       await db.delete('order_items', where: 'order_id = ?', whereArgs: [orderId]);
     } else {
       // Save order as new
-      await DatabaseHelper.instance.insertOrder(order.toDb()..addAll({'customer_phone': state.customerPhone, 'amount_paid': 0.0}));
+      await DatabaseHelper.instance.insertOrder(order.toDb()..addAll({'customer_phone': state.customerPhone, 'amount_paid': state.amountPaid}));
     }
 
     // Save items
