@@ -151,6 +151,73 @@ def delete_waitlist_entry(request, pk):
         entry.delete()
     return redirect('waitlist_dashboard')
 
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def send_waitlist_email(request):
+    if request.method == 'POST':
+        import logging
+        from threading import Thread
+        logger = logging.getLogger(__name__)
+
+        target_type = request.POST.get('target_type')
+        subject = request.POST.get('subject', '').strip()
+        message_body = request.POST.get('message_body', '').strip()
+        cta_text = request.POST.get('cta_text', '').strip() or None
+        cta_link = request.POST.get('cta_link', '').strip() or None
+        single_email = request.POST.get('single_email', '').strip()
+        
+        if not subject or not message_body:
+            messages.error(request, "Subject and Message Body are required.")
+            return redirect('waitlist_dashboard')
+            
+        # Determine recipients
+        if target_type == 'all':
+            recipients = WaitlistEntry.objects.all()
+        elif target_type == 'pending':
+            recipients = WaitlistEntry.objects.filter(is_notified=False)
+        elif target_type == 'notified':
+            recipients = WaitlistEntry.objects.filter(is_notified=True)
+        elif target_type == 'single':
+            if not single_email:
+                messages.error(request, "Specific email address is required.")
+                return redirect('waitlist_dashboard')
+            
+            class TempEntry:
+                def __init__(self, email):
+                    self.email = email
+            recipients = [TempEntry(single_email)]
+        else:
+            messages.error(request, "Invalid target type.")
+            return redirect('waitlist_dashboard')
+            
+        recipients_list = list(recipients)
+        if not recipients_list:
+            messages.warning(request, "No waitlist entries matched your selection.")
+            return redirect('waitlist_dashboard')
+            
+        # Send emails in a background thread to prevent blocking
+        def send_emails_background(recipients, email_subject, email_body, c_text, c_link):
+            from api.emails import send_custom_waitlist_email
+            for entry in recipients:
+                try:
+                    send_custom_waitlist_email(
+                        email=entry.email,
+                        subject=email_subject,
+                        message_body=email_body,
+                        cta_text=c_text,
+                        cta_link=c_link
+                    )
+                except Exception as e:
+                    logger.error(f"Error sending custom waitlist email to {entry.email}: {e}")
+                    
+        thread = Thread(target=send_emails_background, args=(recipients_list, subject, message_body, cta_text, cta_link))
+        thread.daemon = True
+        thread.start()
+        
+        messages.success(request, f"Custom email sending started for {len(recipients_list)} recipient(s) in the background.")
+        
+    return redirect('waitlist_dashboard')
+
+
 from django.http import HttpResponse
 from django.urls import reverse
 

@@ -4,6 +4,78 @@
 {% block header_title %}Waitlist Management{% endblock %}
 
 {% block content %}
+<!-- Alert block for Django messages -->
+{% if messages %}
+<div style="margin-bottom: 1.5rem; max-width: 100%;">
+    {% for message in messages %}
+        <div style="padding: 1rem; border-radius: 8px; font-weight: 500; margin-bottom: 0.5rem; 
+            {% if message.tags == 'error' %}
+                background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+            {% elif message.tags == 'warning' %}
+                background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
+            {% else %}
+                background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+            {% endif %}">
+            {{ message }}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<section class="charts-section" style="grid-template-columns: 1fr; margin-bottom: 2rem;">
+    <!-- Compose custom email card -->
+    <div class="recent-orders-container" id="email-compose-section">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+            <span style="font-size: 1.5rem;">✉️</span>
+            <h3 style="margin: 0; font-size: 1.25rem;">Send Waitlist Email</h3>
+        </div>
+        
+        <form action="{% url 'send_waitlist_email' %}" method="post">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Recipient(s)</label>
+                    <select name="target_type" id="target_type" onchange="toggleSingleEmailField()" style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); background: #ffffff;">
+                        <option value="all">All waitlist entries ({{ waitlist|length }})</option>
+                        <option value="pending">Pending entries only</option>
+                        <option value="notified">Notified entries only</option>
+                        <option value="single">Specific email address</option>
+                    </select>
+                </div>
+                <div id="single_email_container" style="display: none;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Specific Email Address</label>
+                    <input type="email" name="single_email" id="single_email" placeholder="user@example.com" style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); background: #ffffff;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Subject</label>
+                <input type="text" name="subject" required placeholder="e.g. Try Sparkles now on Google Play Store!" style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); background: #ffffff;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Message Body</label>
+                <textarea name="message_body" required rows="6" placeholder="Write your message here... We'll automatically wrap it in our branded template and convert line breaks to HTML." style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); resize: vertical; background: #ffffff;"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Button Text (Optional)</label>
+                    <input type="text" name="cta_text" placeholder="e.g. Join Play Store Testing" style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); background: #ffffff;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Button Link (Optional)</label>
+                    <input type="url" name="cta_link" placeholder="https://play.google.com/store/apps/details?id=..." style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); background: #ffffff;">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-api" style="padding: 0.8rem 2rem; border: none; font-size: 1rem; cursor: pointer; background: var(--primary); color: white; font-weight: bold; border-radius: 8px;">
+                🚀 Send Email Broadcast
+            </button>
+        </form>
+    </div>
+</section>
+
 <section class="charts-section" style="grid-template-columns: 1fr;">
     <div class="recent-orders-container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -36,6 +108,9 @@
                     </td>
                     <td style="text-align: right;">
                         <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end;">
+                            <button type="button" onclick="prepareSingleEmail('{{ entry.email }}')" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #6c757d; color: white;">
+                                Email
+                            </button>
                             <form action="{% url 'toggle_waitlist' entry.id %}" method="post" style="display: inline;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: var(--primary);">
@@ -61,3 +136,32 @@
     </div>
 </section>
 {% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function toggleSingleEmailField() {
+        var targetTypeSelect = document.getElementById('target_type');
+        var singleEmailContainer = document.getElementById('single_email_container');
+        if (targetTypeSelect.value === 'single') {
+            singleEmailContainer.style.display = 'block';
+            document.getElementById('single_email').required = true;
+        } else {
+            singleEmailContainer.style.display = 'none';
+            document.getElementById('single_email').required = false;
+        }
+    }
+
+    function prepareSingleEmail(email) {
+        var targetTypeSelect = document.getElementById('target_type');
+        targetTypeSelect.value = 'single';
+        toggleSingleEmailField();
+        
+        var singleEmailInput = document.getElementById('single_email');
+        singleEmailInput.value = email;
+        
+        document.getElementById('email-compose-section').scrollIntoView({ behavior: 'smooth' });
+        singleEmailInput.focus();
+    }
+</script>
+{% endblock %}
+

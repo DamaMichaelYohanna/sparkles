@@ -458,3 +458,40 @@ def send_password_reset_otp(email, otp):
     """
 
     return _send_html_email(subject, email, _html_wrapper(inner), text_content)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. Waitlist — Custom Broadcast/Single Email
+# ─────────────────────────────────────────────────────────────────────────────
+def send_custom_waitlist_email(email, subject, message_body, cta_text=None, cta_link=None):
+    # Convert newlines to HTML br tags
+    body_html_formatted = message_body.replace("\n", "<br>")
+    
+    cta_html = ""
+    text_content = message_body
+    if cta_text and cta_link:
+        cta_html = f"""
+        <div class="btn-wrapper">
+            <a href="{cta_link}" class="btn">{cta_text} &rarr;</a>
+        </div>
+        """
+        text_content += f"\n\n{cta_text}: {cta_link}"
+        
+    text_content += "\n\nBest regards,\nThe Sparkles Team"
+
+    inner = f"""
+        <div class="badge">Waitlist Update</div>
+        <h1 class="headline">{subject}</h1>
+        
+        <p>
+            {body_html_formatted}
+        </p>
+
+        {cta_html}
+
+        <hr class="divider">
+        <p><strong>The Sparkles Team</strong></p>
+    """
+    
+    return _send_html_email(subject, email, _html_wrapper(inner), text_content)
+
