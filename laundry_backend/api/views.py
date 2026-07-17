@@ -49,6 +49,8 @@ class BaseTenantView:
         else:
             instance = serializer.save(office=user.office)
             
+        logger.info("[TenantView] User '%s' created a new '%s' instance (ID: %s) for office '%s'", user.email, model.__name__, instance.id, user.office.name)
+            
         # Audit Trail Logging
         if model in [Order]:
             ActionLog.objects.create(
@@ -75,6 +77,9 @@ class BaseTenantView:
 
         instance = serializer.save()
         user = self.request.user
+        
+        if user.office:
+            logger.info("[TenantView] User '%s' updated '%s' instance (ID: %s) for office '%s'", user.email, model.__name__, instance.id, user.office.name)
         
         # Audit Trail Logging
         if model in [Order] and user.office:
@@ -463,11 +468,14 @@ class RegisterOfficeView(APIView):
         password = request.data.get('password')
         
         if not office_name or not email or not password:
+            logger.warning("[Register] Failed registration attempt: missing parameters.")
             return Response({"error": "Office name, email, and password are required."}, status=400)
             
         if User.objects.filter(email=email).exists():
+            logger.warning("[Register] Failed registration attempt: email '%s' already exists.", email)
             return Response({"error": "A user with this email already exists."}, status=400)
             
+        logger.info("[Register] Registering new office '%s' with email '%s'...", office_name, email)
         from django.db import transaction
         try:
             with transaction.atomic():
@@ -508,6 +516,7 @@ class RegisterOfficeView(APIView):
             from .emails import send_welcome_registration
             send_welcome_registration(email=user.email, office_name=office.name)
             
+            logger.info("[Register] Successfully registered office '%s' (ID: %s) for admin email '%s'", office.name, office.id, user.email)
             return Response({
                 "status": "success",
                 "message": "Office and admin account registered successfully.",
@@ -515,6 +524,7 @@ class RegisterOfficeView(APIView):
                 "email": user.email
             }, status=201)
         except Exception as e:
+            logger.error("[Register] Registration failed for office '%s', email '%s': %s", office_name, email, e, exc_info=True)
             return Response({"error": f"Registration failed: {str(e)}"}, status=500)
 
 
@@ -542,10 +552,12 @@ class BranchListCreateView(APIView):
         contact_info = request.data.get('contact_info', '')
         
         if not name:
+            logger.warning("[Branch] Failed branch creation: missing name parameter from '%s'", user.email)
             return Response({"error": "Branch name is required."}, status=400)
             
         user = request.user
         if not user.is_office_admin:
+            logger.warning("[Branch] Forbidden branch creation attempt by non-admin user '%s'", user.email)
             return Response({"error": "Only office admins / owners can create new branches."}, status=403)
             
         current_branches_count = user.branches.count()
@@ -557,12 +569,16 @@ class BranchListCreateView(APIView):
         
         # Enforce tier-based branch limit
         if tier == 'free' and current_branches_count >= 1:
+            logger.warning("[Branch] Limit reached: Free tier branch limit (1) exceeded by '%s'", user.email)
             return Response({"error": "Free tier allows a maximum of 1 branch. Please upgrade your subscription."}, status=403)
         elif tier == 'starter' and current_branches_count >= 1:
+            logger.warning("[Branch] Limit reached: Starter tier branch limit (1) exceeded by '%s'", user.email)
             return Response({"error": "Starter tier allows a maximum of 1 branch. Please upgrade your subscription to Pro or Premium."}, status=403)
         elif tier == 'pro' and current_branches_count >= 3:
+            logger.warning("[Branch] Limit reached: Pro tier branch limit (3) exceeded by '%s'", user.email)
             return Response({"error": "Pro tier allows a maximum of 3 branches. Please upgrade your subscription to Premium."}, status=403)
             
+        logger.info("[Branch] User '%s' is registering a new branch '%s' under tier '%s'...", user.email, name, tier)
         from django.db import transaction
         try:
             with transaction.atomic():
@@ -593,6 +609,7 @@ class BranchListCreateView(APIView):
                 ItemPricing.objects.create(office=branch, category=clothing, service_type=dry_clean, name="Suit Jacket", price=2500)
                 ItemPricing.objects.create(office=branch, category=household, service_type=wash_iron, name="Bedsheet", price=2500)
                 
+            logger.info("[Branch] Successfully created and switched user '%s' to new branch '%s' (ID: %s)", user.email, branch.name, branch.id)
             return Response({
                 "status": "success",
                 "message": f"Branch '{branch.name}' registered and set as active workspace successfully.",
@@ -601,6 +618,7 @@ class BranchListCreateView(APIView):
                 "subscription_tier": branch.subscription_tier
             }, status=201)
         except Exception as e:
+            logger.error("[Branch] Failed to register branch '%s' for '%s': %s", name, user.email, e, exc_info=True)
             return Response({"error": f"Failed to register branch: {str(e)}"}, status=500)
 
 
@@ -610,16 +628,19 @@ class BranchSwitchView(APIView):
     def post(self, request):
         office_id = request.data.get('office_id')
         if not office_id:
+            logger.warning("[Branch] BranchSwitch Failed: Missing office_id parameter.")
             return Response({"error": "Office ID is required."}, status=400)
             
         user = request.user
         target_office = user.branches.filter(id=office_id).first()
         if not target_office:
+            logger.warning("[Branch] BranchSwitch Forbidden: User '%s' does not have access to branch '%s'", user.email, office_id)
             return Response({"error": "You do not have access to this branch office workspace."}, status=403)
             
         user.office = target_office
         user.save()
         
+        logger.info("[Branch] User '%s' switched active branch workspace to '%s' (ID: %s)", user.email, target_office.name, target_office.id)
         return Response({
             "status": "success",
             "message": f"Switched active workspace to branch: {target_office.name}",
@@ -637,9 +658,11 @@ class RequestPasswordResetView(APIView):
     def post(self, request):
         email = request.data.get('email', '').strip()
         if not email:
+            logger.warning("[Auth] Password reset request failed: Missing email.")
             return Response({"error": "Email is required."}, status=400)
             
         user_exists = User.objects.filter(email=email).exists()
+        logger.info("[Auth] Password reset requested for email '%s'", email)
         
         if user_exists:
             # 1. Invalidate all older OTPs for this email to prevent multiple usage
@@ -659,6 +682,9 @@ class RequestPasswordResetView(APIView):
             # 4. Dispatch the verification email
             from .emails import send_password_reset_otp
             send_password_reset_otp(email=email, otp=otp)
+            logger.info("[Auth] Password reset OTP sent to '%s'", email)
+        else:
+            logger.warning("[Auth] Password reset requested for non-existent email '%s'", email)
             
         return Response({
             "status": "success",
@@ -675,11 +701,14 @@ class ConfirmPasswordResetView(APIView):
         password = request.data.get('password')
         
         if not email or not otp or not password:
+            logger.warning("[Auth] ConfirmPasswordReset Failed: Missing parameters.")
             return Response({"error": "Email, verification code, and new password are required."}, status=400)
             
         if len(password) < 6:
+            logger.warning("[Auth] ConfirmPasswordReset Failed: New password for '%s' too short.", email)
             return Response({"error": "Password must be at least 6 characters long."}, status=400)
             
+        logger.info("[Auth] Confirm password reset started for email '%s'...", email)
         from django.db import transaction
         try:
             with transaction.atomic():
@@ -692,6 +721,7 @@ class ConfirmPasswordResetView(APIView):
                 ).first()
                 
                 if not otp_record:
+                    logger.warning("[Auth] ConfirmPasswordReset Failed: Invalid/expired OTP record for '%s'", email)
                     return Response({"error": "Invalid or expired verification code."}, status=400)
                     
                 # Mark as used immediately to avoid double spend/concurrency usage
@@ -703,13 +733,16 @@ class ConfirmPasswordResetView(APIView):
                 user.set_password(password)
                 user.save()
                 
+            logger.info("[Auth] Password reset successfully verified and saved for '%s'", email)
             return Response({
                 "status": "success",
                 "message": "Your password has been reset successfully."
             })
         except User.DoesNotExist:
+            logger.warning("[Auth] ConfirmPasswordReset Failed: User '%s' not found.", email)
             return Response({"error": "User with this email does not exist."}, status=400)
         except Exception as e:
+            logger.error("[Auth] ConfirmPasswordReset Exception for '%s': %s", email, e, exc_info=True)
             return Response({"error": f"Password reset failed: {str(e)}"}, status=500)
 
 
@@ -721,8 +754,10 @@ class VerifyOTPView(APIView):
         otp = request.data.get('otp', '').strip()
         
         if not email or not otp:
+            logger.warning("[Auth] VerifyOTP Failed: Missing parameters.")
             return Response({"error": "Email and verification code are required."}, status=400)
             
+        logger.info("[Auth] Verifying OTP for email '%s'...", email)
         otp_record = PasswordResetOTP.objects.filter(
             email=email,
             otp=otp,
@@ -731,8 +766,10 @@ class VerifyOTPView(APIView):
         ).first()
         
         if not otp_record:
+            logger.warning("[Auth] VerifyOTP Failed: Invalid/expired OTP for '%s'", email)
             return Response({"error": "Invalid or expired verification code."}, status=400)
             
+        logger.info("[Auth] OTP verified successfully for '%s'", email)
         return Response({
             "status": "success",
             "message": "Verification code is valid."
