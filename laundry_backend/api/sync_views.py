@@ -96,18 +96,23 @@ class SyncAPIView(APIView):
         for cat_dict in categories_data:
             cat_id = cat_dict.get('id')
             if not cat_id: continue
-            try:
-                cat_obj = Category.objects.get(id=cat_id, office=office)
+            
+            existing_cat = Category.objects.filter(id=cat_id).first()
+            if existing_cat:
+                if existing_cat.office != office:
+                    # Belongs to another branch, skip
+                    continue
+                # Update
                 incoming_updated_at = make_aware(parse(cat_dict.get('updated_at', '')))
-                if incoming_updated_at > cat_obj.updated_at or cat_dict.get('is_deleted', False):
+                if incoming_updated_at > existing_cat.updated_at or cat_dict.get('is_deleted', False):
                     if cat_dict.get('is_deleted', False):
-                        cat_obj.is_deleted = True
+                        existing_cat.is_deleted = True
                     else:
-                        cat_obj.name = cat_dict.get('name', cat_obj.name)
-                    cat_obj.updated_at = incoming_updated_at
-                    cat_obj.save()
+                        existing_cat.name = cat_dict.get('name', existing_cat.name)
+                    existing_cat.updated_at = incoming_updated_at
+                    existing_cat.save()
                     processed_configs += 1
-            except Category.DoesNotExist:
+            else:
                 if not cat_dict.get('is_deleted', False):
                     Category.objects.create(
                         id=cat_id,
@@ -122,19 +127,24 @@ class SyncAPIView(APIView):
         for srv_dict in service_types_data:
             srv_id = srv_dict.get('id')
             if not srv_id: continue
-            try:
-                srv_obj = ServiceType.objects.get(id=srv_id, office=office)
+            
+            existing_srv = ServiceType.objects.filter(id=srv_id).first()
+            if existing_srv:
+                if existing_srv.office != office:
+                    # Belongs to another branch, skip
+                    continue
+                # Update
                 incoming_updated_at = make_aware(parse(srv_dict.get('updated_at', '')))
-                if incoming_updated_at > srv_obj.updated_at or srv_dict.get('is_deleted', False):
+                if incoming_updated_at > existing_srv.updated_at or srv_dict.get('is_deleted', False):
                     if srv_dict.get('is_deleted', False):
-                        srv_obj.is_deleted = True
+                        existing_srv.is_deleted = True
                     else:
-                        srv_obj.name = srv_dict.get('name', srv_obj.name)
-                        srv_obj.description = srv_dict.get('description', srv_obj.description)
-                    srv_obj.updated_at = incoming_updated_at
-                    srv_obj.save()
+                        existing_srv.name = srv_dict.get('name', existing_srv.name)
+                        existing_srv.description = srv_dict.get('description', existing_srv.description)
+                    existing_srv.updated_at = incoming_updated_at
+                    existing_srv.save()
                     processed_configs += 1
-            except ServiceType.DoesNotExist:
+            else:
                 if not srv_dict.get('is_deleted', False):
                     ServiceType.objects.create(
                         id=srv_id,
@@ -150,19 +160,24 @@ class SyncAPIView(APIView):
         for ip_dict in item_pricing_data:
             ip_id = ip_dict.get('id')
             if not ip_id: continue
-            try:
-                ip_obj = ItemPricing.objects.get(id=ip_id, office=office)
+            
+            existing_ip = ItemPricing.objects.filter(id=ip_id).first()
+            if existing_ip:
+                if existing_ip.office != office:
+                    # Belongs to another branch, skip
+                    continue
+                # Update
                 incoming_updated_at = make_aware(parse(ip_dict.get('updated_at', '')))
-                if incoming_updated_at > ip_obj.updated_at or ip_dict.get('is_deleted', False):
+                if incoming_updated_at > existing_ip.updated_at or ip_dict.get('is_deleted', False):
                     if ip_dict.get('is_deleted', False):
-                        ip_obj.is_deleted = True
+                        existing_ip.is_deleted = True
                     else:
-                        ip_obj.name = ip_dict.get('name', ip_obj.name)
-                        ip_obj.price = ip_dict.get('price', ip_obj.price)
-                    ip_obj.updated_at = incoming_updated_at
-                    ip_obj.save()
+                        existing_ip.name = ip_dict.get('name', existing_ip.name)
+                        existing_ip.price = ip_dict.get('price', existing_ip.price)
+                    existing_ip.updated_at = incoming_updated_at
+                    existing_ip.save()
                     processed_configs += 1
-            except ItemPricing.DoesNotExist:
+            else:
                 if not ip_dict.get('is_deleted', False):
                     cat_id = ip_dict.get('category_id')
                     srv_id = ip_dict.get('service_type_id')
@@ -193,21 +208,25 @@ class SyncAPIView(APIView):
             order_id = order_dict.get('id')
             if not order_id: continue
             
-            try:
-                order_obj = Order.objects.get(id=order_id, office=office)
-                was_completed = order_obj.current_status.is_completed_state
+            existing_order = Order.objects.filter(id=order_id).first()
+            if existing_order:
+                if existing_order.office != office:
+                    # Belongs to another branch, skip
+                    continue
+                # Update
+                was_completed = existing_order.current_status.is_completed_state
                 # Last write wins
                 incoming_updated_at = make_aware(parse(order_dict.get('updated_at', '')))
-                if incoming_updated_at > order_obj.updated_at or order_dict.get('is_deleted', False):
+                if incoming_updated_at > existing_order.updated_at or order_dict.get('is_deleted', False):
                     if order_dict.get('is_deleted', False):
-                        order_obj.is_deleted = True
+                        existing_order.is_deleted = True
                     else:
-                        order_obj.customer_name = order_dict.get('customer_name', order_obj.customer_name)
-                        order_obj.customer_phone = order_dict.get('customer_phone', order_obj.customer_phone)
-                        order_obj.customer_is_whatsapp = order_dict.get('customer_is_whatsapp', order_obj.customer_is_whatsapp)
-                        order_obj.total_price = order_dict.get('total_price', order_obj.total_price)
-                        order_obj.amount_paid = order_dict.get('amount_paid', order_obj.amount_paid)
-                        order_obj.discount_amount = order_dict.get('discount_amount', order_obj.discount_amount)
+                        existing_order.customer_name = order_dict.get('customer_name', existing_order.customer_name)
+                        existing_order.customer_phone = order_dict.get('customer_phone', existing_order.customer_phone)
+                        existing_order.customer_is_whatsapp = order_dict.get('customer_is_whatsapp', existing_order.customer_is_whatsapp)
+                        existing_order.total_price = order_dict.get('total_price', existing_order.total_price)
+                        existing_order.amount_paid = order_dict.get('amount_paid', existing_order.amount_paid)
+                        existing_order.discount_amount = order_dict.get('discount_amount', existing_order.discount_amount)
                         
                         # Handle status which might be an ID or string in the payload depending on frontend
                         status_val = order_dict.get('current_status')
@@ -220,17 +239,17 @@ class SyncAPIView(APIView):
                                     sequence_order=OrderStatus.objects.filter(office=office).count() + 1,
                                     is_completed_state=(status_val.lower() == 'completed')
                                 )
-                            order_obj.current_status = status_obj
+                            existing_order.current_status = status_obj
                                 
-                    order_obj.updated_at = incoming_updated_at
-                    order_obj.save()
+                    existing_order.updated_at = incoming_updated_at
+                    existing_order.save()
                     processed_orders += 1
                     
                     # Trigger WhatsApp if transitioned to completed during sync
-                    if order_obj.current_status.is_completed_state and not was_completed:
+                    if existing_order.current_status.is_completed_state and not was_completed:
                         from .whatsapp import send_whatsapp_order_completed
-                        send_whatsapp_order_completed(order_obj)
-            except Order.DoesNotExist:
+                        send_whatsapp_order_completed(existing_order)
+            else:
                 if not order_dict.get('is_deleted', False):
                     # Create new
                     status_val = order_dict.get('current_status') or 'Pending'
@@ -269,21 +288,25 @@ class SyncAPIView(APIView):
             pricing_id = item_dict.get('item_pricing_id')
             if not item_id or not order_id or not pricing_id: continue
 
-            try:
-                item_obj = OrderItem.objects.get(id=item_id, order__office=office)
+            existing_item = OrderItem.objects.filter(id=item_id).first()
+            if existing_item:
+                if existing_item.order.office != office:
+                    # Belongs to another branch, skip
+                    continue
+                # Update
                 incoming_updated_at = make_aware(parse(item_dict.get('updated_at', '')))
-                if incoming_updated_at > item_obj.updated_at or item_dict.get('is_deleted', False):
+                if incoming_updated_at > existing_item.updated_at or item_dict.get('is_deleted', False):
                     if item_dict.get('is_deleted', False):
-                        item_obj.is_deleted = True
+                        existing_item.is_deleted = True
                     else:
-                        item_obj.quantity = item_dict.get('quantity', item_obj.quantity)
-                        item_obj.unit_price = item_dict.get('unit_price', item_obj.unit_price)
-                        item_obj.discount_amount = item_dict.get('discount_amount', item_obj.discount_amount)
-                        item_obj.subtotal = item_dict.get('subtotal', item_obj.subtotal)
-                    item_obj.updated_at = incoming_updated_at
-                    item_obj.save()
+                        existing_item.quantity = item_dict.get('quantity', existing_item.quantity)
+                        existing_item.unit_price = item_dict.get('unit_price', existing_item.unit_price)
+                        existing_item.discount_amount = item_dict.get('discount_amount', existing_item.discount_amount)
+                        existing_item.subtotal = item_dict.get('subtotal', existing_item.subtotal)
+                    existing_item.updated_at = incoming_updated_at
+                    existing_item.save()
                     processed_items += 1
-            except OrderItem.DoesNotExist:
+            else:
                 if not item_dict.get('is_deleted', False):
                     try:
                         order_ref = Order.objects.get(id=order_id, office=office)
