@@ -18,7 +18,9 @@
                     <th>Email</th>
                     <th>Associated Office</th>
                     <th>Role</th>
+                    <th>Status</th>
                     <th>Joined</th>
+                    <th style="text-align: right;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,11 +38,38 @@
                             <span style="background: var(--grey-200); padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Staff</span>
                         {% endif %}
                     </td>
+                    <td>
+                        {% if user.is_active %}
+                            <span style="background: #2ec4b6; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Active</span>
+                        {% else %}
+                            <span style="background: #ff9f1c; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Blocked</span>
+                        {% endif %}
+                    </td>
                     <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end;">
+                            {% if user.id != request.user.id %}
+                                <form action="{% url 'toggle_user_active' user.id %}" method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: {% if user.is_active %}#ff9f1c{% else %}#2ec4b6{% endif %}; color: white;">
+                                        {% if user.is_active %}Block{% else %}Unblock{% endif %}
+                                    </button>
+                                </form>
+                                <form action="{% url 'delete_user' user.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete user {{ user.username }}? This action is permanent.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #e63946; color: white;">
+                                        Delete
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span style="color: var(--grey-500); font-size: 0.8rem; font-style: italic;">Self (Current User)</span>
+                            {% endif %}
+                        </div>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5">No users found.</td>
+                    <td colspan="7">No users found.</td>
                 </tr>
                 {% endfor %}
             </tbody>

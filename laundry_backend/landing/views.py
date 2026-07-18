@@ -248,3 +248,30 @@ def robots_txt(request):
     content += "Allow: /\n\n"
     content += f"Sitemap: {sitemap_url}\n"
     return HttpResponse(content, content_type='text/plain')
+
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def toggle_user_active(request, pk):
+    if request.method == 'POST':
+        user = get_object_or_404(User, pk=pk)
+        if user == request.user:
+            messages.error(request, "You cannot block your own account.")
+        else:
+            user.is_active = not user.is_active
+            user.save()
+            action = "unblocked" if user.is_active else "blocked"
+            messages.success(request, f"User {user.username} has been successfully {action}.")
+    return redirect('users_list')
+
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def delete_user(request, pk):
+    if request.method == 'POST':
+        user = get_object_or_404(User, pk=pk)
+        if user == request.user:
+            messages.error(request, "You cannot delete your own account.")
+        else:
+            username = user.username
+            user.delete()
+            messages.success(request, f"User {username} has been successfully deleted.")
+    return redirect('users_list')
