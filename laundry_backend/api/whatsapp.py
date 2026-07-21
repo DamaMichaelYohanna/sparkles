@@ -95,3 +95,36 @@ def send_whatsapp_order_completed(order):
     )
 
     return send_whatsapp_notification(order.customer_phone, message)
+
+def send_whatsapp_order_received(order):
+    """
+    Constructs and sends a WhatsApp notification with a digital receipt link
+    to the customer when their order is first received.
+    """
+    if not order.customer_phone:
+        return
+        
+    if not order.customer_is_whatsapp:
+        logger.info(f"Skipping WhatsApp receipt for Order {order.id}: customer did not request WhatsApp notifications.")
+        return
+
+    # Expected date formatting
+    due_date_str = "soon"
+    if order.due_date:
+        due_date_str = order.due_date.strftime("%A, %I:%M %p")
+
+    # Branded receipt URL
+    base_url = getattr(settings, 'SPARKLES_PORTAL_BASE_URL', 'https://sparkles.app')
+    receipt_url = f"{base_url.rstrip('/')}/r/{order.tracking_code}/"
+
+    message = (
+        f"👋 Hi {order.customer_name},\n\n"
+        f"Thank you for choosing {order.office.name}.\n\n"
+        f"Your order has been received.\n\n"
+        f"Expected Delivery:\n"
+        f"{due_date_str}\n\n"
+        f"View your digital receipt here:\n"
+        f"{receipt_url}"
+    )
+
+    return send_whatsapp_notification(order.customer_phone, message)

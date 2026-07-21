@@ -10,6 +10,7 @@ class OrderModel {
   final bool isDeleted;
   final String syncStatus;
   final double discountAmount;
+  final String trackingCode;
 
   OrderModel({
     required this.id,
@@ -23,6 +24,7 @@ class OrderModel {
     this.isDeleted = false,
     this.syncStatus = 'synced',
     this.discountAmount = 0.0,
+    this.trackingCode = '',
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -48,6 +50,7 @@ class OrderModel {
           : DateTime.now().toUtc(),
       isDeleted: json['is_deleted'] ?? false,
       discountAmount: double.tryParse(json['discount_amount']?.toString() ?? '0.0') ?? 0.0,
+      trackingCode: json['tracking_code'] ?? '',
     );
   }
 
@@ -64,6 +67,7 @@ class OrderModel {
       isDeleted: (map['is_deleted'] as int? ?? 0) == 1,
       syncStatus: map['sync_status'] as String? ?? 'synced',
       discountAmount: map['discount_amount'] as double? ?? 0.0,
+      trackingCode: map['tracking_code'] as String? ?? '',
     );
   }
 
@@ -80,6 +84,7 @@ class OrderModel {
       'is_deleted': isDeleted ? 1 : 0,
       'sync_status': syncStatus,
       'discount_amount': discountAmount,
+      'tracking_code': trackingCode,
     };
   }
 

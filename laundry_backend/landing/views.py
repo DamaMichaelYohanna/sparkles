@@ -275,3 +275,65 @@ def delete_user(request, pk):
             user.delete()
             messages.success(request, f"User {username} has been successfully deleted.")
     return redirect('users_list')
+
+
+def public_receipt_view(request, tracking_code):
+    """
+    Renders a public digital receipt page for customers using their short tracking code.
+    No login required.
+    """
+    # Fetch the order, prefetching items and related models for efficiency
+    order = get_object_or_404(
+        Order.objects.select_related('office', 'current_status').prefetch_related('items__item_pricing', 'items__item_pricing__category'),
+        tracking_code=tracking_code
+    )
+    
+    # Calculate outstanding balance
+    outstanding_balance = order.total_price - order.amount_paid
+    if outstanding_balance < 0:
+        outstanding_balance = 0
+        
+    # Get all status steps for this office's workflow
+    from operations.models import OrderStatus
+    office_statuses = list(OrderStatus.objects.filter(office=order.office).order_by('sequence_order'))
+    
+    if not office_statuses:
+        # Create standard status list for visual rendering
+        status_names = ['Pending', 'Received', 'Washing', 'Ironing', 'Ready', 'Completed']
+        statuses_list = []
+        is_active_found = False
+        for name in status_names:
+            active = (name.lower() == order.current_status.name.lower())
+            if active:
+                is_active_found = True
+            
+            # Previous ones are completed
+            completed = not active and not is_active_found
+            
+            statuses_list.append({
+                'name': name,
+                'is_active': active,
+                'is_completed': completed
+            })
+    else:
+        # Build list based on database status sequence order
+        statuses_list = []
+        current_seq = order.current_status.sequence_order
+        for status in office_statuses:
+            is_active = (status.id == order.current_status.id) or (status.name.lower() == order.current_status.name.lower())
+            is_completed = False
+            if not is_active:
+                is_completed = (status.sequence_order < current_seq)
+            
+            statuses_list.append({
+                'name': status.name,
+                'is_active': is_active,
+                'is_completed': is_completed
+            })
+            
+    context = {
+        'order': order,
+        'outstanding_balance': outstanding_balance,
+        'statuses': statuses_list,
+    }
+    return render(request, 'landing/receipt.html', context)

@@ -15,6 +15,7 @@ ALLOWED_HOSTS = [
     'www.sparkles.com.ng',
     'localhost',
     '127.0.0.1',
+    'testserver',
 ]
 
 # Required for POST requests from the custom domain (CSRF protection)
@@ -145,3 +146,6 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Sparkles <support@spa
 WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')
 WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
 WHATSAPP_API_VERSION = os.environ.get('WHATSAPP_API_VERSION', 'v18.0')
+
+# Sparkles Portal Configuration
+SPARKLES_PORTAL_BASE_URL = os.environ.get('SPARKLES_PORTAL_BASE_URL', 'http://localhost:8000')

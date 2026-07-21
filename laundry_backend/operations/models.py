@@ -34,6 +34,18 @@ class Order(BaseModel):
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     due_date = models.DateTimeField(null=True, blank=True)
     custom_notes = models.TextField(blank=True)
+    tracking_code = models.CharField(max_length=50, unique=True, null=True, blank=True, db_index=True)
+
+    def save(self, *args, **kwargs):
+        if not self.tracking_code:
+            import random
+            import string
+            while True:
+                code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+                if not Order.objects.filter(tracking_code=code).exists():
+                    self.tracking_code = code
+                    break
+        super().save(*args, **kwargs)
 
 class OrderItem(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')

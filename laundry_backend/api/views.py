@@ -60,10 +60,14 @@ class BaseTenantView:
                 details=f"Created ID {instance.id}"
             )
             
-            # Trigger WhatsApp if created as completed
+            # Trigger WhatsApp notifications in background threads
+            from threading import Thread
             if instance.current_status.is_completed_state:
                 from .whatsapp import send_whatsapp_order_completed
-                send_whatsapp_order_completed(instance)
+                Thread(target=send_whatsapp_order_completed, args=(instance,), daemon=True).start()
+            else:
+                from .whatsapp import send_whatsapp_order_received
+                Thread(target=send_whatsapp_order_received, args=(instance,), daemon=True).start()
 
     def perform_update(self, serializer):
         model = self.serializer_class.Meta.model
@@ -92,8 +96,9 @@ class BaseTenantView:
             
             # Trigger WhatsApp if transitioned to completed
             if instance.current_status.is_completed_state and not was_completed:
+                from threading import Thread
                 from .whatsapp import send_whatsapp_order_completed
-                send_whatsapp_order_completed(instance)
+                Thread(target=send_whatsapp_order_completed, args=(instance,), daemon=True).start()
 
 
 # LaundryOffice

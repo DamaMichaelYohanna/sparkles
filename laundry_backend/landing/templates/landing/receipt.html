@@ -1,0 +1,523 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Receipt | {{ order.office.name }}</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: {{ order.office.preferences.primary_color|default:"#0284c7" }};
+            --primary-light: {{ order.office.preferences.primary_light|default:"#e0f2fe" }};
+            --accent: #f97316;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --success-light: #ecfdf5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            padding: 1.5rem 1rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .portal-container {
+            width: 100%;
+            max-width: 540px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        /* Card styles */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 4px 18px -4px rgba(15, 23, 42, 0.05);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Branded header */
+        .brand-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .brand-logo i {
+            font-size: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .receipt-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.35rem 0.75rem;
+            border-radius: 30px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .customer-info h2 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .customer-info p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        /* Visual Timeline */
+        .timeline-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            position: relative;
+            padding-left: 0.5rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0.5rem;
+            bottom: 0.5rem;
+            width: 2px;
+            background: var(--border);
+            z-index: 1;
+        }
+
+        .timeline-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .timeline-node {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-step.completed .timeline-node {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .timeline-step.active .timeline-node {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.2);
+            animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0px rgba(2, 132, 199, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(2, 132, 199, 0); }
+            100% { box-shadow: 0 0 0 0px rgba(2, 132, 199, 0); }
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-step-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .timeline-step.completed .timeline-step-name {
+            color: var(--text-main);
+        }
+
+        .timeline-step.active .timeline-step-name {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* Order Details Card */
+        .order-meta {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .meta-col span {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-col strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        /* Table styles */
+        .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.25rem;
+        }
+
+        .receipt-table th {
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .receipt-table td {
+            padding: 0.75rem 0;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .item-category {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .receipt-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-top: 2px solid var(--border);
+            padding-top: 1rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .summary-row.total {
+            font-size: 1.125rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-top: 0.25rem;
+            padding-top: 0.25rem;
+        }
+
+        .summary-row.paid {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .summary-row.balance {
+            color: var(--accent);
+            font-weight: 700;
+            border-top: 1px dashed var(--border);
+            padding-top: 0.5rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Action banners */
+        .promo-banner {
+            background: linear-gradient(135deg, var(--primary) 0%, #0369a1 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .promo-banner h3 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .promo-banner p {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            max-width: 320px;
+            line-height: 1.4;
+        }
+
+        .btn-notify {
+            background: white;
+            color: var(--primary);
+            border: none;
+            outline: none;
+            padding: 0.65rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            border-radius: 30px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+        }
+
+        .btn-notify:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer-credits {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 1rem;
+        }
+
+        .footer-credits a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* Responsive Layout styles */
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem 0.5rem;
+            }
+            .card {
+                padding: 1.25rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="portal-container">
+    <!-- Header Card -->
+    <div class="card">
+        <div class="brand-header">
+            <div class="brand-logo">
+                <i class="fa-solid fa-soap"></i>
+                <span>{{ order.office.name }}</span>
+            </div>
+            <span class="receipt-badge">Receipt</span>
+        </div>
+        <div class="customer-info">
+            <h2>{{ order.customer_name }}</h2>
+            <p><i class="fa-solid fa-phone"></i> {{ order.customer_phone }}</p>
+        </div>
+    </div>
+
+    <!-- Live Status Timeline Card -->
+    <div class="card">
+        <h3 class="timeline-title">
+            <i class="fa-solid fa-spinner fa-spin" style="color: var(--primary);"></i> Order Progress
+        </h3>
+        
+        <div class="timeline">
+            {% for status in statuses %}
+                <div class="timeline-step 
+                    {% if status.is_completed %}completed
+                    {% elif status.is_active %}active
+                    {% endif %}">
+                    <div class="timeline-node">
+                        {% if status.is_completed %}
+                            <i class="fa-solid fa-check"></i>
+                        {% else %}
+                            {{ forloop.counter }}
+                        {% endif %}
+                    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-step-name">{{ status.name }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Items & Pricing Table Card -->
+    <div class="card">
+        <div class="order-meta">
+            <div class="meta-col">
+                <span>Receipt Number</span>
+                <strong>#{{ order.tracking_code }}</strong>
+            </div>
+            <div class="meta-col" style="text-align: right;">
+                <span>Expected On</span>
+                <strong>
+                    {% if order.due_date %}
+                        {{ order.due_date|date:"l, M d" }}
+                    {% else %}
+                        Soon
+                    {% endif %}
+                </strong>
+            </div>
+        </div>
+
+        <table class="receipt-table">
+            <thead>
+                <tr>
+                    <th>Item Description</th>
+                    <th style="text-align: center;">Qty</th>
+                    <th style="text-align: right;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                    <tr>
+                        <td>
+                            <span class="item-name">{{ item.item_pricing.name }}</span>
+                            <span class="item-category">{{ item.item_pricing.category.name|default:"General" }}</span>
+                        </td>
+                        <td style="text-align: center; color: var(--text-muted);">{{ item.quantity }}</td>
+                        <td style="text-align: right; font-weight: 600;">₦{{ item.subtotal|floatformat:2 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totals & Balances -->
+        <div class="receipt-summary">
+            {% if order.discount_amount > 0 %}
+                <div class="summary-row">
+                    <span>Discount</span>
+                    <span>-₦{{ order.discount_amount|floatformat:2 }}</span>
+                </div>
+            {% endif %}
+            <div class="summary-row total">
+                <span>Total Amount</span>
+                <span>₦{{ order.total_price|floatformat:2 }}</span>
+            </div>
+            <div class="summary-row paid">
+                <span>Amount Paid</span>
+                <span>₦{{ order.amount_paid|floatformat:2 }}</span>
+            </div>
+            {% if outstanding_balance > 0 %}
+                <div class="summary-row balance">
+                    <span>Balance Due</span>
+                    <span>₦{{ outstanding_balance|floatformat:2 }}</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Introduction PWA Banner -->
+    <div class="promo-banner">
+        <h3>Never lose your receipts again!</h3>
+        <p>Save this page to your home screen and enable notifications to receive free real-time updates of your laundry's status.</p>
+        <button class="btn-notify" onclick="requestNotifications()">
+            <i class="fa-solid fa-bell"></i> Enable Notifications
+        </button>
+    </div>
+
+    <!-- Footer Sparkles branding -->
+    <div class="footer-credits">
+        Powered by <a href="https://www.sparkles.com.ng" target="_blank">Sparkles 🫧</a>
+    </div>
+</div>
+
+<script>
+    function requestNotifications() {
+        if (!('Notification' in window)) {
+            alert('This browser does not support desktop notifications');
+            return;
+        }
+
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                alert('Notifications enabled! You will now receive free laundry progress alerts.');
+                // In a future step, this will register the service worker device token in the database.
+            } else {
+                alert('Notifications permission denied.');
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

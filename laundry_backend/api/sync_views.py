@@ -227,6 +227,7 @@ class SyncAPIView(APIView):
                         existing_order.total_price = order_dict.get('total_price', existing_order.total_price)
                         existing_order.amount_paid = order_dict.get('amount_paid', existing_order.amount_paid)
                         existing_order.discount_amount = order_dict.get('discount_amount', existing_order.discount_amount)
+                        existing_order.tracking_code = order_dict.get('tracking_code', existing_order.tracking_code)
                         
                         # Handle status which might be an ID or string in the payload depending on frontend
                         status_val = order_dict.get('current_status')
@@ -247,8 +248,9 @@ class SyncAPIView(APIView):
                     
                     # Trigger WhatsApp if transitioned to completed during sync
                     if existing_order.current_status.is_completed_state and not was_completed:
+                        from threading import Thread
                         from .whatsapp import send_whatsapp_order_completed
-                        send_whatsapp_order_completed(existing_order)
+                        Thread(target=send_whatsapp_order_completed, args=(existing_order,), daemon=True).start()
             else:
                 if not order_dict.get('is_deleted', False):
                     # Create new
@@ -271,15 +273,20 @@ class SyncAPIView(APIView):
                         amount_paid=order_dict.get('amount_paid', 0),
                         discount_amount=order_dict.get('discount_amount', 0),
                         current_status=status_obj,
+                        tracking_code=order_dict.get('tracking_code'),
                         created_at=make_aware(parse(order_dict.get('created_at'))) if order_dict.get('created_at') else None,
                         updated_at=make_aware(parse(order_dict.get('updated_at'))) if order_dict.get('updated_at') else None
                     )
                     processed_orders += 1
                     
-                    # Trigger WhatsApp if created as completed during sync
+                    # Trigger WhatsApp notifications in the background
+                    from threading import Thread
                     if new_order.current_status.is_completed_state:
                         from .whatsapp import send_whatsapp_order_completed
-                        send_whatsapp_order_completed(new_order)
+                        Thread(target=send_whatsapp_order_completed, args=(new_order,), daemon=True).start()
+                    else:
+                        from .whatsapp import send_whatsapp_order_received
+                        Thread(target=send_whatsapp_order_received, args=(new_order,), daemon=True).start()
 
         # Process Order Items
         for item_dict in order_items_data:

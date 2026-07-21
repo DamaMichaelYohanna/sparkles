@@ -19,4 +19,5 @@ urlpatterns = [
     path('join-waitlist/', views.JoinWaitlistView.as_view(), name='api-waitlist'),
     path('sitemap.xml', views.sitemap_xml, name='sitemap-xml'),
     path('robots.txt', views.robots_txt, name='robots-txt'),
+    path('r/<str:tracking_code>/', views.public_receipt_view, name='public-receipt-detail'),
 ]

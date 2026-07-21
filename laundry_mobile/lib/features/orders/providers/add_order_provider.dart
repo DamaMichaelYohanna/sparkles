@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:laundry_mobile/core/models/order_model.dart';
@@ -24,6 +25,7 @@ class DraftOrderState {
   final String status;
   final double amountPaid;
   final DateTime? createdAt;
+  final String? trackingCode;
 
   DraftOrderState({
     this.existingOrderId,
@@ -34,6 +36,7 @@ class DraftOrderState {
     this.status = 'Pending',
     this.amountPaid = 0.0,
     this.createdAt,
+    this.trackingCode,
   });
 
   DraftOrderState copyWith({
@@ -45,6 +48,7 @@ class DraftOrderState {
     String? status,
     double? amountPaid,
     DateTime? createdAt,
+    String? trackingCode,
   }) {
     return DraftOrderState(
       existingOrderId: existingOrderId ?? this.existingOrderId,
@@ -55,6 +59,7 @@ class DraftOrderState {
       status: status ?? this.status,
       amountPaid: amountPaid ?? this.amountPaid,
       createdAt: createdAt ?? this.createdAt,
+      trackingCode: trackingCode ?? this.trackingCode,
     );
   }
   
@@ -81,6 +86,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
       status: order.status,
       amountPaid: order.amountPaid,
       createdAt: order.createdAt,
+      trackingCode: order.trackingCode,
     );
   }
 
@@ -151,6 +157,12 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
     state = state.copyWith(items: updatedList);
   }
 
+  String _generateTrackingCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rnd = Random();
+    return List.generate(8, (index) => chars[rnd.nextInt(chars.length)]).join();
+  }
+
   Future<void> saveOrder() async {
     if (state.customerName.isEmpty || state.items.isEmpty) {
       throw Exception("Customer name and at least one item are required.");
@@ -159,6 +171,9 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
     final isEditing = state.existingOrderId != null;
     final orderId = state.existingOrderId ?? const Uuid().v4();
     final now = DateTime.now().toUtc();
+    final trackingCode = isEditing
+        ? (state.trackingCode ?? _generateTrackingCode())
+        : _generateTrackingCode();
 
     final order = OrderModel(
       id: orderId,
@@ -171,6 +186,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
       discountAmount: state.orderDiscount,
       customerPhone: state.customerPhone,
       amountPaid: state.amountPaid,
+      trackingCode: trackingCode,
     );
 
     final db = await DatabaseHelper.instance.database;
@@ -179,7 +195,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
       // Update order table
       await db.update(
         'orders',
-        order.toDb()..addAll({'customer_phone': state.customerPhone, 'amount_paid': state.amountPaid}),
+        order.toDb(),
         where: 'id = ?',
         whereArgs: [orderId],
       );
@@ -187,7 +203,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
       await db.delete('order_items', where: 'order_id = ?', whereArgs: [orderId]);
     } else {
       // Save order as new
-      await DatabaseHelper.instance.insertOrder(order.toDb()..addAll({'customer_phone': state.customerPhone, 'amount_paid': state.amountPaid}));
+      await DatabaseHelper.instance.insertOrder(order.toDb());
     }
 
     // Save items
