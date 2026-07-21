@@ -223,6 +223,14 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
       await DatabaseHelper.instance.insertOrderItem(finalItem.toDb());
     }
 
+    print("==================================================");
+    print("CREATED ORDER OFFLINE");
+    print("Order ID: $orderId");
+    print("Tracking Code: $trackingCode");
+    print("Local Receipt URL: http://localhost:8000/r/$trackingCode/");
+    print("Production Receipt URL: https://sparkles.com.ng/r/$trackingCode/");
+    print("==================================================");
+
     // Reset draft state
     state = DraftOrderState();
 

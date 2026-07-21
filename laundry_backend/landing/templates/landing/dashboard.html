@@ -37,6 +37,7 @@
                     <th>Office</th>
                     <th>Customer</th>
                     <th>Total</th>
+                    <th>Receipt URL</th>
                 </tr>
             </thead>
             <tbody>
@@ -46,10 +47,22 @@
                     <td>{{ order.office.name }}</td>
                     <td>{{ order.customer_name }}</td>
                     <td>₦{{ order.total_price }}</td>
+                    <td>
+                        {% if order.tracking_code %}
+                            <a href="/r/{{ order.tracking_code }}/" target="_blank" style="color: #0284c7; text-decoration: none; font-weight: 600;">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> /r/{{ order.tracking_code }}
+                            </a>
+                            <button onclick="copyReceiptLink('{{ order.tracking_code }}')" style="background: none; border: none; cursor: pointer; color: #64748b; margin-left: 8px;" title="Copy Receipt Link">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        {% else %}
+                            <span style="color: #94a3b8;">N/A</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4">No orders found on the platform yet.</td>
+                    <td colspan="5">No orders found on the platform yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -87,5 +100,14 @@
             }
         }
     });
+
+    function copyReceiptLink(code) {
+        const url = window.location.origin + '/r/' + code + '/';
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Receipt link copied to clipboard: ' + url);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
 </script>
 {% endblock %}
