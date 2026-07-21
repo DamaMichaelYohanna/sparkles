@@ -4,6 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Receipts">
+    <link rel="manifest" href="/manifest.json">
     <title>Digital Receipt | {{ order.office.name }}</title>
     
     <!-- Google Fonts -->
@@ -395,8 +399,13 @@
 
     <!-- Live Status Timeline Card -->
     <div class="card">
-        <h3 class="timeline-title">
-            <i class="fa-solid fa-spinner fa-spin" style="color: var(--primary);"></i> Order Progress
+        <h3 class="timeline-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-spinner fa-spin" style="color: var(--primary);"></i> Order Progress
+            </span>
+            <button onclick="window.location.reload()" style="background: none; border: none; cursor: pointer; color: var(--primary); font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;" title="Refresh Status">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh
+            </button>
         </h3>
         
         <div class="timeline">
@@ -502,6 +511,9 @@
 </div>
 
 <script>
+    // Save this tracking code as the latest viewed receipt for the single PWA launcher
+    localStorage.setItem('latest_tracking_code', '{{ order.tracking_code }}');
+
     function requestNotifications() {
         const isSecureContext = window.isSecureContext;
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;

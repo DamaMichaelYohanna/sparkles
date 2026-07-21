@@ -337,3 +337,31 @@ def public_receipt_view(request, tracking_code):
         'statuses': statuses_list,
     }
     return render(request, 'landing/receipt.html', context)
+
+
+def public_latest_receipt_view(request):
+    return render(request, 'landing/latest_receipt.html')
+
+
+def pwa_manifest_view(request):
+    from django.http import JsonResponse
+    protocol = "https" if request.is_secure() else "http"
+    host = request.get_host()
+    logo_url = f"{protocol}://{host}/static/landing/images/logo.png"
+    
+    manifest_data = {
+        "name": "Sparkles Receipts",
+        "short_name": "Receipts",
+        "start_url": "/r/latest/",
+        "display": "standalone",
+        "background_color": "#f8fafc",
+        "theme_color": "#0284c7",
+        "icons": [
+            {
+                "src": logo_url,
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ]
+    }
+    return JsonResponse(manifest_data)
