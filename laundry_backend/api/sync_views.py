@@ -216,42 +216,41 @@ class SyncAPIView(APIView):
                     continue
                 # Update
                 was_completed = existing_order.current_status.is_completed_state
-                # Last write wins
                 incoming_updated_at = make_aware(parse(order_dict.get('updated_at', '')))
-                if incoming_updated_at > existing_order.updated_at or order_dict.get('is_deleted', False):
-                    if order_dict.get('is_deleted', False):
-                        existing_order.is_deleted = True
-                    else:
-                        existing_order.customer_name = order_dict.get('customer_name', existing_order.customer_name)
-                        existing_order.customer_phone = order_dict.get('customer_phone', existing_order.customer_phone)
-                        existing_order.customer_is_whatsapp = order_dict.get('customer_is_whatsapp', existing_order.customer_is_whatsapp)
-                        existing_order.total_price = order_dict.get('total_price', existing_order.total_price)
-                        existing_order.amount_paid = order_dict.get('amount_paid', existing_order.amount_paid)
-                        existing_order.discount_amount = order_dict.get('discount_amount', existing_order.discount_amount)
-                        existing_order.tracking_code = order_dict.get('tracking_code', existing_order.tracking_code)
-                        
-                        # Handle status which might be an ID or string in the payload depending on frontend
-                        status_val = order_dict.get('current_status')
-                        if status_val:
-                            status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first()
-                            if not status_obj:
-                                status_obj = OrderStatus.objects.create(
-                                    office=office,
-                                    name=status_val,
-                                    sequence_order=OrderStatus.objects.filter(office=office).count() + 1,
-                                    is_completed_state=(status_val.lower() == 'completed')
-                                )
-                            existing_order.current_status = status_obj
-                                
-                    existing_order.updated_at = incoming_updated_at
-                    existing_order.save()
-                    processed_orders += 1
+                # Always apply updates from the client since the client is the source of truth for POS orders
+                if order_dict.get('is_deleted', False):
+                    existing_order.is_deleted = True
+                else:
+                    existing_order.customer_name = order_dict.get('customer_name', existing_order.customer_name)
+                    existing_order.customer_phone = order_dict.get('customer_phone', existing_order.customer_phone)
+                    existing_order.customer_is_whatsapp = order_dict.get('customer_is_whatsapp', existing_order.customer_is_whatsapp)
+                    existing_order.total_price = order_dict.get('total_price', existing_order.total_price)
+                    existing_order.amount_paid = order_dict.get('amount_paid', existing_order.amount_paid)
+                    existing_order.discount_amount = order_dict.get('discount_amount', existing_order.discount_amount)
+                    existing_order.tracking_code = order_dict.get('tracking_code', existing_order.tracking_code)
                     
-                    # Trigger WhatsApp if transitioned to completed during sync
-                    if existing_order.current_status.is_completed_state and not was_completed:
-                        from threading import Thread
-                        from .whatsapp import send_whatsapp_order_completed
-                        Thread(target=send_whatsapp_order_completed, args=(existing_order,), daemon=True).start()
+                    # Handle status which might be an ID or string in the payload depending on frontend
+                    status_val = order_dict.get('current_status')
+                    if status_val:
+                        status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first()
+                        if not status_obj:
+                            status_obj = OrderStatus.objects.create(
+                                office=office,
+                                name=status_val,
+                                sequence_order=OrderStatus.objects.filter(office=office).count() + 1,
+                                is_completed_state=(status_val.lower() == 'completed')
+                            )
+                        existing_order.current_status = status_obj
+                            
+                existing_order.updated_at = incoming_updated_at
+                existing_order.save()
+                processed_orders += 1
+                
+                # Trigger WhatsApp if transitioned to completed during sync
+                if existing_order.current_status.is_completed_state and not was_completed:
+                    from threading import Thread
+                    from .whatsapp import send_whatsapp_order_completed
+                    Thread(target=send_whatsapp_order_completed, args=(existing_order,), daemon=True).start()
             else:
                 if not order_dict.get('is_deleted', False):
                     # Create new
@@ -318,17 +317,17 @@ class SyncAPIView(APIView):
                     continue
                 # Update
                 incoming_updated_at = make_aware(parse(item_dict.get('updated_at', '')))
-                if incoming_updated_at > existing_item.updated_at or item_dict.get('is_deleted', False):
-                    if item_dict.get('is_deleted', False):
-                        existing_item.is_deleted = True
-                    else:
-                        existing_item.quantity = item_dict.get('quantity', existing_item.quantity)
-                        existing_item.unit_price = item_dict.get('unit_price', existing_item.unit_price)
-                        existing_item.discount_amount = item_dict.get('discount_amount', existing_item.discount_amount)
-                        existing_item.subtotal = item_dict.get('subtotal', existing_item.subtotal)
-                    existing_item.updated_at = incoming_updated_at
-                    existing_item.save()
-                    processed_items += 1
+                # Always apply updates from the client since the client is the source of truth for POS order items
+                if item_dict.get('is_deleted', False):
+                    existing_item.is_deleted = True
+                else:
+                    existing_item.quantity = item_dict.get('quantity', existing_item.quantity)
+                    existing_item.unit_price = item_dict.get('unit_price', existing_item.unit_price)
+                    existing_item.discount_amount = item_dict.get('discount_amount', existing_item.discount_amount)
+                    existing_item.subtotal = item_dict.get('subtotal', existing_item.subtotal)
+                existing_item.updated_at = incoming_updated_at
+                existing_item.save()
+                processed_items += 1
             else:
                 if not item_dict.get('is_deleted', False):
                     try:
