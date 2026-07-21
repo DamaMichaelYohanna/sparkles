@@ -503,15 +503,29 @@
 
 <script>
     function requestNotifications() {
+        const isSecureContext = window.isSecureContext;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        // Check secure context
+        if (!isSecureContext) {
+            alert('🔒 Secure Connection Required:\nWeb notifications require a secure HTTPS connection. Please access this page using HTTPS to enable notifications.');
+            return;
+        }
+
+        // Check iOS Safari PWA requirement
+        if (isIOS && !window.navigator.standalone) {
+            alert('📱 iOS Notification Instructions:\n1. Tap the Share button in Safari.\n2. Tap "Add to Home Screen".\n3. Launch the app from your Home Screen to enable notifications.');
+            return;
+        }
+
         if (!('Notification' in window)) {
-            alert('This browser does not support desktop notifications');
+            alert('This browser does not support notifications.');
             return;
         }
 
         Notification.requestPermission().then(permission => {
             if (permission === 'granted') {
-                alert('Notifications enabled! You will now receive free laundry progress alerts.');
-                // In a future step, this will register the service worker device token in the database.
+                alert('🔔 Notifications enabled! You will now receive free laundry progress alerts.');
             } else {
                 alert('Notifications permission denied.');
             }
