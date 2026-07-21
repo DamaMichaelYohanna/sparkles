@@ -382,6 +382,17 @@
 <body>
 
 <div class="portal-container">
+    {% if newer_active_order %}
+    <div class="card" style="background: var(--primary-light); border-color: var(--primary); padding: 1rem; display: flex; justify-content: space-between; align-items: center; border-radius: 16px;">
+        <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.35rem;">
+            <i class="fa-solid fa-bell" style="animation: bounce 1s infinite alternate;"></i> Newer Order Active: #{{ newer_active_order.tracking_code }}
+        </span>
+        <a href="/r/{{ newer_active_order.tracking_code }}/" style="background: var(--primary); color: white; padding: 0.35rem 0.75rem; border-radius: 30px; font-size: 0.75rem; font-weight: 700; text-decoration: none; box-shadow: 0 2px 6px rgba(2,132,199,0.3);">
+            Open
+        </a>
+    </div>
+    {% endif %}
+
     <!-- Header Card -->
     <div class="card">
         <div class="brand-header">
@@ -503,6 +514,30 @@
             <i class="fa-solid fa-bell"></i> Enable Notifications
         </button>
     </div>
+
+    <!-- History Card -->
+    {% if other_orders %}
+    <div class="card" style="padding: 1.25rem 1.5rem;">
+        <h3 class="timeline-title" style="margin-bottom: 0.75rem;"><i class="fa-solid fa-history" style="color: var(--primary);"></i> Your Receipt History</h3>
+        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for other in other_orders %}
+            <li style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem;">
+                <span style="display: flex; align-items: center; gap: 0.5rem;">
+                    <a href="/r/{{ other.tracking_code }}/" style="color: var(--primary); text-decoration: none; font-weight: 700; border-bottom: 1px dashed var(--primary);">
+                        #{{ other.tracking_code }}
+                    </a>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">
+                        ({{ other.created_at|date:"M d" }})
+                    </span>
+                </span>
+                <span class="receipt-badge" style="font-size: 0.7rem; padding: 0.2rem 0.55rem; background-color: {% if other.current_status.is_completed_state %}var(--success-light){% else %}var(--primary-light){% endif %}; color: {% if other.current_status.is_completed_state %}var(--success){% else %}var(--primary){% endif %}; border-radius: 12px; font-weight: 700;">
+                    {{ other.current_status.name }}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
 
     <!-- Footer Sparkles branding -->
     <div class="footer-credits">

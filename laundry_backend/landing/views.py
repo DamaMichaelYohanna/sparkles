@@ -331,10 +331,27 @@ def public_receipt_view(request, tracking_code):
                 'is_completed': is_completed
             })
             
+    # Fetch other orders for the same customer phone to display in history
+    other_orders = []
+    newer_active_order = None
+    if order.customer_phone:
+        other_orders = Order.objects.filter(
+            customer_phone=order.customer_phone
+        ).exclude(id=order.id).select_related('current_status').order_by('-created_at')[:5]
+        
+        # Check if there is a newer active (non-completed) order
+        newer_active_order = Order.objects.filter(
+            customer_phone=order.customer_phone,
+            created_at__gt=order.created_at,
+            current_status__is_completed_state=False
+        ).select_related('current_status').order_by('-created_at').first()
+
     context = {
         'order': order,
         'outstanding_balance': outstanding_balance,
         'statuses': statuses_list,
+        'other_orders': other_orders,
+        'newer_active_order': newer_active_order,
     }
     return render(request, 'landing/receipt.html', context)
 
