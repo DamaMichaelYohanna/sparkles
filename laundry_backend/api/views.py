@@ -72,10 +72,12 @@ class BaseTenantView:
     def perform_update(self, serializer):
         model = self.serializer_class.Meta.model
         was_completed = False
+        old_status_name = None
         if model == Order:
             try:
                 old_order = Order.objects.get(pk=serializer.instance.pk)
                 was_completed = old_order.current_status.is_completed_state
+                old_status_name = old_order.current_status.name
             except Order.DoesNotExist:
                 pass
 
@@ -93,6 +95,11 @@ class BaseTenantView:
                 action=f"{model.__name__.upper()}_UPDATED",
                 details=f"Updated ID {instance.id}"
             )
+            
+            # Trigger Web Push notification if status changed
+            if old_status_name and instance.current_status.name != old_status_name:
+                from .push_notifications import notify_order_status_change
+                notify_order_status_change(instance)
             
             # Trigger WhatsApp if transitioned to completed
             if instance.current_status.is_completed_state and not was_completed:
@@ -779,3 +786,32 @@ class VerifyOTPView(APIView):
             "status": "success",
             "message": "Verification code is valid."
         })
+
+
+class SavePushSubscriptionAPIView(APIView):
+    permission_classes = []  # Public endpoint
+
+    def post(self, request):
+        customer_phone = request.data.get('customer_phone', '').strip()
+        endpoint = request.data.get('endpoint', '').strip()
+        keys = request.data.get('keys', {})
+        p256dh = keys.get('p256dh', '').strip()
+        auth = keys.get('auth', '').strip()
+
+        if not customer_phone or not endpoint or not p256dh or not auth:
+            logger.warning("[PushNotification] Subscription registration failed: missing parameters.")
+            return Response({"error": "Missing subscription parameters."}, status=400)
+
+        from operations.models import WebPushSubscription
+        subscription, created = WebPushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={
+                'customer_phone': customer_phone,
+                'p256dh': p256dh,
+                'auth': auth,
+                'is_deleted': False
+            }
+        )
+
+        logger.info("[PushNotification] Saved subscription for customer %s (created: %s)", customer_phone, created)
+        return Response({"status": "success", "message": "Subscription saved."})

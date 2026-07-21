@@ -546,8 +546,30 @@
 </div>
 
 <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker registered:', reg.scope))
+                .catch(err => console.error('Service Worker registration failed:', err));
+        });
+    }
+
     // Save this tracking code as the latest viewed receipt for the single PWA launcher
     localStorage.setItem('latest_tracking_code', '{{ order.tracking_code }}');
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
 
     function requestNotifications() {
         const isSecureContext = window.isSecureContext;
@@ -565,18 +587,76 @@
             return;
         }
 
-        if (!('Notification' in window)) {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
             alert('This browser does not support notifications.');
             return;
         }
 
         Notification.requestPermission().then(permission => {
             if (permission === 'granted') {
-                alert('🔔 Notifications enabled! You will now receive free laundry progress alerts.');
+                navigator.serviceWorker.ready.then(reg => {
+                    const vapidPublicKey = '{{ vapid_public_key }}';
+                    if (!vapidPublicKey) {
+                        alert('Error: VAPID Public Key is missing on the server.');
+                        return;
+                    }
+
+                    const subscribeOptions = {
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+                    };
+
+                    return reg.pushManager.subscribe(subscribeOptions);
+                }).then(subscription => {
+                    if (!subscription) return;
+
+                    const p256dh = btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh'))));
+                    const auth = btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth'))));
+
+                    return fetch('/api/notifications/subscribe/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            customer_phone: '{{ order.customer_phone }}',
+                            endpoint: subscription.endpoint,
+                            keys: {
+                                p256dh: p256dh,
+                                auth: auth
+                            }
+                        })
+                    });
+                }).then(response => {
+                    if (response && response.ok) {
+                        alert('🔔 Notifications enabled! You will now receive free laundry progress alerts.');
+                    } else {
+                        alert('🔔 Notifications enabled locally, but failed to register with the server.');
+                    }
+                }).catch(err => {
+                    console.error('Error during push subscription registration:', err);
+                    alert('Failed to register notifications: ' + err.message);
+                });
             } else {
                 alert('Notifications permission denied.');
             }
         });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 </script>
 

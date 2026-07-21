@@ -65,4 +65,5 @@ urlpatterns = [
     path('password-reset/request/', views.RequestPasswordResetView.as_view(), name='password-reset-request'),
     path('password-reset/verify/', views.VerifyOTPView.as_view(), name='password-reset-verify'),
     path('password-reset/confirm/', views.ConfirmPasswordResetView.as_view(), name='password-reset-confirm'),
+    path('notifications/subscribe/', views.SavePushSubscriptionAPIView.as_view(), name='notifications-subscribe'),
 ]

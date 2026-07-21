@@ -149,3 +149,8 @@ WHATSAPP_API_VERSION = os.environ.get('WHATSAPP_API_VERSION', 'v18.0')
 
 # Sparkles Portal Configuration
 SPARKLES_PORTAL_BASE_URL = os.environ.get('SPARKLES_PORTAL_BASE_URL', 'http://localhost:8000')
+
+# Web Push Notifications (VAPID Configuration)
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
+VAPID_CLAIM_EMAIL = os.environ.get('VAPID_CLAIM_EMAIL', 'mailto:support@sparkles.com.ng')

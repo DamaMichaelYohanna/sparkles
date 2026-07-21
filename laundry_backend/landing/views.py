@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
 from django.db.models import Sum, Count
+from django.conf import settings
 from offices.models import LaundryOffice, User
 from operations.models import Order
 
@@ -352,6 +353,7 @@ def public_receipt_view(request, tracking_code):
         'statuses': statuses_list,
         'other_orders': other_orders,
         'newer_active_order': newer_active_order,
+        'vapid_public_key': settings.VAPID_PUBLIC_KEY,
     }
     return render(request, 'landing/receipt.html', context)
 

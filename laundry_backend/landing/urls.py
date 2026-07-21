@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 from . import views
 
 urlpatterns = [
@@ -21,5 +22,6 @@ urlpatterns = [
     path('robots.txt', views.robots_txt, name='robots-txt'),
     path('r/latest/', views.public_latest_receipt_view, name='public-receipt-latest'),
     path('manifest.json', views.pwa_manifest_view, name='pwa-manifest'),
+    path('sw.js', TemplateView.as_view(template_name='landing/sw.js', content_type='application/javascript'), name='pwa-service-worker'),
     path('r/<str:tracking_code>/', views.public_receipt_view, name='public-receipt-detail'),
 ]

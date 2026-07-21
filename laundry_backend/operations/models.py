@@ -60,3 +60,9 @@ class ActionLog(BaseModel):
     user = models.ForeignKey('offices.User', on_delete=models.SET_NULL, null=True, blank=True)
     action = models.CharField(max_length=50) # e.g., "ORDER_CREATED", "ORDER_PAID"
     details = models.TextField(blank=True)
+
+class WebPushSubscription(BaseModel):
+    customer_phone = models.CharField(max_length=50, db_index=True)
+    endpoint = models.TextField(unique=True)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=255)
