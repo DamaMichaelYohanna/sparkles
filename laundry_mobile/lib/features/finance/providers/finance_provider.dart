@@ -3,6 +3,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers.dart';
 import '../../../core/models/order_model.dart';
 
+enum FinancePeriod {
+  today,
+  thisWeek,
+  thisMonth,
+  allTime,
+}
+
+final financePeriodFilterProvider = StateProvider<FinancePeriod>((ref) => FinancePeriod.allTime);
+
 class FinanceStats {
   final double totalRevenue;
   final double averageOrderValue;
@@ -11,6 +20,7 @@ class FinanceStats {
   final List<double> weeklyTrend; // Last 7 days
   final Map<String, double> topCustomers;
   final String officeName;
+  final String periodLabel;
 
   FinanceStats({
     required this.totalRevenue,
@@ -19,13 +29,40 @@ class FinanceStats {
     required this.revenueByStatus,
     required this.weeklyTrend,
     required this.topCustomers,
+    required this.periodLabel,
     this.officeName = 'My Laundry Co.',
   });
 }
 
 final financeStatsProvider = FutureProvider<FinanceStats>((ref) async {
+  final filter = ref.watch(financePeriodFilterProvider);
   final syncRepo = ref.watch(syncRepositoryProvider);
-  final orders = await syncRepo.getOrders();
+  final allOrders = await syncRepo.getOrders();
+
+  final now = DateTime.now();
+  final todayStart = DateTime(now.year, now.month, now.day);
+
+  String label = 'All Time';
+  final filteredOrders = allOrders.where((order) {
+    final orderDate = DateTime(order.createdAt.year, order.createdAt.month, order.createdAt.day);
+    switch (filter) {
+      case FinancePeriod.today:
+        label = 'Today';
+        return orderDate.isAtSameMomentAs(todayStart);
+      case FinancePeriod.thisWeek:
+        label = 'Last 7 Days';
+        final startOfWeek = todayStart.subtract(const Duration(days: 7));
+        return orderDate.isAfter(startOfWeek);
+      case FinancePeriod.thisMonth:
+        label = 'Last 30 Days';
+        final startOfMonth = todayStart.subtract(const Duration(days: 30));
+        return orderDate.isAfter(startOfMonth);
+      case FinancePeriod.allTime:
+      default:
+        label = 'All Time';
+        return true;
+    }
+  }).toList();
 
   double totalRev = 0.0;
   Map<String, double> revByStatus = {
@@ -37,11 +74,7 @@ final financeStatsProvider = FutureProvider<FinanceStats>((ref) async {
   Map<String, double> customerRev = {};
   List<double> weekly = List.filled(7, 0.0);
   
-  final now = DateTime.now();
-  // We want the last 7 days ending today
-  final todayStart = DateTime(now.year, now.month, now.day);
-  
-  for (final order in orders) {
+  for (final order in filteredOrders) {
     totalRev += order.totalPrice;
     
     // Status
@@ -53,8 +86,10 @@ final financeStatsProvider = FutureProvider<FinanceStats>((ref) async {
     
     // Customers
     customerRev[order.customerName] = (customerRev[order.customerName] ?? 0) + order.totalPrice;
-    
-    // Weekly Trend (last 7 days, index 6 is today, index 0 is 6 days ago)
+  }
+
+  // Calculate weekly trend ending today (always uses allOrders for continuous 7-day trend display)
+  for (final order in allOrders) {
     final daysDifference = todayStart.difference(DateTime(order.createdAt.year, order.createdAt.month, order.createdAt.day)).inDays;
     if (daysDifference >= 0 && daysDifference < 7) {
       final index = 6 - daysDifference;
@@ -72,11 +107,12 @@ final financeStatsProvider = FutureProvider<FinanceStats>((ref) async {
 
   return FinanceStats(
     totalRevenue: totalRev,
-    averageOrderValue: orders.isEmpty ? 0 : totalRev / orders.length,
-    totalOrders: orders.length,
+    averageOrderValue: filteredOrders.isEmpty ? 0 : totalRev / filteredOrders.length,
+    totalOrders: filteredOrders.length,
     revenueByStatus: revByStatus,
     weeklyTrend: weekly,
     topCustomers: top5Customers,
     officeName: officeName,
+    periodLabel: label,
   );
 });

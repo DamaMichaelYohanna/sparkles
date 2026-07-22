@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -8,9 +9,9 @@ import 'providers/finance_provider.dart';
 
 /// Generates a branded PDF financial report and opens the OS share sheet.
 class FinanceReportGenerator {
-  /// Builds and shares a PDF report for [stats] belonging to [officeName].
-  /// Returns the generated [File] for optional additional handling.
-  static Future<File> generateAndShare(
+  /// Builds a PDF report for [stats] belonging to [officeName].
+  /// Returns the generated PDF bytes.
+  static Future<Uint8List> generatePdfBytes(
     FinanceStats stats,
     String officeName,
   ) async {
@@ -180,6 +181,12 @@ class FinanceReportGenerator {
                             font: fontMedium,
                             fontSize: 13,
                             color: white)),
+                    pw.SizedBox(height: 4),
+                    pw.Text('Period: ${stats.periodLabel}',
+                        style: pw.TextStyle(
+                            font: fontRegular,
+                            fontSize: 10,
+                            color: white.withOpacity(0.85))),
                   ],
                 ),
                 pw.Column(
@@ -349,20 +356,35 @@ class FinanceReportGenerator {
       ),
     );
 
-    // ── Save to temp directory ──
-    final dir = await getTemporaryDirectory();
-    final fileName =
-        'sparkles_report_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}.pdf';
-    final file = File('${dir.path}/$fileName');
-    await file.writeAsBytes(await pdf.save());
+    return pdf.save();
+  }
 
-    // ── Open OS share / print sheet ──
+  /// Opens the native OS share sheet for the PDF.
+  static Future<void> sharePdf(Uint8List bytes, String filename) async {
     await Printing.sharePdf(
-      bytes: await file.readAsBytes(),
-      filename: fileName,
+      bytes: bytes,
+      filename: filename,
     );
+  }
 
-    return file;
+  /// Saves the PDF to the device's public Downloads directory (Android)
+  /// or application Documents folder (iOS).
+  /// Returns the saved file path.
+  static Future<String> downloadPdf(Uint8List bytes, String filename) async {
+    Directory? dir;
+    if (Platform.isAndroid) {
+      // Direct write to public downloads folder
+      dir = Directory('/storage/emulated/0/Download');
+      if (!await dir.exists()) {
+        dir = await getDownloadsDirectory();
+      }
+    }
+    dir ??= await getApplicationDocumentsDirectory();
+
+    final file = File('${dir.path}/$filename');
+    await file.writeAsBytes(bytes);
+    return file.path;
+  }
   }
 
   static pw.TableRow _statusRow(

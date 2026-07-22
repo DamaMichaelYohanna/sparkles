@@ -125,17 +125,88 @@ class FinanceScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _triggerExport(
-      BuildContext context, WidgetRef ref, FinanceStats stats) async {
-    // Show a loading indicator in the snack bar while generating
+  void _showExportOptionsSheet(BuildContext context, WidgetRef ref, FinanceStats stats) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Export Financial Report',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Period: ${stats.periodLabel}',
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(LucideIcons.download, color: AppTheme.primaryColor, size: 20),
+              ),
+              title: const Text('Save to Device (Download)', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Saves PDF report directly to your public Downloads folder.', style: TextStyle(fontSize: 12)),
+              onTap: () {
+                Navigator.pop(context);
+                _performExportAction(context, ref, stats, isDownload: true);
+              },
+            ),
+            const Divider(height: 24),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(LucideIcons.share2, color: Colors.green, size: 20),
+              ),
+              title: const Text('Share / Send Report', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Share PDF report via WhatsApp, Email, or other apps.', style: TextStyle(fontSize: 12)),
+              onTap: () {
+                Navigator.pop(context);
+                _performExportAction(context, ref, stats, isDownload: false);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _performExportAction(
+      BuildContext context, WidgetRef ref, FinanceStats stats, {required bool isDownload}) async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Row(
           children: [
             SizedBox(
               width: 18, height: 18,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2, color: Colors.white),
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
             ),
             SizedBox(width: 12),
             Text('Generating report…'),
@@ -144,17 +215,49 @@ class FinanceScreen extends ConsumerWidget {
         duration: Duration(seconds: 10),
       ),
     );
+
     try {
-      await FinanceReportGenerator.generateAndShare(stats, stats.officeName);
+      final pdfBytes = await FinanceReportGenerator.generatePdfBytes(stats, stats.officeName);
+      final now = DateTime.now();
+      final fileName = 'sparkles_finance_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}.pdf';
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+
+      if (isDownload) {
+        final path = await FinanceReportGenerator.downloadPdf(pdfBytes, fileName);
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(LucideIcons.checkCircle, color: Colors.green),
+                  SizedBox(width: 8),
+                  Text('Report Downloaded'),
+                ],
+              ),
+              content: Text('Financial report has been saved successfully to:\n\n$path'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                )
+              ],
+            ),
+          );
+        }
+      } else {
+        await FinanceReportGenerator.sharePdf(pdfBytes, fileName);
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to generate report: $e'),
+            content: Text('Failed to export report: $e'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -211,7 +314,7 @@ class FinanceScreen extends ConsumerWidget {
                 ],
               ),
               onPressed: () => _canExport(tier)
-                  ? _triggerExport(context, ref, stats)
+                  ? _showExportOptionsSheet(context, ref, stats)
                   : _showUpgradeSheet(context),
             ),
             orElse: () => const SizedBox.shrink(),
@@ -232,6 +335,8 @@ class FinanceScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildPeriodFilterRow(context, ref),
+                const SizedBox(height: 16),
                 _buildHeaderKpis(stats),
                 const SizedBox(height: 24),
                 _buildRevenueTrendsChart(stats),
@@ -526,6 +631,42 @@ class FinanceScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPeriodFilterRow(BuildContext context, WidgetRef ref) {
+    final activeFilter = ref.watch(financePeriodFilterProvider);
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildFilterChip(ref, 'Today', FinancePeriod.today, activeFilter),
+        _buildFilterChip(ref, '7 Days', FinancePeriod.thisWeek, activeFilter),
+        _buildFilterChip(ref, '30 Days', FinancePeriod.thisMonth, activeFilter),
+        _buildFilterChip(ref, 'All Time', FinancePeriod.allTime, activeFilter),
+      ],
+    );
+  }
+
+  Widget _buildFilterChip(WidgetRef ref, String label, FinancePeriod filter, FinancePeriod activeFilter) {
+    final isSelected = filter == activeFilter;
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.white : AppTheme.textSecondary,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          fontSize: 12,
+        ),
+      ),
+      selected: isSelected,
+      selectedColor: AppTheme.primaryColor,
+      backgroundColor: Colors.grey.shade100,
+      onSelected: (val) {
+        if (val) {
+          ref.read(financePeriodFilterProvider.notifier).state = filter;
+        }
+      },
     );
   }
 }

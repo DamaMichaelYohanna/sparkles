@@ -149,7 +149,7 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
             TextField(
               controller: _phoneController,
               decoration: const InputDecoration(
-                labelText: 'Phone Number (Optional)',
+                labelText: 'Whatsapp Number (Essential)',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(LucideIcons.phone),
                 counterText: '',
