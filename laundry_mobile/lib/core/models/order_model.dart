@@ -1,5 +1,6 @@
 class OrderModel {
   final String id;
+  final String? customerId;
   final String customerName;
   final String customerPhone;
   final String status;
@@ -14,6 +15,7 @@ class OrderModel {
 
   OrderModel({
     required this.id,
+    this.customerId,
     required this.customerName,
     this.customerPhone = '',
     required this.status,
@@ -37,6 +39,7 @@ class OrderModel {
 
     return OrderModel(
       id: json['id'] ?? '',
+      customerId: json['customer'] as String? ?? json['customer_id'] as String?,
       customerName: json['customer_name'] ?? 'Unknown Customer',
       customerPhone: json['customer_phone'] ?? '',
       status: statusName,
@@ -57,6 +60,7 @@ class OrderModel {
   factory OrderModel.fromDb(Map<String, dynamic> map) {
     return OrderModel(
       id: map['id'] as String,
+      customerId: map['customer_id'] as String?,
       customerName: map['customer_name'] as String,
       customerPhone: map['customer_phone'] as String? ?? '',
       status: map['current_status'] as String,
@@ -74,6 +78,7 @@ class OrderModel {
   Map<String, dynamic> toDb() {
     return {
       'id': id,
+      'customer_id': customerId,
       'customer_name': customerName,
       'customer_phone': customerPhone,
       'current_status': status,

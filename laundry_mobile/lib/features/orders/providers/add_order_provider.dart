@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:laundry_mobile/core/models/order_model.dart';
 import 'package:laundry_mobile/core/models/order_item_model.dart';
 import 'package:laundry_mobile/core/models/item_pricing_model.dart';
+import 'package:laundry_mobile/core/models/customer_model.dart';
 import 'package:laundry_mobile/core/local_db/database_helper.dart';
 import 'orders_provider.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
@@ -18,6 +19,7 @@ final itemPricingListProvider = FutureProvider.autoDispose<List<ItemPricingModel
 
 class DraftOrderState {
   final String? existingOrderId;
+  final String? customerId;
   final String customerName;
   final String customerPhone;
   final List<OrderItemModel> items;
@@ -29,6 +31,7 @@ class DraftOrderState {
 
   DraftOrderState({
     this.existingOrderId,
+    this.customerId,
     this.customerName = '',
     this.customerPhone = '',
     this.items = const [],
@@ -41,6 +44,7 @@ class DraftOrderState {
 
   DraftOrderState copyWith({
     String? existingOrderId,
+    String? customerId,
     String? customerName,
     String? customerPhone,
     List<OrderItemModel>? items,
@@ -52,6 +56,7 @@ class DraftOrderState {
   }) {
     return DraftOrderState(
       existingOrderId: existingOrderId ?? this.existingOrderId,
+      customerId: customerId ?? this.customerId,
       customerName: customerName ?? this.customerName,
       customerPhone: customerPhone ?? this.customerPhone,
       items: items ?? this.items,
@@ -79,6 +84,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
   void initializeFromOrder(OrderModel order, List<OrderItemModel> items) {
     state = DraftOrderState(
       existingOrderId: order.id,
+      customerId: order.customerId,
       customerName: order.customerName,
       customerPhone: order.customerPhone,
       items: items,
@@ -94,10 +100,11 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
     state = DraftOrderState();
   }
 
-  void updateCustomerInfo({String? name, String? phone}) {
+  void updateCustomerInfo({String? name, String? phone, String? customerId, bool clearCustomerId = false}) {
     state = state.copyWith(
       customerName: name ?? state.customerName,
       customerPhone: phone ?? state.customerPhone,
+      customerId: clearCustomerId ? null : (customerId ?? state.customerId),
     );
   }
 
@@ -175,8 +182,49 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
         ? (state.trackingCode ?? _generateTrackingCode())
         : _generateTrackingCode();
 
+    // Ensure customer profile exists or create it inline
+    String? finalCustomerId = state.customerId;
+    if (finalCustomerId == null && state.customerPhone.isNotEmpty) {
+      final db = await DatabaseHelper.instance.database;
+      final existing = await db.query('customers', where: 'phone = ? AND is_deleted = 0', whereArgs: [state.customerPhone.trim()]);
+      if (existing.isNotEmpty) {
+        finalCustomerId = existing.first['id'] as String;
+      } else {
+        // Create new customer profile automatically
+        final newCust = CustomerModel(
+          id: const Uuid().v4(),
+          name: state.customerName,
+          phone: state.customerPhone,
+          createdAt: now,
+          updatedAt: now,
+          syncStatus: 'pending',
+        );
+        await DatabaseHelper.instance.insertCustomer(newCust.toDb());
+        finalCustomerId = newCust.id;
+      }
+    } else if (finalCustomerId == null && state.customerName.isNotEmpty) {
+      // Walk-in customer with name but no phone
+      final db = await DatabaseHelper.instance.database;
+      final existing = await db.query('customers', where: 'name = ? AND (phone IS NULL OR phone = "") AND is_deleted = 0', whereArgs: [state.customerName.trim()]);
+      if (existing.isNotEmpty) {
+        finalCustomerId = existing.first['id'] as String;
+      } else {
+        final newCust = CustomerModel(
+          id: const Uuid().v4(),
+          name: state.customerName,
+          phone: '',
+          createdAt: now,
+          updatedAt: now,
+          syncStatus: 'pending',
+        );
+        await DatabaseHelper.instance.insertCustomer(newCust.toDb());
+        finalCustomerId = newCust.id;
+      }
+    }
+
     final order = OrderModel(
       id: orderId,
+      customerId: finalCustomerId,
       customerName: state.customerName,
       status: state.status,
       totalPrice: state.total,

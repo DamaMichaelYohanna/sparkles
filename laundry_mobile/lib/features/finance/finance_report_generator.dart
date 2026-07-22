@@ -186,7 +186,7 @@ class FinanceReportGenerator {
                         style: pw.TextStyle(
                             font: fontRegular,
                             fontSize: 10,
-                            color: white.withOpacity(0.85))),
+                            color: PdfColor(white.red, white.green, white.blue, 0.85))),
                   ],
                 ),
                 pw.Column(
@@ -384,7 +384,6 @@ class FinanceReportGenerator {
     final file = File('${dir.path}/$filename');
     await file.writeAsBytes(bytes);
     return file.path;
-  }
   }
 
   static pw.TableRow _statusRow(

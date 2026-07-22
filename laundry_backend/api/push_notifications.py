@@ -59,10 +59,15 @@ def notify_order_status_change(order):
     if not order.customer_phone:
         return
 
+    from django.db.models import Q
+    q_filter = Q(customer_phone=order.customer_phone)
+    if order.customer:
+        q_filter |= Q(customer=order.customer)
+
     subscriptions = WebPushSubscription.objects.filter(
-        customer_phone=order.customer_phone,
+        q_filter,
         is_deleted=False
-    )
+    ).distinct()
     if not subscriptions.exists():
         logger.info("[WebPush] No push subscriptions found for phone %s", order.customer_phone)
         return

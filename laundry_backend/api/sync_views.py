@@ -6,10 +6,10 @@ from rest_framework.permissions import IsAuthenticated
 from dateutil.parser import parse
 from django.utils import timezone
 from offices.models import LaundryOffice
-from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem
+from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem, Customer
 from .serializers import (
     ServiceTypeSerializer, CategorySerializer, ItemPricingSerializer,
-    OrderStatusSerializer, OrderSerializer, OrderItemSerializer
+    OrderStatusSerializer, OrderSerializer, OrderItemSerializer, CustomerSerializer
 )
 
 from .permissions import TierLimitPermission
@@ -38,6 +38,7 @@ class SyncAPIView(APIView):
         item_pricing_qs = ItemPricing.objects.filter(office=office)
         order_statuses_qs = OrderStatus.objects.filter(office=office)
         orders_qs = Order.objects.filter(office=office)
+        customers_qs = Customer.objects.filter(office=office)
         
         # Order items are tied to orders, which are tied to offices
         order_items_qs = OrderItem.objects.filter(order__office=office)
@@ -51,6 +52,7 @@ class SyncAPIView(APIView):
                 order_statuses_qs = order_statuses_qs.filter(updated_at__gte=last_sync_date)
                 orders_qs = orders_qs.filter(updated_at__gte=last_sync_date)
                 order_items_qs = order_items_qs.filter(updated_at__gte=last_sync_date)
+                customers_qs = customers_qs.filter(updated_at__gte=last_sync_date)
             except ValueError:
                 return Response({"error": "Invalid last_sync_timestamp format."}, status=400)
 
@@ -61,6 +63,7 @@ class SyncAPIView(APIView):
             "order_statuses": OrderStatusSerializer(order_statuses_qs, many=True).data,
             "orders": OrderSerializer(orders_qs, many=True).data,
             "order_items": OrderItemSerializer(order_items_qs, many=True).data,
+            "customers": CustomerSerializer(customers_qs, many=True).data,
         }
 
         return Response(payload)
@@ -77,21 +80,53 @@ class SyncAPIView(APIView):
         categories_data = data.get('categories', [])
         service_types_data = data.get('service_types', [])
         item_pricing_data = data.get('item_pricing', [])
+        customers_data = data.get('customers', [])
 
         logger.info(
-            "Sync POST started for user '%s', office '%s'. Payload: %d orders, %d items, %d categories, %d service types, %d item pricings", 
+            "Sync POST started for user '%s', office '%s'. Payload: %d orders, %d items, %d categories, %d service types, %d item pricings, %d customers", 
             request.user.email, 
             office.name, 
             len(orders_data), 
             len(order_items_data), 
             len(categories_data), 
             len(service_types_data), 
-            len(item_pricing_data)
+            len(item_pricing_data),
+            len(customers_data)
         )
 
         processed_orders = 0
         processed_items = 0
         processed_configs = 0
+
+        # Process Customers
+        for cust_dict in customers_data:
+            cust_id = cust_dict.get('id')
+            if not cust_id: continue
+            
+            existing_cust = Customer.objects.filter(id=cust_id).first()
+            if existing_cust:
+                if existing_cust.office != office:
+                    continue
+                incoming_updated_at = make_aware(parse(cust_dict.get('updated_at', '')))
+                if cust_dict.get('is_deleted', False):
+                    existing_cust.is_deleted = True
+                else:
+                    existing_cust.name = cust_dict.get('name', existing_cust.name)
+                    existing_cust.phone = cust_dict.get('phone')
+                    existing_cust.is_whatsapp = cust_dict.get('is_whatsapp', existing_cust.is_whatsapp)
+                existing_cust.updated_at = incoming_updated_at
+                existing_cust.save()
+            else:
+                if not cust_dict.get('is_deleted', False):
+                    Customer.objects.create(
+                        id=cust_id,
+                        office=office,
+                        name=cust_dict.get('name', ''),
+                        phone=cust_dict.get('phone'),
+                        is_whatsapp=cust_dict.get('is_whatsapp', False),
+                        created_at=make_aware(parse(cust_dict.get('created_at'))) if cust_dict.get('created_at') else None,
+                        updated_at=make_aware(parse(cust_dict.get('updated_at'))) if cust_dict.get('updated_at') else None
+                    )
 
         # Process Categories
         for cat_dict in categories_data:
@@ -230,6 +265,10 @@ class SyncAPIView(APIView):
                     existing_order.discount_amount = order_dict.get('discount_amount', existing_order.discount_amount)
                     existing_order.tracking_code = order_dict.get('tracking_code', existing_order.tracking_code)
                     
+                    customer_id = order_dict.get('customer') or order_dict.get('customer_id')
+                    if customer_id:
+                        existing_order.customer = Customer.objects.filter(id=customer_id, office=office).first()
+                    
                     # Handle status which might be an ID or string in the payload depending on frontend
                     status_val = order_dict.get('current_status')
                     if status_val:
@@ -270,9 +309,15 @@ class SyncAPIView(APIView):
                             is_completed_state=(status_val.lower() == 'completed')
                         )
                     try:
+                        customer_obj = None
+                        customer_id = order_dict.get('customer') or order_dict.get('customer_id')
+                        if customer_id:
+                            customer_obj = Customer.objects.filter(id=customer_id, office=office).first()
+                        
                         new_order = Order.objects.create(
                             id=order_id,
                             office=office,
+                            customer=customer_obj,
                             customer_name=order_dict.get('customer_name', 'Unknown'),
                             customer_phone=order_dict.get('customer_phone', ''),
                             customer_is_whatsapp=order_dict.get('customer_is_whatsapp', False),
@@ -306,6 +351,11 @@ class SyncAPIView(APIView):
                             existing_order.discount_amount = order_dict.get('discount_amount', existing_order.discount_amount)
                             existing_order.tracking_code = order_dict.get('tracking_code', existing_order.tracking_code)
                             existing_order.current_status = status_obj
+                            
+                            customer_id = order_dict.get('customer') or order_dict.get('customer_id')
+                            if customer_id:
+                                existing_order.customer = Customer.objects.filter(id=customer_id, office=office).first()
+                            
                             existing_order.save()
                             processed_orders += 1
 

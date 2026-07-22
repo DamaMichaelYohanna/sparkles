@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../orders/orders_screen.dart';
+import '../customers/customers_screen.dart';
 import '../analysis/analysis_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../core/theme.dart';
@@ -26,6 +27,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     final List<Widget> screens = [
       const DashboardScreen(),
       const OrdersScreen(),
+      const CustomersScreen(),
       if (isAdmin) const AnalysisScreen(),
       const SettingsScreen(),
     ];
@@ -67,6 +69,10 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
               icon: Icon(LucideIcons.shoppingBag),
               label: 'Orders',
             ),
+            const BottomNavigationBarItem(
+              icon: Icon(LucideIcons.users),
+              label: 'Customers',
+            ),
             if (isAdmin)
               const BottomNavigationBarItem(
                 icon: Icon(LucideIcons.barChart2),
@@ -79,7 +85,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
           ],
         ),
       ),
-      floatingActionButton: actualIndex == 1
+      floatingActionButton: actualIndex == 1 || actualIndex == 2
           ? null
           : FloatingActionButton(
               onPressed: _launchWhatsApp,

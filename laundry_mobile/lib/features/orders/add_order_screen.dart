@@ -66,6 +66,7 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
             ref.read(addOrderProvider.notifier).updateCustomerInfo(
               name: customer['name']!,
               phone: customer['phone']!,
+              customerId: customer['id']!,
             );
           },
         );
@@ -143,7 +144,7 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(LucideIcons.user),
               ),
-              onChanged: (val) => ref.read(addOrderProvider.notifier).updateCustomerInfo(name: val, phone: _phoneController.text),
+              onChanged: (val) => ref.read(addOrderProvider.notifier).updateCustomerInfo(name: val, phone: _phoneController.text, clearCustomerId: true),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -159,7 +160,7 @@ class _AddOrderScreenState extends ConsumerState<AddOrderScreen> {
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
               ],
-              onChanged: (val) => ref.read(addOrderProvider.notifier).updateCustomerInfo(name: _nameController.text, phone: val),
+              onChanged: (val) => ref.read(addOrderProvider.notifier).updateCustomerInfo(name: _nameController.text, phone: val, clearCustomerId: true),
             ),
             const SizedBox(height: 32),
             

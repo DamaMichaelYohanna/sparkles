@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
       onOpen: _onOpen,
@@ -47,12 +47,29 @@ class DatabaseHelper {
     if (oldVersion < 3) {
       await db.execute('ALTER TABLE orders ADD COLUMN tracking_code TEXT');
     }
+    if (oldVersion < 4) {
+      await db.execute('ALTER TABLE orders ADD COLUMN customer_id TEXT');
+      await db.execute('''
+CREATE TABLE customers (
+  id TEXT PRIMARY KEY,
+  office_id TEXT,
+  name TEXT,
+  phone TEXT,
+  is_whatsapp INTEGER DEFAULT 0,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
+  sync_status TEXT
+)
+''');
+    }
   }
 
   Future _createDB(Database db, int version) async {
     await db.execute('''
 CREATE TABLE orders (
   id TEXT PRIMARY KEY,
+  customer_id TEXT,
   customer_name TEXT,
   customer_phone TEXT,
   total_price REAL,
@@ -64,6 +81,20 @@ CREATE TABLE orders (
   sync_status TEXT,
   discount_amount REAL DEFAULT 0.0,
   tracking_code TEXT
+)
+''');
+
+    await db.execute('''
+CREATE TABLE customers (
+  id TEXT PRIMARY KEY,
+  office_id TEXT,
+  name TEXT,
+  phone TEXT,
+  is_whatsapp INTEGER DEFAULT 0,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
+  sync_status TEXT
 )
 ''');
 
@@ -165,6 +196,23 @@ CREATE TABLE item_pricing (
     await db.insert('item_pricing', pricingData, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  // --- CRUD for Customers ---
+  Future<void> insertCustomer(Map<String, dynamic> customerData) async {
+    final db = await database;
+    await db.insert('customers', customerData, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<Map<String, dynamic>>> getCustomers() async {
+    final db = await database;
+    return await db.query('customers', where: 'is_deleted = ?', whereArgs: [0], orderBy: 'name COLLATE NOCASE ASC');
+  }
+
+  Future<Map<String, dynamic>?> getCustomerById(String id) async {
+    final db = await database;
+    final results = await db.query('customers', where: 'id = ?', whereArgs: [id]);
+    return results.isNotEmpty ? results.first : null;
+  }
+
   // --- Sync Engine Queries ---
   Future<Map<String, dynamic>> getPendingSyncRecords() async {
     final db = await database;
@@ -174,6 +222,7 @@ CREATE TABLE item_pricing (
     final pendingCategories = await db.query('categories', where: 'sync_status = ?', whereArgs: ['pending']);
     final pendingServices = await db.query('service_types', where: 'sync_status = ?', whereArgs: ['pending']);
     final pendingPricing = await db.query('item_pricing', where: 'sync_status = ?', whereArgs: ['pending']);
+    final pendingCustomers = await db.query('customers', where: 'sync_status = ?', whereArgs: ['pending']);
     
     return {
       'orders': pendingOrders,
@@ -181,6 +230,7 @@ CREATE TABLE item_pricing (
       'categories': pendingCategories,
       'service_types': pendingServices,
       'item_pricing': pendingPricing,
+      'customers': pendingCustomers,
     };
   }
 
@@ -192,6 +242,7 @@ CREATE TABLE item_pricing (
     await db.update('categories', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
     await db.update('service_types', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
     await db.update('item_pricing', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
+    await db.update('customers', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
   }
 
   Future<List<Map<String, dynamic>>> getOrderItemsWithPricing(String orderId) async {
@@ -252,15 +303,17 @@ CREATE TABLE item_pricing (
 
   Future<List<Map<String, String>>> getUniqueCustomers() async {
     final db = await database;
-    final result = await db.rawQuery('''
-      SELECT DISTINCT customer_name, customer_phone 
-      FROM orders 
-      WHERE customer_name IS NOT NULL AND customer_name != '' AND is_deleted = 0
-      ORDER BY customer_name COLLATE NOCASE ASC
-    ''');
+    final result = await db.query(
+      'customers',
+      where: 'is_deleted = ?',
+      whereArgs: [0],
+      orderBy: 'name COLLATE NOCASE ASC',
+    );
     return result.map((row) => {
-      'name': (row['customer_name'] ?? '') as String,
-      'phone': (row['customer_phone'] ?? '') as String,
+      'id': (row['id'] ?? '') as String,
+      'name': (row['name'] ?? '') as String,
+      'phone': (row['phone'] ?? '') as String,
+      'is_whatsapp': (row['is_whatsapp'] == 1 ? 'true' : 'false'),
     }).toList();
   }
 
@@ -273,6 +326,7 @@ CREATE TABLE item_pricing (
       await txn.delete('categories');
       await txn.delete('order_statuses');
       await txn.delete('item_pricing');
+      await txn.delete('customers');
     });
   }
 }

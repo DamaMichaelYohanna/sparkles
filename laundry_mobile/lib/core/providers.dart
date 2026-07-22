@@ -39,12 +39,14 @@ final pendingSyncCountProvider = StreamProvider.autoDispose<int>((ref) async* {
     final categoriesResult = await db.rawQuery("SELECT COUNT(*) as count FROM categories WHERE sync_status = 'pending'");
     final servicesResult = await db.rawQuery("SELECT COUNT(*) as count FROM service_types WHERE sync_status = 'pending'");
     final pricingResult = await db.rawQuery("SELECT COUNT(*) as count FROM item_pricing WHERE sync_status = 'pending'");
+    final customersResult = await db.rawQuery("SELECT COUNT(*) as count FROM customers WHERE sync_status = 'pending'");
     
     final count = (Sqflite.firstIntValue(ordersResult) ?? 0) + 
                   (Sqflite.firstIntValue(orderItemsResult) ?? 0) +
                   (Sqflite.firstIntValue(categoriesResult) ?? 0) +
                   (Sqflite.firstIntValue(servicesResult) ?? 0) +
-                  (Sqflite.firstIntValue(pricingResult) ?? 0);
+                  (Sqflite.firstIntValue(pricingResult) ?? 0) +
+                  (Sqflite.firstIntValue(customersResult) ?? 0);
     yield count;
     await Future.delayed(const Duration(seconds: 4));
   }

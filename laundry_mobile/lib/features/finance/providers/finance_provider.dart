@@ -10,7 +10,14 @@ enum FinancePeriod {
   allTime,
 }
 
-final financePeriodFilterProvider = StateProvider<FinancePeriod>((ref) => FinancePeriod.allTime);
+class FinancePeriodFilterNotifier extends Notifier<FinancePeriod> {
+  @override
+  FinancePeriod build() => FinancePeriod.allTime;
+}
+
+final financePeriodFilterProvider = NotifierProvider<FinancePeriodFilterNotifier, FinancePeriod>(() {
+  return FinancePeriodFilterNotifier();
+});
 
 class FinanceStats {
   final double totalRevenue;

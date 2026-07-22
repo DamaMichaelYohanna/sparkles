@@ -10,6 +10,7 @@ import '../models/category_model.dart';
 import '../models/item_pricing_model.dart';
 import '../models/order_status_model.dart';
 import '../models/order_item_model.dart';
+import '../models/customer_model.dart';
 import '../providers.dart';
 
 class SyncRepository {
@@ -72,7 +73,8 @@ class SyncRepository {
           (pendingRecords['order_items'] as List).isNotEmpty ||
           (pendingRecords['categories'] as List).isNotEmpty ||
           (pendingRecords['service_types'] as List).isNotEmpty ||
-          (pendingRecords['item_pricing'] as List).isNotEmpty) {
+          (pendingRecords['item_pricing'] as List).isNotEmpty ||
+          (pendingRecords['customers'] as List).isNotEmpty) {
         await _apiService.pushDelta(pendingRecords);
         await _dbHelper.markRecordsAsSynced();
       }
@@ -83,6 +85,19 @@ class SyncRepository {
       final db = await _dbHelper.database;
       
       sqflite.Batch batch = db.batch();
+
+      // Process Customers
+      final pendingCustomers = await db.query('customers', where: 'sync_status = ?', whereArgs: ['pending']);
+      final pendingCustomerIds = pendingCustomers.map((e) => e['id'] as String).toSet();
+      for (var json in (deltaPayload['customers'] as List? ?? [])) {
+        final item = CustomerModel.fromJson(json);
+        if (pendingCustomerIds.contains(item.id)) continue;
+        if (item.isDeleted) {
+          batch.delete('customers', where: 'id = ?', whereArgs: [item.id]);
+        } else {
+          batch.insert('customers', item.toDb(), conflictAlgorithm: sqflite.ConflictAlgorithm.replace);
+        }
+      }
 
       // Process Orders
       final pendingOrders = await db.query('orders', where: 'sync_status = ?', whereArgs: ['pending']);

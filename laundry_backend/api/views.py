@@ -802,10 +802,13 @@ class SavePushSubscriptionAPIView(APIView):
             logger.warning("[PushNotification] Subscription registration failed: missing parameters.")
             return Response({"error": "Missing subscription parameters."}, status=400)
 
-        from operations.models import WebPushSubscription
+        from operations.models import WebPushSubscription, Customer
+        customer = Customer.objects.filter(phone=customer_phone, is_deleted=False).first()
+        
         subscription, created = WebPushSubscription.objects.update_or_create(
             endpoint=endpoint,
             defaults={
+                'customer': customer,
                 'customer_phone': customer_phone,
                 'p256dh': p256dh,
                 'auth': auth,
@@ -813,5 +816,5 @@ class SavePushSubscriptionAPIView(APIView):
             }
         )
 
-        logger.info("[PushNotification] Saved subscription for customer %s (created: %s)", customer_phone, created)
+        logger.info("[PushNotification] Saved subscription for customer %s (created: %s, linked customer: %s)", customer_phone, created, customer)
         return Response({"status": "success", "message": "Subscription saved."})

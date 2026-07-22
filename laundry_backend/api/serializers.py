@@ -1,9 +1,15 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from offices.models import LaundryOffice
-from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem
+from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem, Customer
 
 User = get_user_model()
+
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = '__all__'
+        read_only_fields = ['office']
 
 class LaundryOfficeSerializer(serializers.ModelSerializer):
     class Meta:

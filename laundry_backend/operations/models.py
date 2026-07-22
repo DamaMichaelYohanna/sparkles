@@ -23,8 +23,21 @@ class OrderStatus(BaseModel):
     sequence_order = models.PositiveIntegerField(default=0)
     is_completed_state = models.BooleanField(default=False)
 
+class Customer(BaseModel):
+    office = models.ForeignKey('offices.LaundryOffice', on_delete=models.CASCADE, related_name='customers')
+    name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=50, db_index=True, null=True, blank=True)
+    is_whatsapp = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('office', 'phone')
+
+    def __str__(self):
+        return f"{self.name} ({self.phone})"
+
 class Order(BaseModel):
     office = models.ForeignKey('offices.LaundryOffice', on_delete=models.CASCADE, related_name='orders')
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
     customer_name = models.CharField(max_length=255)
     customer_phone = models.CharField(max_length=50)
     customer_is_whatsapp = models.BooleanField(default=False)
@@ -62,6 +75,7 @@ class ActionLog(BaseModel):
     details = models.TextField(blank=True)
 
 class WebPushSubscription(BaseModel):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True, related_name='subscriptions')
     customer_phone = models.CharField(max_length=50, db_index=True)
     endpoint = models.TextField(unique=True)
     p256dh = models.CharField(max_length=255)
