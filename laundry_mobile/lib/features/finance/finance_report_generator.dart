@@ -386,6 +386,12 @@ class FinanceReportGenerator {
     return file.path;
   }
 
+  /// Generates the PDF and immediately opens the share sheet.
+  static Future<void> generateAndShare(FinanceStats stats, String officeName) async {
+    final bytes = await generatePdfBytes(stats, officeName);
+    await sharePdf(bytes, '${officeName.replaceAll(' ', '_')}_financial_report.pdf');
+  }
+
   static pw.TableRow _statusRow(
     String label,
     double value,
