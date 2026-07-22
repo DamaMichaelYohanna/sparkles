@@ -103,30 +103,38 @@ class SyncAPIView(APIView):
             cust_id = cust_dict.get('id')
             if not cust_id: continue
             
-            existing_cust = Customer.objects.filter(id=cust_id).first()
-            if existing_cust:
-                if existing_cust.office != office:
-                    continue
-                incoming_updated_at = make_aware(parse(cust_dict.get('updated_at', '')))
-                if cust_dict.get('is_deleted', False):
-                    existing_cust.is_deleted = True
+            phone = cust_dict.get('phone')
+            if phone == '':
+                phone = None
+
+            try:
+                existing_cust = Customer.objects.filter(id=cust_id).first()
+                if existing_cust:
+                    if existing_cust.office != office:
+                        continue
+                    incoming_updated_at = make_aware(parse(cust_dict.get('updated_at', '')))
+                    if cust_dict.get('is_deleted', False):
+                        existing_cust.is_deleted = True
+                    else:
+                        existing_cust.name = cust_dict.get('name', existing_cust.name)
+                        existing_cust.phone = phone
+                        existing_cust.is_whatsapp = cust_dict.get('is_whatsapp', existing_cust.is_whatsapp)
+                    existing_cust.updated_at = incoming_updated_at
+                    existing_cust.save()
                 else:
-                    existing_cust.name = cust_dict.get('name', existing_cust.name)
-                    existing_cust.phone = cust_dict.get('phone')
-                    existing_cust.is_whatsapp = cust_dict.get('is_whatsapp', existing_cust.is_whatsapp)
-                existing_cust.updated_at = incoming_updated_at
-                existing_cust.save()
-            else:
-                if not cust_dict.get('is_deleted', False):
-                    Customer.objects.create(
-                        id=cust_id,
-                        office=office,
-                        name=cust_dict.get('name', ''),
-                        phone=cust_dict.get('phone'),
-                        is_whatsapp=cust_dict.get('is_whatsapp', False),
-                        created_at=make_aware(parse(cust_dict.get('created_at'))) if cust_dict.get('created_at') else None,
-                        updated_at=make_aware(parse(cust_dict.get('updated_at'))) if cust_dict.get('updated_at') else None
-                    )
+                    if not cust_dict.get('is_deleted', False):
+                        Customer.objects.create(
+                            id=cust_id,
+                            office=office,
+                            name=cust_dict.get('name', ''),
+                            phone=phone,
+                            is_whatsapp=cust_dict.get('is_whatsapp', False),
+                            created_at=make_aware(parse(cust_dict.get('created_at'))) if cust_dict.get('created_at') else None,
+                            updated_at=make_aware(parse(cust_dict.get('updated_at'))) if cust_dict.get('updated_at') else None
+                        )
+            except IntegrityError as e:
+                logger.warning("Customer sync conflict: ID='%s', office='%s', phone='%s'. Error: %s", cust_id, office.id, phone, str(e))
+                continue
 
         # Process Categories
         for cat_dict in categories_data:
