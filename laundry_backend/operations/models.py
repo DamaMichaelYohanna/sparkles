@@ -58,7 +58,34 @@ class Order(BaseModel):
                 if not Order.objects.filter(tracking_code=code).exists():
                     self.tracking_code = code
                     break
+
+        # Auto-create or link Customer profile if customer FK is missing but phone/name exists
+        if not self.customer_id and self.office_id:
+            phone = (self.customer_phone or '').strip()
+            name = (self.customer_name or '').strip()
+            if phone:
+                customer, _ = Customer.objects.get_or_create(
+                    office=self.office,
+                    phone=phone,
+                    defaults={
+                        'name': name or 'Customer',
+                        'is_whatsapp': self.customer_is_whatsapp
+                    }
+                )
+                self.customer = customer
+            elif name:
+                customer, _ = Customer.objects.get_or_create(
+                    office=self.office,
+                    name=name,
+                    phone='',
+                    defaults={
+                        'is_whatsapp': self.customer_is_whatsapp
+                    }
+                )
+                self.customer = customer
+
         super().save(*args, **kwargs)
+
 
 class OrderItem(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')

@@ -185,17 +185,20 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
 
     // Ensure customer profile exists or create it inline
     String? finalCustomerId = state.customerId;
-    if (finalCustomerId == null && state.customerPhone.isNotEmpty) {
+    final trimmedPhone = state.customerPhone.trim();
+    final trimmedName = state.customerName.trim();
+
+    if (finalCustomerId == null && trimmedPhone.isNotEmpty) {
       final db = await DatabaseHelper.instance.database;
-      final existing = await db.query('customers', where: 'phone = ? AND is_deleted = 0', whereArgs: [state.customerPhone.trim()]);
+      final existing = await db.query('customers', where: 'phone = ? AND is_deleted = 0', whereArgs: [trimmedPhone]);
       if (existing.isNotEmpty) {
         finalCustomerId = existing.first['id'] as String;
       } else {
         // Create new customer profile automatically
         final newCust = CustomerModel(
           id: const Uuid().v4(),
-          name: state.customerName,
-          phone: state.customerPhone,
+          name: trimmedName.isNotEmpty ? trimmedName : 'Customer',
+          phone: trimmedPhone,
           createdAt: now,
           updatedAt: now,
           syncStatus: 'pending',
@@ -203,16 +206,16 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
         await DatabaseHelper.instance.insertCustomer(newCust.toDb());
         finalCustomerId = newCust.id;
       }
-    } else if (finalCustomerId == null && state.customerName.isNotEmpty) {
+    } else if (finalCustomerId == null && trimmedName.isNotEmpty) {
       // Walk-in customer with name but no phone
       final db = await DatabaseHelper.instance.database;
-      final existing = await db.query('customers', where: 'name = ? AND (phone IS NULL OR phone = "") AND is_deleted = 0', whereArgs: [state.customerName.trim()]);
+      final existing = await db.query('customers', where: 'name = ? AND (phone IS NULL OR phone = "") AND is_deleted = 0', whereArgs: [trimmedName]);
       if (existing.isNotEmpty) {
         finalCustomerId = existing.first['id'] as String;
       } else {
         final newCust = CustomerModel(
           id: const Uuid().v4(),
-          name: state.customerName,
+          name: trimmedName,
           phone: '',
           createdAt: now,
           updatedAt: now,
