@@ -615,112 +615,87 @@
 </div>
 
 <script>
-    // Register Service Worker
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('Service Worker registered:', reg.scope))
-                .catch(err => console.error('Service Worker registration failed:', err));
-        });
-    }
-
-    // Save this tracking code as the latest viewed receipt for the single PWA launcher
+    // Save this tracking code as the latest viewed receipt for the PWA launcher
     localStorage.setItem('latest_tracking_code', '{{ order.tracking_code }}');
+
+    const VAPID_PUBLIC_KEY = '{{ vapid_public_key }}';
+    const CUSTOMER_PHONE = '{{ order.customer_phone }}';
 
     function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding)
-            .replace(/\-/g, '+')
-            .replace(/_/g, '/');
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
         const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
+        const output = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) output[i] = rawData.charCodeAt(i);
+        return output;
     }
 
-    function requestNotifications() {
-        const isSecureContext = window.isSecureContext;
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    function saveSubscription(subscription) {
+        const p256dh = btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh'))));
+        const auth = btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth'))));
+        return fetch('/api/notifications/subscribe/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customer_phone: CUSTOMER_PHONE,
+                endpoint: subscription.endpoint,
+                keys: { p256dh, auth }
+            })
+        });
+    }
 
-        // Check secure context
-        if (!isSecureContext) {
-            alert('🔒 Secure Connection Required:\nWeb notifications require a secure HTTPS connection. Please access this page using HTTPS to enable notifications.');
-            return;
-        }
+    async function setupPushNotifications(reg) {
+        if (!VAPID_PUBLIC_KEY || !CUSTOMER_PHONE) return;
 
-        // Check iOS Safari PWA requirement
-        if (isIOS && !window.navigator.standalone) {
-            alert('📱 iOS Notification Instructions:\n1. Tap the Share button in Safari.\n2. Tap "Add to Home Screen".\n3. Launch the app from your Home Screen to enable notifications.');
-            return;
-        }
-
-        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-            alert('This browser does not support notifications.');
-            return;
-        }
-
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                navigator.serviceWorker.ready.then(reg => {
-                    const vapidPublicKey = '{{ vapid_public_key }}';
-                    if (!vapidPublicKey) {
-                        alert('Error: VAPID Public Key is missing on the server.');
-                        return;
-                    }
-
-                    const subscribeOptions = {
-                        userVisibleOnly: true,
-                        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-                    };
-
-                    return reg.pushManager.subscribe(subscribeOptions);
-                }).then(subscription => {
-                    if (!subscription) return;
-
-                    const p256dh = btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh'))));
-                    const auth = btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth'))));
-
-                    return fetch('/api/notifications/subscribe/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken')
-                        },
-                        body: JSON.stringify({
-                            customer_phone: '{{ order.customer_phone }}',
-                            endpoint: subscription.endpoint,
-                            keys: {
-                                p256dh: p256dh,
-                                auth: auth
-                            }
-                        })
-                    });
-                }).then(response => {
-                    if (response && response.ok) {
-                        alert('🔔 Notifications enabled! You will now receive free laundry progress alerts.');
-                    } else {
-                        alert('🔔 Notifications enabled locally, but failed to register with the server.');
-                    }
-                }).catch(err => {
-                    console.error('Error during push subscription registration:', err);
-                    alert('Failed to register notifications: ' + err.message);
-                });
-            } else {
-                alert('Notifications permission denied.');
+        try {
+            // Check if already subscribed
+            const existing = await reg.pushManager.getSubscription();
+            if (existing) {
+                // Already subscribed — silently re-save to keep server in sync
+                await saveSubscription(existing);
+                return;
             }
+
+            // Only prompt if permission not already decided
+            if (Notification.permission === 'denied') return;
+
+            const permission = Notification.permission === 'granted'
+                ? 'granted'
+                : await Notification.requestPermission();
+
+            if (permission !== 'granted') return;
+
+            const subscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+            });
+
+            await saveSubscription(subscription);
+            console.log('[Push] Subscribed successfully.');
+        } catch (err) {
+            console.warn('[Push] Subscription failed:', err.message);
+        }
+    }
+
+    // Register Service Worker and set up push
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => {
+                    console.log('[SW] Registered:', reg.scope);
+                    setupPushNotifications(reg);
+                })
+                .catch(err => console.error('[SW] Registration failed:', err));
         });
     }
 
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            for (const cookie of document.cookie.split(';')) {
+                const c = cookie.trim();
+                if (c.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(c.substring(name.length + 1));
                     break;
                 }
             }
@@ -728,6 +703,8 @@
         return cookieValue;
     }
 </script>
+
+
 
 </body>
 </html>

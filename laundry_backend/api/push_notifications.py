@@ -41,9 +41,9 @@ def send_web_push(subscription, title, body, url):
         return True
     except WebPushException as ex:
         logger.warning("[WebPush] WebPushException: %s", ex)
-        # If the browser push service returned 410 Gone, the subscription is expired or revoked. Delete it!
-        if ex.response is not None and ex.response.status_code == 410:
-            logger.info("[WebPush] Subscription expired or revoked (410). Deleting subscription for %s", subscription.customer_phone)
+        # If the browser push service returned 410 Gone or 403 Forbidden (e.g. VAPID key changed), delete stale sub
+        if ex.response is not None and ex.response.status_code in (403, 410):
+            logger.info("[WebPush] Subscription invalid/expired (%s). Deleting subscription for %s", ex.response.status_code, subscription.customer_phone)
             subscription.delete()
         return False
     except Exception as e:
