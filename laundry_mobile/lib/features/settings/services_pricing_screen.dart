@@ -331,7 +331,7 @@ class PricingTab extends ConsumerWidget {
                   children: [
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Category'),
-                      value: selectedCategoryId,
+                      value: categories.any((c) => c.id == selectedCategoryId) ? selectedCategoryId : null,
                       items: categories.map((c) {
                         return DropdownMenuItem(value: c.id, child: Text(c.name));
                       }).toList(),
@@ -340,7 +340,7 @@ class PricingTab extends ConsumerWidget {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Service Type'),
-                      value: selectedServiceId,
+                      value: services.any((s) => s.id == selectedServiceId) ? selectedServiceId : null,
                       items: services.map((s) {
                         return DropdownMenuItem(value: s.id, child: Text(s.name));
                       }).toList(),

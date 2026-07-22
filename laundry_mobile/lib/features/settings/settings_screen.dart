@@ -6,8 +6,8 @@ import 'branch_management_screen.dart';
 import 'office_details_screen.dart';
 import 'services_pricing_screen.dart';
 import 'staff_management_screen.dart';
-import 'profile_screen.dart';
 import '../auth/auth_screen.dart';
+import '../customers/customers_screen.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../core/local_db/database_helper.dart';
@@ -45,19 +45,6 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         children: [
           const SizedBox(height: 8),
-          ListTile(
-            leading: const Icon(LucideIcons.user),
-            title: const Text('My Profile'),
-            subtitle: const Text('View and manage your account details'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
-            },
-          ),
-          const Divider(),
           if (isAdmin) ...[
             ListTile(
               leading: const Icon(LucideIcons.building),
@@ -68,19 +55,6 @@ class SettingsScreen extends ConsumerWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const OfficeDetailsScreen()),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(LucideIcons.gitBranch),
-              title: const Text('Branches / Store Locations'),
-              subtitle: const Text('Manage store locations and switch workspaces'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const BranchManagementScreen()),
                 );
               },
             ),
@@ -99,6 +73,19 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const Divider(),
             ListTile(
+              leading: const Icon(LucideIcons.gitBranch),
+              title: const Text('Branches / Store Locations'),
+              subtitle: const Text('Manage store locations and switch workspaces'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const BranchManagementScreen()),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
               leading: const Icon(LucideIcons.users),
               title: const Text('Staff Management'),
               subtitle: const Text('Manage staff accounts and assign roles'),
@@ -112,6 +99,19 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const Divider(),
           ],
+          ListTile(
+            leading: const Icon(LucideIcons.users),
+            title: const Text('Customers'),
+            subtitle: const Text('Manage customer profiles and contact details'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CustomersScreen()),
+              );
+            },
+          ),
+          const Divider(),
           ListTile(
             leading: const Icon(LucideIcons.logOut, color: Colors.redAccent),
             title: const Text('Logout', style: TextStyle(color: Colors.redAccent)),

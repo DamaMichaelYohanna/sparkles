@@ -105,6 +105,7 @@ class CustomersScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'add_customer_fab',
         onPressed: () {
           Navigator.push(
             context,

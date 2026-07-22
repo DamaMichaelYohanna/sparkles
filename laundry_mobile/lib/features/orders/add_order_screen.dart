@@ -455,14 +455,14 @@ class _ItemSelectionSheetState extends ConsumerState<_ItemSelectionSheet> {
           const SizedBox(height: 24),
           DropdownButtonFormField<String>(
             decoration: const InputDecoration(labelText: 'Fabric Category (e.g. T-Shirt)'),
-            value: selectedCategoryId,
+            value: categories.any((c) => c.id == selectedCategoryId) ? selectedCategoryId : null,
             items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
             onChanged: (val) => setState(() => selectedCategoryId = val),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             decoration: const InputDecoration(labelText: 'Service Type (e.g. Washing & Ironing)'),
-            value: selectedServiceId,
+            value: services.any((s) => s.id == selectedServiceId) ? selectedServiceId : null,
             items: services.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))).toList(),
             onChanged: (val) => setState(() => selectedServiceId = val),
           ),
