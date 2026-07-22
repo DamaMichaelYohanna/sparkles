@@ -12,6 +12,7 @@ import '../models/order_status_model.dart';
 import '../models/order_item_model.dart';
 import '../models/customer_model.dart';
 import '../providers.dart';
+import '../../features/customers/providers/customer_providers.dart';
 
 class SyncRepository {
   final Ref _ref;
@@ -178,6 +179,9 @@ class SyncRepository {
       }
 
       await batch.commit(noResult: true);
+      
+      // Invalidate customersProvider to ensure Customers list is refreshed with synced records
+      _ref.invalidate(customersProvider);
       
       // Update timestamp to current UTC time
       await prefs.setString('last_sync_timestamp', DateTime.now().toUtc().toIso8601String());
