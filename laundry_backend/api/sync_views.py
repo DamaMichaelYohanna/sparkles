@@ -277,18 +277,14 @@ class SyncAPIView(APIView):
                     if customer_id:
                         existing_order.customer = Customer.objects.filter(id=customer_id, office=office).first()
                     
-                    # Handle status which might be an ID or string in the payload depending on frontend
+                    # Handle status which might be a name string in the payload
                     status_val = order_dict.get('current_status')
                     if status_val:
                         status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first()
-                        if not status_obj:
-                            status_obj = OrderStatus.objects.create(
-                                office=office,
-                                name=status_val,
-                                sequence_order=OrderStatus.objects.filter(office=office).count() + 1,
-                                is_completed_state=(status_val.lower() == 'completed')
-                            )
-                        existing_order.current_status = status_obj
+                        if status_obj:
+                            existing_order.current_status = status_obj
+                        else:
+                            logger.warning("Sync: Unknown status '%s' for office '%s', keeping existing status.", status_val, office.name)
                             
                 existing_order.updated_at = incoming_updated_at
                 existing_order.save()
@@ -310,12 +306,11 @@ class SyncAPIView(APIView):
                     status_val = order_dict.get('current_status') or 'Pending'
                     status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first()
                     if not status_obj:
-                        status_obj = OrderStatus.objects.create(
-                            office=office,
-                            name=status_val,
-                            sequence_order=OrderStatus.objects.filter(office=office).count() + 1,
-                            is_completed_state=(status_val.lower() == 'completed')
-                        )
+                        # Fall back to the first available status for this office
+                        status_obj = OrderStatus.objects.filter(office=office).order_by('sequence_order').first()
+                    if not status_obj:
+                        logger.error("Sync: No OrderStatus found for office '%s'. Cannot create order ID='%s'.", office.name, order_id)
+                        continue
                     try:
                         customer_obj = None
                         customer_id = order_dict.get('customer') or order_dict.get('customer_id')

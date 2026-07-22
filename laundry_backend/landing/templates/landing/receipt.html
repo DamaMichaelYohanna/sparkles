@@ -120,98 +120,127 @@
             gap: 0.35rem;
         }
 
-        /* Visual Timeline */
-        .timeline-title {
-            font-size: 0.875rem;
+        /* Status Stepper */
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .status-label {
+            font-size: 0.78rem;
             font-weight: 700;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 1rem;
+            letter-spacing: 0.07em;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
 
-        .timeline {
+        .refresh-btn {
+            background: var(--primary-light);
+            border: none;
+            cursor: pointer;
+            color: var(--primary);
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-family: inherit;
+        }
+
+        .stepper {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .step {
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
-            position: relative;
-            padding-left: 0.5rem;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 1rem;
-            top: 0.5rem;
-            bottom: 0.5rem;
-            width: 2px;
-            background: var(--border);
-            z-index: 1;
-        }
-
-        .timeline-step {
-            display: flex;
             align-items: center;
-            gap: 1rem;
-            position: relative;
-            z-index: 2;
+            gap: 0.4rem;
+            flex: 1;
         }
 
-        .timeline-node {
-            width: 24px;
-            height: 24px;
+        .step-node {
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            background: var(--surface);
-            border: 2px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 2.5px solid var(--border);
+            background: var(--surface);
             color: var(--text-muted);
             transition: all 0.3s ease;
         }
 
-        .timeline-step.completed .timeline-node {
+        .step-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* Connector line between steps */
+        .step-connector {
+            flex: 1;
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-bottom: 1.4rem; /* align with node center */
+            transition: background 0.3s ease;
+        }
+
+        /* Green - done/completed */
+        .step.done .step-node {
             background: var(--success);
             border-color: var(--success);
             color: white;
         }
+        .step.done .step-label { color: var(--success); }
+        .step-connector.done { background: var(--success); }
 
-        .timeline-step.active .timeline-node {
-            border-color: var(--primary);
-            background: var(--primary-light);
-            color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.2);
-            animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        /* Amber - active/current */
+        .step.active .step-node {
+            background: #fef9c3;
+            border-color: #d97706;
+            color: #92400e;
+            box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.15);
+            animation: pulse-amber 1.8s ease-in-out infinite;
+        }
+        .step.active .step-label { color: #92400e; }
+
+        /* Red - overdue */
+        .step.overdue-done .step-node {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: white;
+        }
+        .step.overdue-done .step-label { color: #dc2626; }
+        .step-connector.overdue { background: #dc2626; }
+
+        .step.overdue-active .step-node {
+            background: #fee2e2;
+            border-color: #dc2626;
+            color: #991b1b;
+        }
+        .step.overdue-active .step-label { color: #991b1b; }
+
+        @keyframes pulse-amber {
+            0%, 100% { box-shadow: 0 0 0 0px rgba(217, 119, 6, 0.3); }
+            50% { box-shadow: 0 0 0 6px rgba(217, 119, 6, 0); }
         }
 
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0px rgba(2, 132, 199, 0.4); }
-            70% { box-shadow: 0 0 0 6px rgba(2, 132, 199, 0); }
-            100% { box-shadow: 0 0 0 0px rgba(2, 132, 199, 0); }
-        }
-
-        .timeline-content {
-            flex: 1;
-        }
-
-        .timeline-step-name {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        .timeline-step.completed .timeline-step-name {
-            color: var(--text-main);
-        }
-
-        .timeline-step.active .timeline-step-name {
-            color: var(--primary);
-            font-weight: 700;
-        }
 
         /* Order Details Card */
         .order-meta {
@@ -408,36 +437,76 @@
         </div>
     </div>
 
-    <!-- Live Status Timeline Card -->
+    <!-- Live Status Card -->
     <div class="card">
-        <h3 class="timeline-title" style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fa-solid fa-spinner fa-spin" style="color: var(--primary);"></i> Order Progress
+        {% with status_name=order.current_status.name|lower %}
+        <div class="status-header">
+            <span class="status-label">
+                <i class="fa-solid fa-layer-group"></i> Order Progress
             </span>
-            <button onclick="window.location.reload()" style="background: none; border: none; cursor: pointer; color: var(--primary); font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;" title="Refresh Status">
+            <button class="refresh-btn" onclick="window.location.reload()" title="Refresh Status">
                 <i class="fa-solid fa-arrows-rotate"></i> Refresh
             </button>
-        </h3>
-        
-        <div class="timeline">
-            {% for status in statuses %}
-                <div class="timeline-step 
-                    {% if status.is_completed %}completed
-                    {% elif status.is_active %}active
-                    {% endif %}">
-                    <div class="timeline-node">
-                        {% if status.is_completed %}
-                            <i class="fa-solid fa-check"></i>
-                        {% else %}
-                            {{ forloop.counter }}
-                        {% endif %}
-                    </div>
-                    <div class="timeline-content">
-                        <div class="timeline-step-name">{{ status.name }}</div>
-                    </div>
-                </div>
-            {% endfor %}
         </div>
+
+        {% if status_name == 'completed' %}
+        <!-- Completed: Pending(green) → Completed(green) -->
+        <div class="stepper">
+            <div class="step done">
+                <div class="step-node"><i class="fa-solid fa-check"></i></div>
+                <div class="step-label">Pending</div>
+            </div>
+            <div class="step-connector done"></div>
+            <div class="step done">
+                <div class="step-node"><i class="fa-solid fa-check"></i></div>
+                <div class="step-label">Completed</div>
+            </div>
+        </div>
+
+        {% elif status_name == 'overdue' %}
+        <!-- Overdue: Pending(red) → Overdue(red-active) -->
+        <div class="stepper">
+            <div class="step overdue-done">
+                <div class="step-node"><i class="fa-solid fa-check"></i></div>
+                <div class="step-label">Pending</div>
+            </div>
+            <div class="step-connector overdue"></div>
+            <div class="step overdue-active">
+                <div class="step-node"><i class="fa-solid fa-clock"></i></div>
+                <div class="step-label">Overdue</div>
+            </div>
+        </div>
+
+        {% elif status_name == 'pending' %}
+        <!-- Pending: Pending(amber active) → Completed(grey) -->
+        <div class="stepper">
+            <div class="step active">
+                <div class="step-node"><i class="fa-solid fa-hourglass-half"></i></div>
+                <div class="step-label">Pending</div>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step">
+                <div class="step-node">2</div>
+                <div class="step-label">Completed</div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Fallback: show current status name as active -->
+        <div class="stepper">
+            <div class="step done">
+                <div class="step-node"><i class="fa-solid fa-check"></i></div>
+                <div class="step-label">Pending</div>
+            </div>
+            <div class="step-connector done"></div>
+            <div class="step active">
+                <div class="step-node"><i class="fa-solid fa-circle-dot"></i></div>
+                <div class="step-label">{{ order.current_status.name }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% endwith %}
     </div>
 
     <!-- Items & Pricing Table Card -->
