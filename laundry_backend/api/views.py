@@ -619,9 +619,9 @@ class BranchListCreateView(APIView):
                 user.save()
                 
                 # Populate new branch with initial items and order statuses
-                OrderStatus.objects.create(office=branch, name="Pending", sequence_order=1, is_completed_state=False, is_default=True)
-                OrderStatus.objects.create(office=branch, name="Completed", sequence_order=2, is_completed_state=True, is_default=False)
-                OrderStatus.objects.create(office=branch, name="Overdue", sequence_order=3, is_completed_state=False, is_default=False)
+                OrderStatus.objects.create(office=branch, name="Pending", sequence_order=1, is_completed_state=False)
+                OrderStatus.objects.create(office=branch, name="Completed", sequence_order=2, is_completed_state=True)
+                OrderStatus.objects.create(office=branch, name="Overdue", sequence_order=3, is_completed_state=False)
                 
                 clothing = Category.objects.create(office=branch, name="Clothing")
                 household = Category.objects.create(office=branch, name="Household")

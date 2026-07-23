@@ -24,18 +24,17 @@ def make_aware(dt):
 def ensure_default_order_statuses(office):
     if not OrderStatus.objects.filter(office=office).exists():
         defaults = [
-            ('Pending', 1, False, True),
-            ('Completed', 2, True, False),
-            ('Overdue', 3, False, False),
+            ('Pending', 1, False),
+            ('Completed', 2, True),
+            ('Overdue', 3, False),
         ]
-        for name, seq, is_comp, is_def in defaults:
+        for name, seq, is_comp in defaults:
             OrderStatus.objects.get_or_create(
                 office=office,
                 name=name,
                 defaults={
                     'sequence_order': seq,
                     'is_completed_state': is_comp,
-                    'is_default': is_def,
                 }
             )
 
