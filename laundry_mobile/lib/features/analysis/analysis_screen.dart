@@ -9,6 +9,7 @@ import '../../core/widgets/sync_badge.dart';
 import 'providers/analysis_provider.dart';
 import '../finance/providers/finance_provider.dart';
 import '../finance/finance_report_generator.dart';
+import '../settings/profile_screen.dart';
 
 /// Reads subscription_tier from SharedPreferences (cached at login/profile fetch).
 final _tierProvider = FutureProvider<String>((ref) async {
@@ -111,7 +112,13 @@ class AnalysisScreen extends ConsumerWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  );
+                },
                 child: const Text('Upgrade Plan',
                     style: TextStyle(fontWeight: FontWeight.bold)),
               ),
