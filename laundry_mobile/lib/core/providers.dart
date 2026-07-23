@@ -31,6 +31,11 @@ final officeNameProvider = FutureProvider.autoDispose<String>((ref) async {
   return prefs.getString('office_name') ?? 'My Laundry Co.';
 });
 
+final officeLogoProvider = FutureProvider.autoDispose<String?>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('office_logo_base64');
+});
+
 final pendingSyncCountProvider = StreamProvider.autoDispose<int>((ref) async* {
   final db = await DatabaseHelper.instance.database;
   while (true) {

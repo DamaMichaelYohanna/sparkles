@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/dashboard_provider.dart';
 import '../../core/models/dashboard_stats_model.dart';
@@ -224,16 +225,25 @@ class _DashboardBody extends ConsumerWidget {
             // Header
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                  child: Text(
-                    ref.watch(officeNameProvider).maybeWhen(
-                      data: (name) => name.isNotEmpty ? name[0].toUpperCase() : 'L',
-                      orElse: () => 'L',
-                    ),
-                    style: const TextStyle(
-                        color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
-                  ),
+                Builder(
+                  builder: (context) {
+                    final logoBase64 = ref.watch(officeLogoProvider).valueOrNull;
+                    final hasLogo = logoBase64 != null && logoBase64.isNotEmpty;
+                    return CircleAvatar(
+                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                      backgroundImage: hasLogo ? MemoryImage(base64Decode(logoBase64!)) : null,
+                      child: !hasLogo
+                          ? Text(
+                              ref.watch(officeNameProvider).maybeWhen(
+                                data: (name) => name.isNotEmpty ? name[0].toUpperCase() : 'L',
+                                orElse: () => 'L',
+                              ),
+                              style: const TextStyle(
+                                  color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                            )
+                          : null,
+                    );
+                  },
                 ),
                 const SizedBox(width: 12),
                 Column(

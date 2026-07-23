@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,6 +21,15 @@ class _OfficeDetailsScreenState extends ConsumerState<OfficeDetailsScreen> {
   late final TextEditingController _contactController;
   bool _isLoading = true;
   String? _logoBase64;
+
+  Uint8List? get _logoBytes {
+    if (_logoBase64 == null || _logoBase64!.isEmpty) return null;
+    try {
+      return base64Decode(_logoBase64!);
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   void initState() {
@@ -111,6 +121,7 @@ class _OfficeDetailsScreenState extends ConsumerState<OfficeDetailsScreen> {
         }
         
         ref.invalidate(officeNameProvider);
+        ref.invalidate(officeLogoProvider);
         ref.invalidate(userProfileProvider);
         
         if (mounted) {
@@ -135,6 +146,7 @@ class _OfficeDetailsScreenState extends ConsumerState<OfficeDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final logoBytes = _logoBytes;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Office Details'),
@@ -166,25 +178,25 @@ class _OfficeDetailsScreenState extends ConsumerState<OfficeDetailsScreen> {
                           color: Colors.grey[200],
                           shape: BoxShape.circle,
                           border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3), width: 2),
-                          image: _logoBase64 != null
+                          image: logoBytes != null
                               ? DecorationImage(
-                                  image: MemoryImage(base64Decode(_logoBase64!)),
+                                  image: MemoryImage(logoBytes),
                                   fit: BoxFit.cover,
                                 )
                               : null,
                         ),
-                        child: _logoBase64 == null
+                        child: logoBytes == null
                             ? const Icon(Icons.add_a_photo, size: 36, color: AppTheme.primaryColor)
                             : null,
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextButton(
-                      onPressed: _logoBase64 == null ? _pickLogo : _removeLogo,
+                      onPressed: logoBytes == null ? _pickLogo : _removeLogo,
                       child: Text(
-                        _logoBase64 == null ? 'Upload Logo' : 'Remove Logo',
+                        logoBytes == null ? 'Upload Logo' : 'Remove Logo',
                         style: TextStyle(
-                          color: _logoBase64 == null ? AppTheme.primaryColor : Colors.red,
+                          color: logoBytes == null ? AppTheme.primaryColor : Colors.red,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
