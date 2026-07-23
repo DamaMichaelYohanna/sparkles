@@ -49,6 +49,7 @@ urlpatterns = [
     
     # Webhooks
     path('webhooks/paystack/', views.PaystackWebhookView.as_view(), name='webhook-paystack'),
+    path('webhooks/whatsapp/', views.WhatsAppWebhookView.as_view(), name='webhook-whatsapp'),
 
     # Billing
     path('billing/initialize/', views.InitializeSubscriptionView.as_view(), name='billing-initialize'),

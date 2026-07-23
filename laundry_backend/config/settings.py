@@ -148,6 +148,7 @@ WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
 WHATSAPP_API_VERSION = os.environ.get('WHATSAPP_API_VERSION', 'v18.0')
 WHATSAPP_TEMPLATE_ORDER_CREATED = os.environ.get('WHATSAPP_TEMPLATE_ORDER_CREATED', 'order_created')
 WHATSAPP_TEMPLATE_LANGUAGE = os.environ.get('WHATSAPP_TEMPLATE_LANGUAGE', 'en')
+WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN', 'sparkles_whatsapp_verify_token')
 
 # Sparkles Portal Configuration
 SPARKLES_PORTAL_BASE_URL = os.environ.get('SPARKLES_PORTAL_BASE_URL', 'http://localhost:8000')

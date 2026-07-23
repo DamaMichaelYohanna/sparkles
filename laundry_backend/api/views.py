@@ -864,3 +864,33 @@ class SavePushSubscriptionAPIView(APIView):
 
         logger.info("[PushNotification] Saved subscription for customer %s (created: %s, linked customer: %s)", customer_phone, created, customer)
         return Response({"status": "success", "message": "Subscription saved."})
+
+
+class WhatsAppWebhookView(APIView):
+    permission_classes = []  # Public endpoint for Meta Webhook verification & events
+
+    def get(self, request):
+        """
+        Meta Webhook Handshake Verification.
+        Meta sends GET request with hub.mode, hub.verify_token, and hub.challenge.
+        """
+        mode = request.GET.get('hub.mode')
+        token = request.GET.get('hub.verify_token')
+        challenge = request.GET.get('hub.challenge')
+
+        expected_token = getattr(settings, 'WHATSAPP_VERIFY_TOKEN', 'sparkles_whatsapp_verify_token')
+
+        if mode == 'subscribe' and token == expected_token:
+            logger.info("[WhatsApp Webhook] Verification handshake successful.")
+            from django.http import HttpResponse
+            return HttpResponse(challenge, status=200, content_type="text/plain")
+
+        logger.warning("[WhatsApp Webhook] Verification handshake failed. Token mismatch or invalid mode.")
+        return Response({"error": "Forbidden"}, status=403)
+
+    def post(self, request):
+        """
+        Receives incoming WhatsApp message events & delivery status updates from Meta.
+        """
+        logger.info("[WhatsApp Webhook] Event received: %s", request.data)
+        return Response({"status": "ok"}, status=200)
