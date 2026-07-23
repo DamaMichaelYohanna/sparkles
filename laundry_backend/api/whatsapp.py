@@ -4,23 +4,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def _format_clean_phone(phone_number):
+    clean_phone = ''.join(c for c in str(phone_number or '') if c.isdigit())
+    if len(clean_phone) == 11 and clean_phone.startswith('0'):
+        clean_phone = '234' + clean_phone[1:]
+    return clean_phone
+
 def send_whatsapp_notification(phone_number, message_body):
     """
-    Sends a WhatsApp notification using Meta WhatsApp Cloud API.
+    Sends a freeform text WhatsApp notification using Meta WhatsApp Cloud API.
     Fails gracefully to console logging if credentials are not configured.
     """
     access_token = getattr(settings, 'WHATSAPP_ACCESS_TOKEN', None)
     phone_number_id = getattr(settings, 'WHATSAPP_PHONE_NUMBER_ID', None)
     api_version = getattr(settings, 'WHATSAPP_API_VERSION', 'v18.0')
 
-    # Clean recipient phone number (Meta requires digits only: country code + subscriber, e.g. 23480xxxxxxxx)
-    clean_phone = ''.join(c for c in phone_number if c.isdigit())
-    # If the clean phone is a Nigerian local format (starts with '0' and has 11 digits), format with country code 234
-    if len(clean_phone) == 11 and clean_phone.startswith('0'):
-        clean_phone = '234' + clean_phone[1:]
+    clean_phone = _format_clean_phone(phone_number)
+    if not clean_phone:
+        return {"status": "error", "message": "Invalid phone number"}
 
     if not access_token or not phone_number_id:
-        # Development / Sandbox Fallback
         print("=========================================")
         print("CONSOLE WHATSAPP FALLBACK (No Meta API Credentials)")
         print(f"To: {clean_phone}")
@@ -30,12 +33,10 @@ def send_whatsapp_notification(phone_number, message_body):
         return {"status": "mock_success", "message": "Mock notification queued"}
 
     api_url = f"https://graph.facebook.com/{api_version}/{phone_number_id}/messages"
-    
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
-
     payload = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
@@ -59,21 +60,78 @@ def send_whatsapp_notification(phone_number, message_body):
         logger.error(f"Error calling Meta WhatsApp Cloud API: {str(e)}")
         return {"status": "error", "message": str(e)}
 
+
+def send_whatsapp_template_notification(phone_number, template_name, language_code, parameters, fallback_text):
+    """
+    Sends an approved Utility Message Template via Meta WhatsApp Cloud API.
+    Required by Meta when initiating conversations outside the 24-hr customer service window.
+    """
+    access_token = getattr(settings, 'WHATSAPP_ACCESS_TOKEN', None)
+    phone_number_id = getattr(settings, 'WHATSAPP_PHONE_NUMBER_ID', None)
+    api_version = getattr(settings, 'WHATSAPP_API_VERSION', 'v18.0')
+
+    clean_phone = _format_clean_phone(phone_number)
+    if not clean_phone:
+        return {"status": "error", "message": "Invalid phone number"}
+
+    if not access_token or not phone_number_id:
+        print("=========================================")
+        print("CONSOLE WHATSAPP TEMPLATE FALLBACK (No Meta API Credentials)")
+        print(f"To: {clean_phone}")
+        print(f"Template Name: {template_name} ({language_code})")
+        print(f"Parameters: {parameters}")
+        print(f"Fallback Text:\n{fallback_text}")
+        print("=========================================")
+        logger.info(f"WhatsApp template printed to console (local fallback) to {clean_phone}")
+        return {"status": "mock_success", "message": "Mock template notification logged"}
+
+    api_url = f"https://graph.facebook.com/{api_version}/{phone_number_id}/messages"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    # Meta Cloud API Template Payload
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": clean_phone,
+        "type": "template",
+        "template": {
+            "name": template_name,
+            "language": {
+                "code": language_code
+            },
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [{"type": "text", "text": str(p)} for p in parameters]
+                }
+            ]
+        }
+    }
+
+    try:
+        response = requests.post(api_url, json=payload, headers=headers, timeout=10)
+        if response.status_code == 200:
+            logger.info(f"WhatsApp template '{template_name}' sent successfully via Meta Cloud API to {clean_phone}")
+            return response.json()
+        else:
+            logger.warning(f"Meta WhatsApp Template API returned status {response.status_code}: {response.text}. Attempting text fallback...")
+            return send_whatsapp_notification(phone_number, fallback_text)
+    except Exception as e:
+        logger.error(f"Error sending Meta WhatsApp Template: {str(e)}")
+        return send_whatsapp_notification(phone_number, fallback_text)
+
+
 def send_whatsapp_order_completed(order):
     """
-    Constructs and sends a professional WhatsApp notification to the customer
+    Constructs and sends a WhatsApp notification to the customer
     when their laundry order is completed.
     """
-    # Only send if the customer has a phone number
     if not order.customer_phone:
         return
-        
-    # Check if the customer opted in / wants WhatsApp notifications
-    if not order.customer_is_whatsapp:
-        logger.info(f"Skipping WhatsApp notification for Order {order.id}: customer did not request WhatsApp notifications.")
-        return
 
-    # Construct a beautiful and professional receipt message
     message = (
         f"Hello {order.customer_name},\n\n"
         f"Great news! Your laundry order is ready for collection at Sparkles {order.office.name}.\n\n"
@@ -82,7 +140,6 @@ def send_whatsapp_order_completed(order):
         f"- Amount Paid: ₦{order.amount_paid:,.2f}\n"
     )
     
-    # Add pending balance details if any
     balance = order.total_price - order.amount_paid
     if balance > 0:
         message += f"- Balance Due: ₦{balance:,.2f}\n"
@@ -96,35 +153,43 @@ def send_whatsapp_order_completed(order):
 
     return send_whatsapp_notification(order.customer_phone, message)
 
+
 def send_whatsapp_order_received(order):
     """
-    Constructs and sends a WhatsApp notification with a digital receipt link
-    to the customer when their order is first received.
+    Constructs and sends a Meta WhatsApp Utility template message to the customer
+    whenever a new order is created and a customer phone number is present.
+
+    Meta Template Format:
+    Hi {{1}}
+    Your order has been created at {{2}}
+    Here is your tracking link {{3}}
     """
     if not order.customer_phone:
-        return
-        
-    if not order.customer_is_whatsapp:
-        logger.info(f"Skipping WhatsApp receipt for Order {order.id}: customer did not request WhatsApp notifications.")
+        logger.info(f"Skipping WhatsApp order creation notification for Order #{order.tracking_code}: No phone number provided.")
         return
 
-    # Expected date formatting
-    due_date_str = "soon"
-    if order.due_date:
-        due_date_str = order.due_date.strftime("%A, %I:%M %p")
+    customer_name = (order.customer_name or 'Customer').strip()
+    office_name = (order.office.name or 'Sparkles Laundry').strip()
 
-    # Branded receipt URL
     base_url = getattr(settings, 'SPARKLES_PORTAL_BASE_URL', 'https://sparkles.app')
     receipt_url = f"{base_url.rstrip('/')}/r/{order.tracking_code}/"
 
-    message = (
-        f"👋 Hi {order.customer_name},\n\n"
-        f"Thank you for choosing {order.office.name}.\n\n"
-        f"Your order has been received.\n\n"
-        f"Expected Delivery:\n"
-        f"{due_date_str}\n\n"
-        f"View your digital receipt here:\n"
-        f"{receipt_url}"
+    template_name = getattr(settings, 'WHATSAPP_TEMPLATE_ORDER_CREATED', 'order_created')
+    language_code = getattr(settings, 'WHATSAPP_TEMPLATE_LANGUAGE', 'en')
+    
+    # Parameters matching Meta Template: {{1}}=Name, {{2}}=Office, {{3}}=URL
+    parameters = [customer_name, office_name, receipt_url]
+
+    fallback_text = (
+        f"Hi {customer_name}\n"
+        f"Your order has been created at {office_name}\n"
+        f"Here is your tracking link {receipt_url}"
     )
 
-    return send_whatsapp_notification(order.customer_phone, message)
+    return send_whatsapp_template_notification(
+        phone_number=order.customer_phone,
+        template_name=template_name,
+        language_code=language_code,
+        parameters=parameters,
+        fallback_text=fallback_text
+    )
