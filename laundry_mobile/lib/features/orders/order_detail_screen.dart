@@ -266,44 +266,133 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Log Payment'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Outstanding Balance: ₦${remaining.toStringAsFixed(2)}', 
-                style: const TextStyle(fontWeight: FontWeight.w500)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: 'Amount Paid (₦)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(LucideIcons.wallet, color: Colors.green.shade700, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Record Payment', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final amount = double.tryParse(controller.text) ?? 0.0;
-              if (amount > 0) {
-                Navigator.pop(context);
-                _logPayment(amount);
-              }
-            },
-            child: const Text('Save Payment'),
-          ),
-        ],
-      ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.primaryColor.withOpacity(0.15)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Outstanding Balance',
+                          style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
+                        ),
+                        Text(
+                          '₦${remaining.toStringAsFixed(2)}',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.redAccent),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Quick-fill amount chips
+                  if (remaining > 0) ...[
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          ActionChip(
+                            label: const Text('Pay Full', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            avatar: const Icon(LucideIcons.check, size: 12),
+                            backgroundColor: Colors.green.shade50,
+                            side: BorderSide(color: Colors.green.shade300),
+                            labelStyle: TextStyle(color: Colors.green.shade900),
+                            onPressed: () {
+                              setDialogState(() {
+                                controller.text = remaining.toStringAsFixed(2);
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 6),
+                          ActionChip(
+                            label: Text('Half (₦${(remaining / 2).toStringAsFixed(0)})', style: const TextStyle(fontSize: 11)),
+                            backgroundColor: Colors.grey.shade100,
+                            side: BorderSide.none,
+                            onPressed: () {
+                              setDialogState(() {
+                                controller.text = (remaining / 2).toStringAsFixed(2);
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  TextField(
+                    controller: controller,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      labelText: 'Payment Amount (₦)',
+                      prefixIcon: const Icon(LucideIcons.banknote, size: 20, color: Colors.green),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade700,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
+                  ),
+                  icon: const Icon(LucideIcons.checkCircle2, size: 18),
+                  onPressed: () {
+                    final amount = double.tryParse(controller.text) ?? 0.0;
+                    if (amount > 0) {
+                      Navigator.pop(context);
+                      _logPayment(amount);
+                    }
+                  },
+                  label: const Text('Save Payment', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -666,13 +755,22 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                             const SizedBox(height: 20),
                             SizedBox(
                               width: double.infinity,
+                              height: 48,
                               child: ElevatedButton.icon(
                                 onPressed: _showPaymentDialog,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryColor,
+                                  backgroundColor: Colors.green.shade700,
+                                  foregroundColor: Colors.white,
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
-                                icon: const Icon(LucideIcons.plus, size: 18),
-                                label: const Text('Log Payment'),
+                                icon: const Icon(LucideIcons.wallet, size: 18),
+                                label: const Text(
+                                  'Record Payment',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
                               ),
                             ),
                           ],
