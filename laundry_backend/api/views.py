@@ -1,4 +1,5 @@
 import logging
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction, close_old_connections
 from django.db.models import Sum, Count, F, Q
