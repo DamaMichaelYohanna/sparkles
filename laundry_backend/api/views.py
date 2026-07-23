@@ -847,7 +847,9 @@ class SavePushSubscriptionAPIView(APIView):
             return Response({"error": "Missing subscription parameters."}, status=400)
 
         from operations.models import WebPushSubscription, Customer
-        customer = Customer.objects.filter(phone=customer_phone, is_deleted=False).first()
+        digits = ''.join(filter(str.isdigit, customer_phone))
+        last_10 = digits[-10:] if len(digits) >= 7 else customer_phone
+        customer = Customer.objects.filter(phone__endswith=last_10, is_deleted=False).first()
         
         subscription, created = WebPushSubscription.objects.update_or_create(
             endpoint=endpoint,

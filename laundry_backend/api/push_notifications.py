@@ -12,7 +12,11 @@ def send_web_push(subscription, title, body, url):
     """
     vapid_private_key = settings.VAPID_PRIVATE_KEY
     vapid_public_key = settings.VAPID_PUBLIC_KEY
-    vapid_claims = {"sub": settings.VAPID_CLAIM_EMAIL}
+    
+    sub_claim = settings.VAPID_CLAIM_EMAIL or "mailto:support@sparkles.com.ng"
+    if not sub_claim.startswith("mailto:") and not sub_claim.startswith("https://"):
+        sub_claim = f"mailto:{sub_claim}"
+    vapid_claims = {"sub": sub_claim}
 
     if not vapid_private_key or not vapid_public_key:
         logger.warning("[WebPush] Skipping push notification: VAPID keys not configured in settings.")
@@ -37,17 +41,17 @@ def send_web_push(subscription, title, body, url):
             vapid_private_key=vapid_private_key,
             vapid_claims=vapid_claims,
         )
-        logger.info("[WebPush] Successfully sent push to %s", subscription.customer_phone)
+        logger.info("[WebPush] Successfully sent push to %s (endpoint: %s...)", subscription.customer_phone, subscription.endpoint[:30])
         return True
     except WebPushException as ex:
-        logger.warning("[WebPush] WebPushException: %s", ex)
-        # If the browser push service returned 410 Gone or 403 Forbidden (e.g. VAPID key changed), delete stale sub
-        if ex.response is not None and ex.response.status_code in (403, 410):
-            logger.info("[WebPush] Subscription invalid/expired (%s). Deleting subscription for %s", ex.response.status_code, subscription.customer_phone)
+        logger.warning("[WebPush] WebPushException for %s: %s", subscription.customer_phone, ex)
+        # Delete ONLY if 410 Gone (explicitly unsubscribed/invalidated by push service)
+        if ex.response is not None and ex.response.status_code == 410:
+            logger.info("[WebPush] Subscription expired (410 Gone). Deleting subscription for %s", subscription.customer_phone)
             subscription.delete()
         return False
     except Exception as e:
-        logger.error("[WebPush] Failed to send push: %s", e, exc_info=True)
+        logger.error("[WebPush] Failed to send push to %s: %s", subscription.customer_phone, e, exc_info=True)
         return False
 
 
@@ -56,24 +60,39 @@ def notify_order_status_change(order):
     Finds all active subscriptions for the order's customer phone,
     and sends them web push notifications indicating the status change.
     """
-    if not order.customer_phone:
+    if not order.customer_phone and not order.customer:
         return
 
     from django.db.models import Q
-    q_filter = Q(customer_phone=order.customer_phone)
+    raw_phone = (order.customer_phone or '').strip()
+    digits = ''.join(filter(str.isdigit, raw_phone))
+    last_10 = digits[-10:] if len(digits) >= 7 else ''
+
+    q_filter = Q()
+    if raw_phone:
+        q_filter |= Q(customer_phone=raw_phone)
+    if last_10:
+        q_filter |= Q(customer_phone__endswith=last_10)
     if order.customer:
         q_filter |= Q(customer=order.customer)
+        if order.customer.phone:
+            q_filter |= Q(customer_phone=order.customer.phone)
+            cust_digits = ''.join(filter(str.isdigit, order.customer.phone))
+            if len(cust_digits) >= 7:
+                q_filter |= Q(customer_phone__endswith=cust_digits[-10:])
 
     subscriptions = WebPushSubscription.objects.filter(
         q_filter,
         is_deleted=False
     ).distinct()
+
     if not subscriptions.exists():
-        logger.info("[WebPush] No push subscriptions found for phone %s", order.customer_phone)
+        logger.info("[WebPush] No push subscriptions found for phone '%s' (last10: '%s')", raw_phone, last_10)
         return
 
+    status_name = order.current_status.name if order.current_status else 'Updated'
     title = f"Sparkles | {order.office.name}"
-    body = f"Order #{order.tracking_code} is now: {order.current_status.name}."
+    body = f"Order #{order.tracking_code} is now: {status_name}."
     
     # Construct receipt detail URL dynamically based on settings
     base_url = settings.SPARKLES_PORTAL_BASE_URL.rstrip('/')
