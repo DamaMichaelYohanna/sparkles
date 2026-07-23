@@ -292,6 +292,7 @@ class AddOrderNotifier extends Notifier<DraftOrderState> {
     ref.invalidate(dashboardStatsProvider);
     ref.invalidate(rawAnalysisOrdersProvider);
     ref.invalidate(customersProvider);
+    await ref.read(customersProvider.notifier).loadCustomers();
   }
 }
 

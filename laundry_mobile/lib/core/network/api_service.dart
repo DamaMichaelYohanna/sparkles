@@ -211,9 +211,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> verifySubscription(String reference) async {
+  Future<Map<String, dynamic>> verifySubscription([String? reference]) async {
     try {
-      final response = await _dio.get('billing/verify/', queryParameters: {'reference': reference});
+      final queryParams = <String, dynamic>{};
+      if (reference != null && reference.isNotEmpty) {
+        queryParams['reference'] = reference;
+      }
+      final response = await _dio.get('billing/verify/', queryParameters: queryParams);
       return response.data as Map<String, dynamic>;
     } catch (e) {
       throw _handleException(e, 'Failed to verify subscription');

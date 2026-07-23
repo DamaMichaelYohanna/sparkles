@@ -21,6 +21,24 @@ def make_aware(dt):
         return None
     return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
 
+def ensure_default_order_statuses(office):
+    if not OrderStatus.objects.filter(office=office).exists():
+        defaults = [
+            ('Pending', 1, False, True),
+            ('Completed', 2, True, False),
+            ('Overdue', 3, False, False),
+        ]
+        for name, seq, is_comp, is_def in defaults:
+            OrderStatus.objects.get_or_create(
+                office=office,
+                name=name,
+                defaults={
+                    'sequence_order': seq,
+                    'is_completed_state': is_comp,
+                    'is_default': is_def,
+                }
+            )
+
 class SyncAPIView(APIView):
     permission_classes = [IsAuthenticated, TierLimitPermission]
 
@@ -29,6 +47,8 @@ class SyncAPIView(APIView):
         if not office:
             logger.warning("Sync GET warning: User '%s' is not associated with any office.", request.user.email)
             return Response({"error": "User is not associated with an office."}, status=400)
+
+        ensure_default_order_statuses(office)
 
         last_sync = request.query_params.get('last_sync_timestamp')
         
@@ -306,8 +326,8 @@ class SyncAPIView(APIView):
                     status_val = order_dict.get('current_status') or 'Pending'
                     status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first()
                     if not status_obj:
-                        # Fall back to the first available status for this office
-                        status_obj = OrderStatus.objects.filter(office=office).order_by('sequence_order').first()
+                        ensure_default_order_statuses(office)
+                        status_obj = OrderStatus.objects.filter(office=office, name__iexact=status_val).first() or OrderStatus.objects.filter(office=office).order_by('sequence_order').first()
                     if not status_obj:
                         logger.error("Sync: No OrderStatus found for office '%s'. Cannot create order ID='%s'.", office.name, order_id)
                         continue

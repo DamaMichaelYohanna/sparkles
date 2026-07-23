@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/local_db/database_helper.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/providers.dart';
+import '../../finance/providers/finance_provider.dart';
 
 class AnalysisStats {
   final double totalSales;
@@ -63,14 +65,108 @@ final rawAnalysisOrdersProvider = FutureProvider.autoDispose<List<OrderModel>>((
   return results.map((e) => OrderModel.fromDb(e)).toList();
 });
 
+class AnalysisFilterState {
+  final String status; // 'All', 'Pending', 'Completed', 'Overdue'
+  final String paymentStatus; // 'All', 'Fully Paid', 'Partially Paid', 'Unpaid'
+  final String dateRange; // 'All Time', 'Today', 'This Week', 'This Month', 'Custom'
+  final DateTimeRange? customDateRange;
+
+  AnalysisFilterState({
+    this.status = 'All',
+    this.paymentStatus = 'All',
+    this.dateRange = 'All Time',
+    this.customDateRange,
+  });
+
+  AnalysisFilterState copyWith({
+    String? status,
+    String? paymentStatus,
+    String? dateRange,
+    DateTimeRange? customDateRange,
+  }) {
+    return AnalysisFilterState(
+      status: status ?? this.status,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      dateRange: dateRange ?? this.dateRange,
+      customDateRange: customDateRange ?? this.customDateRange,
+    );
+  }
+}
+
+class AnalysisFilterNotifier extends Notifier<AnalysisFilterState> {
+  @override
+  AnalysisFilterState build() => AnalysisFilterState();
+
+  void setStatus(String value) => state = state.copyWith(status: value);
+  void setPaymentStatus(String value) => state = state.copyWith(paymentStatus: value);
+  void setDateRange(String value) {
+    if (value != 'Custom') {
+      state = state.copyWith(dateRange: value, customDateRange: null);
+    } else {
+      state = state.copyWith(dateRange: value);
+    }
+  }
+  void setCustomDateRange(DateTimeRange? range) {
+    state = state.copyWith(dateRange: 'Custom', customDateRange: range);
+  }
+  void reset() => state = AnalysisFilterState();
+}
+
+final analysisFilterProvider = NotifierProvider<AnalysisFilterNotifier, AnalysisFilterState>(() {
+  return AnalysisFilterNotifier();
+});
+
 // Aggregated stats provider
 final analysisStatsProvider = Provider.autoDispose<AsyncValue<AnalysisStats>>((ref) {
   final ordersAsync = ref.watch(rawAnalysisOrdersProvider);
+  final filter = ref.watch(analysisFilterProvider);
 
   return ordersAsync.when(
     loading: () => const AsyncValue.loading(),
     error: (err, stack) => AsyncValue.error(err, stack),
-    data: (orders) {
+    data: (allOrders) {
+      final now = DateTime.now();
+      final todayStart = DateTime(now.year, now.month, now.day);
+
+      final orders = allOrders.where((order) {
+        // 1. Status Filter
+        if (filter.status != 'All' && order.status != filter.status) {
+          return false;
+        }
+
+        // 2. Payment Status Filter
+        final balance = order.totalPrice - order.amountPaid;
+        if (filter.paymentStatus == 'Fully Paid' && (balance > 0 || order.totalPrice == 0)) {
+          return false;
+        }
+        if (filter.paymentStatus == 'Partially Paid' && (order.amountPaid <= 0 || balance <= 0)) {
+          return false;
+        }
+        if (filter.paymentStatus == 'Unpaid' && order.amountPaid > 0) {
+          return false;
+        }
+
+        // 3. Date Range Filter
+        final localDate = DateTime(order.createdAt.toLocal().year, order.createdAt.toLocal().month, order.createdAt.toLocal().day);
+        if (filter.dateRange == 'Today' && !localDate.isAtSameMomentAs(todayStart)) {
+          return false;
+        }
+        if (filter.dateRange == 'This Week') {
+          final startOfWeek = todayStart.subtract(Duration(days: todayStart.weekday - 1));
+          if (localDate.isBefore(startOfWeek)) return false;
+        }
+        if (filter.dateRange == 'This Month') {
+          final startOfMonth = DateTime(todayStart.year, todayStart.month, 1);
+          if (localDate.isBefore(startOfMonth)) return false;
+        }
+        if (filter.dateRange == 'Custom' && filter.customDateRange != null) {
+          final start = DateTime(filter.customDateRange!.start.year, filter.customDateRange!.start.month, filter.customDateRange!.start.day);
+          final end = DateTime(filter.customDateRange!.end.year, filter.customDateRange!.end.month, filter.customDateRange!.end.day, 23, 59, 59);
+          if (localDate.isBefore(start) || localDate.isAfter(end)) return false;
+        }
+
+        return true;
+      }).toList();
       double totalSales = 0.0;
       double totalCollected = 0.0;
       int pending = 0;
@@ -95,7 +191,6 @@ final analysisStatsProvider = Provider.autoDispose<AsyncValue<AnalysisStats>>((r
 
       // Weekly revenue trend (Monday to Sunday)
       List<double> weeklyTrend = List.generate(7, (_) => 0.0);
-      final now = DateTime.now();
       final monday = now.subtract(Duration(days: now.weekday - 1));
       final startOfWeek = DateTime(monday.year, monday.month, monday.day);
       final endOfWeek = startOfWeek.add(const Duration(days: 7));

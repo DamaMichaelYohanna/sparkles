@@ -29,7 +29,21 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Add Staff Member'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(LucideIcons.userPlus, color: AppTheme.primaryColor, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Add Staff Member', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
               content: SingleChildScrollView(
                 child: Form(
                   key: formKey,
@@ -40,8 +54,8 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                         controller: usernameController,
                         decoration: InputDecoration(
                           labelText: 'Username',
-                          prefixIcon: const Icon(LucideIcons.user, size: 18),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          prefixIcon: const Icon(LucideIcons.atSign, size: 18, color: AppTheme.primaryColor),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
@@ -50,8 +64,8 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                         controller: emailController,
                         decoration: InputDecoration(
                           labelText: 'Email Address',
-                          prefixIcon: const Icon(LucideIcons.mail, size: 18),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          prefixIcon: const Icon(LucideIcons.mail, size: 18, color: AppTheme.primaryColor),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         keyboardType: TextInputType.emailAddress,
                         validator: (v) {
@@ -65,8 +79,24 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                         controller: firstNameController,
                         decoration: InputDecoration(
                           labelText: 'First Name',
-                          prefixIcon: const Icon(LucideIcons.type, size: 18),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          prefixIcon: Container(
+                            width: 36,
+                            alignment: Alignment.center,
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withOpacity(0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'F',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.primaryColor),
+                              ),
+                            ),
+                          ),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
@@ -75,8 +105,24 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                         controller: lastNameController,
                         decoration: InputDecoration(
                           labelText: 'Last Name',
-                          prefixIcon: const Icon(LucideIcons.type, size: 18),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          prefixIcon: Container(
+                            width: 36,
+                            alignment: Alignment.center,
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withOpacity(0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'L',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.primaryColor),
+                              ),
+                            ),
+                          ),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
@@ -85,8 +131,8 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                         controller: passwordController,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon: const Icon(LucideIcons.lock, size: 18),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          prefixIcon: const Icon(LucideIcons.lock, size: 18, color: AppTheme.primaryColor),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         obscureText: true,
                         validator: (v) => (v == null || v.length < 6) ? 'Must be at least 6 characters' : null,
@@ -101,6 +147,12 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  ),
                   onPressed: _isCreating
                       ? null
                       : () async {
@@ -140,7 +192,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Save'),
+                      : const Text('Save Staff'),
                 ),
               ],
             );

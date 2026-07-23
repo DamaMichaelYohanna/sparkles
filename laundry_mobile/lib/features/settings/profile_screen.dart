@@ -23,16 +23,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  void _verifyPayment(String reference, StateSetter setDialogState) async {
+  void _verifyPayment([String? reference, StateSetter? setDialogState]) async {
     final navigator = Navigator.of(context);
-    setDialogState(() => _isCheckingStatus = true);
+    if (setDialogState != null) setDialogState(() => _isCheckingStatus = true);
     setState(() => _isCheckingStatus = true);
     try {
       final api = ref.read(apiServiceProvider);
       final res = await api.verifySubscription(reference);
       
       if (mounted) {
-        setDialogState(() => _isCheckingStatus = false);
+        if (setDialogState != null) setDialogState(() => _isCheckingStatus = false);
         setState(() => _isCheckingStatus = false);
         ref.refresh(userProfileProvider);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -41,11 +41,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        navigator.pop(); // Close check status dialog safely
+        if (navigator.canPop()) navigator.pop();
       }
     } catch (e) {
       if (mounted) {
-        setDialogState(() => _isCheckingStatus = false);
+        if (setDialogState != null) setDialogState(() => _isCheckingStatus = false);
         setState(() => _isCheckingStatus = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -57,7 +57,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  void _showVerifyDialog(String reference) {
+  void _showVerifyDialog([String? reference, String? authUrl]) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -65,14 +65,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Complete Payment'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(LucideIcons.shieldCheck, color: AppTheme.primaryColor, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Payment Verification', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('We have opened the Paystack checkout page in your browser.'),
-                  const SizedBox(height: 12),
-                  const Text('Please complete the billing transaction and return here to verify.'),
+                  const Text(
+                    'Complete your billing checkout in the browser and tap "Verify Payment" below to activate your plan.',
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13, height: 1.4),
+                  ),
+                  if (authUrl != null && authUrl.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () => _launchUrl(authUrl),
+                      icon: const Icon(LucideIcons.externalLink, size: 14),
+                      label: const Text('Re-open Checkout Page'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryColor,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ],
                   if (_isCheckingStatus) ...[
                     const SizedBox(height: 20),
                     const Center(
@@ -90,13 +117,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         },
                   child: const Text('Close'),
                 ),
-                ElevatedButton(
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                  icon: const Icon(LucideIcons.checkCircle2, size: 16),
                   onPressed: _isCheckingStatus
                       ? null
                       : () {
                           _verifyPayment(reference, setDialogState);
                         },
-                  child: const Text('Verify Payment'),
+                  label: const Text('Verify Payment'),
                 ),
               ],
             );
@@ -334,7 +368,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                                 final refStr = res['reference'];
                                                 
                                                 await _launchUrl(url);
-                                                _showVerifyDialog(refStr);
+                                                _showVerifyDialog(refStr, url);
                                               }
                                             } catch (e) {
                                               if (mounted) {
@@ -463,55 +497,115 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 16),
 
               // Plan Card
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Colors.grey.shade100),
-                ),
-                elevation: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Builder(
+                builder: (context) {
+                  final pendingSub = profile['office_preferences']?['pending_subscription'] as Map<String, dynamic>?;
+                  final pendingTier = pendingSub?['tier']?.toString().toUpperCase();
+                  final pendingRef = pendingSub?['reference']?.toString();
+                  final pendingUrl = pendingSub?['authorization_url']?.toString();
+
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: Colors.grey.shade100),
+                    ),
+                    elevation: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'SUBSCRIPTION PLAN',
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'SUBSCRIPTION PLAN',
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.textSecondary),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    tierName,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: tier.toString().toLowerCase() == 'free' ? Colors.grey[700] : Colors.green[700],
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                tierName,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  color: tier.toString().toLowerCase() == 'free' ? Colors.grey[700] : Colors.green[700],
+                              if (isAdmin)
+                                Row(
+                                  children: [
+                                    OutlinedButton.icon(
+                                      onPressed: () => _showVerifyDialog(pendingRef, pendingUrl),
+                                      icon: const Icon(LucideIcons.shieldCheck, size: 14),
+                                      label: const Text('Verify'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppTheme.primaryColor,
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton.icon(
+                                      onPressed: () => _showSubscriptionSheet(tier),
+                                      icon: const Icon(Icons.payment, size: 14),
+                                      label: const Text('Manage Plan'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.primaryColor,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
                             ],
                           ),
-                          if (isAdmin)
-                            ElevatedButton.icon(
-                              onPressed: () => _showSubscriptionSheet(tier),
-                              icon: const Icon(Icons.payment, size: 16),
-                              label: const Text('Manage Plan'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryColor,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          if (pendingSub != null) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.amber.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(LucideIcons.alertCircle, color: Colors.amber.shade800, size: 18),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Pending Upgrade: $pendingTier',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                                        ),
+                                        const Text(
+                                          'Payment initialized. Tap "Verify Now" after completing Paystack checkout.',
+                                          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => _showVerifyDialog(pendingRef, pendingUrl),
+                                    child: const Text('Verify Now', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                  ),
+                                ],
                               ),
                             ),
+                          ],
                         ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             ],
           );

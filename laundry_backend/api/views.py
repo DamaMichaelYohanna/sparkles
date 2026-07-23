@@ -427,19 +427,19 @@ class VerifySubscriptionView(APIView):
 
     def get(self, request):
         user = request.user
-        reference = request.query_params.get('reference')
-        if not reference:
-            logger.warning("[Billing] Verify Failed: Missing reference parameter in request from user '%s'.", user.email)
-            return Response({"error": "Reference parameter is required"}, status=400)
-            
         office = user.office
         if not office:
             logger.warning("[Billing] Verify Failed: User '%s' has no office.", user.email)
             return Response({"error": "No office associated with user"}, status=400)
             
-        logger.info("[Billing] Verifying transaction reference '%s' for office '%s'.", reference, office.name)
         pending = office.preferences.get('pending_subscription')
-        if not pending or pending.get('reference') != reference:
+        reference = request.query_params.get('reference') or (pending.get('reference') if pending else None)
+        if not reference:
+            logger.warning("[Billing] Verify Failed: Missing reference parameter and no pending subscription for user '%s'.", user.email)
+            return Response({"error": "Reference parameter is required or no pending subscription found"}, status=400)
+            
+        logger.info("[Billing] Verifying transaction reference '%s' for office '%s'.", reference, office.name)
+        if pending and pending.get('reference') != reference:
             logger.warning("[Billing] Verify Failed: Reference '%s' does not match pending reference for office '%s'.", reference, office.name)
             return Response({"error": "No pending subscription found for this reference"}, status=400)
             
@@ -618,7 +618,11 @@ class BranchListCreateView(APIView):
                 user.office = branch
                 user.save()
                 
-                # Populate new branch with initial items
+                # Populate new branch with initial items and order statuses
+                OrderStatus.objects.create(office=branch, name="Pending", sequence_order=1, is_completed_state=False, is_default=True)
+                OrderStatus.objects.create(office=branch, name="Completed", sequence_order=2, is_completed_state=True, is_default=False)
+                OrderStatus.objects.create(office=branch, name="Overdue", sequence_order=3, is_completed_state=False, is_default=False)
+                
                 clothing = Category.objects.create(office=branch, name="Clothing")
                 household = Category.objects.create(office=branch, name="Household")
                 

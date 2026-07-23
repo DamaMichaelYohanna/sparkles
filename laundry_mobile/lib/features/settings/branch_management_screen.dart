@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'profile_screen.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../core/local_db/database_helper.dart';
@@ -28,9 +29,16 @@ class BranchManagementScreen extends ConsumerWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
-              Icon(Icons.lock_outline, color: Colors.orange.shade700, size: 28),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.lock_outline, color: Colors.orange.shade700, size: 24),
+              ),
               const SizedBox(width: 12),
-              const Text('Upgrade Workspace'),
+              const Text('Branch Limit Reached', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
           content: Column(
@@ -38,35 +46,37 @@ class BranchManagementScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Branch limit reached for ${tier.toUpperCase()} Tier.',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                'Your current ${tier.toUpperCase()} plan allows a maximum of $limit store location(s).',
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 12),
-              Text(
-                'Your current plan allows a maximum of $limit store location(s).\n\nUpgrade your workspace subscription plan to add multiple branch locations and sync them seamlessly.',
-                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13, height: 1.4),
+              const Text(
+                'Upgrade your subscription plan to add additional store branches, sync inventory, and manage multi-location staff.',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13, height: 1.4),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
+              child: const Text('Cancel'),
             ),
-            ElevatedButton(
+            ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
+              icon: const Icon(LucideIcons.sparkles, size: 16),
               onPressed: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Click 'Manage Plan' at the top of the settings page to upgrade."),
-                  ),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
                 );
               },
-              child: const Text('Upgrade Subscription'),
+              label: const Text('Upgrade Plan'),
             ),
           ],
         );
@@ -267,28 +277,103 @@ class BranchManagementScreen extends ConsumerWidget {
               return ListView(
                 padding: const EdgeInsets.all(16.0),
                 children: [
-                  Card(
-                    color: AppTheme.primaryColor.withOpacity(0.05),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: AppTheme.primaryColor.withOpacity(0.15)),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Icon(LucideIcons.info, color: Colors.grey[700], size: 20),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'Manage multiple store locations. Tap on any branch to switch your active workspace.',
-                              style: TextStyle(fontSize: 13, height: 1.3),
-                            ),
+                  Builder(
+                    builder: (context) {
+                      final tier = (profile['subscription_tier'] ?? 'free').toString().toUpperCase();
+                      final limit = _getBranchLimit(tier);
+                      final limitText = limit != null ? '$limit Max' : 'Unlimited';
+
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                        ],
-                      ),
-                    ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primaryColor,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '$tier TIER',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${branches.length} / $limitText Branches',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(LucideIcons.sparkles, color: Colors.amber, size: 12),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Upgrade Plan',
+                                          style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Manage multiple store locations. Tap on any branch to switch active workspace.',
+                              style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   ...branches.map((b) {

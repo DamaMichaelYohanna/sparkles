@@ -158,10 +158,25 @@ class AnalysisScreen extends ConsumerWidget {
     }
   }
 
+  void _showFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AnalysisFilterBottomSheet(),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return "${date.day}/${date.month}/${date.year.toString().substring(2)}";
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsyncValue = ref.watch(analysisStatsProvider);
     final financeStatsAsync = ref.watch(financeStatsProvider);
+    final filter = ref.watch(analysisFilterProvider);
+    final filterNotifier = ref.read(analysisFilterProvider.notifier);
     final tierAsync = ref.watch(_tierProvider);
     final tier = tierAsync.maybeWhen(
       data: (t) => t,
@@ -174,10 +189,35 @@ class AnalysisScreen extends ConsumerWidget {
       },
     );
 
+    final hasActiveFilters = filter.status != 'All' ||
+        filter.paymentStatus != 'All' ||
+        filter.dateRange != 'All Time';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Business Analysis'),
         actions: [
+          IconButton(
+            icon: Stack(
+              children: [
+                const Icon(LucideIcons.slidersHorizontal, size: 20),
+                if (hasActiveFilters)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.redAccent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            onPressed: () => _showFilterBottomSheet(context),
+          ),
           const SyncBadge(),
           financeStatsAsync.maybeWhen(
             data: (stats) => IconButton(
@@ -212,24 +252,104 @@ class AnalysisScreen extends ConsumerWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('last_sync_timestamp');
-          final syncRepo = ref.read(syncRepositoryProvider);
-          await syncRepo.getOrders();
-          ref.invalidate(rawAnalysisOrdersProvider);
-          ref.invalidate(analysisStatsProvider);
-        },
-        child: statsAsyncValue.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(child: Text('Error loading analytics: $error')),
-          data: (stats) => SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      body: Column(
+        children: [
+          // Active Filter Chips (Only shown if filters are active)
+          if (hasActiveFilters)
+            Container(
+              height: 48,
+              color: AppTheme.background.withOpacity(0.5),
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                children: [
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.filter, size: 14, color: AppTheme.textSecondary),
+                      const SizedBox(width: 8),
+                      if (filter.dateRange != 'All Time')
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: InputChip(
+                            label: Text(
+                              filter.dateRange == 'Custom' && filter.customDateRange != null
+                                  ? "${_formatDate(filter.customDateRange!.start)} - ${_formatDate(filter.customDateRange!.end)}"
+                                  : filter.dateRange,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            onDeleted: () => filterNotifier.setDateRange('All Time'),
+                            deleteIcon: const Icon(Icons.close, size: 14),
+                            deleteIconColor: AppTheme.primaryColor,
+                            backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          ),
+                        ),
+                      if (filter.status != 'All')
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: InputChip(
+                            label: Text(
+                              "Status: ${filter.status}",
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            onDeleted: () => filterNotifier.setStatus('All'),
+                            deleteIcon: const Icon(Icons.close, size: 14),
+                            deleteIconColor: AppTheme.primaryColor,
+                            backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          ),
+                        ),
+                      if (filter.paymentStatus != 'All')
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: InputChip(
+                            label: Text(
+                              "Payment: ${filter.paymentStatus}",
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            onDeleted: () => filterNotifier.setPaymentStatus('All'),
+                            deleteIcon: const Icon(Icons.close, size: 14),
+                            deleteIconColor: AppTheme.primaryColor,
+                            backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          ),
+                        ),
+                      TextButton(
+                        onPressed: () => filterNotifier.reset(),
+                        style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(50, 30)),
+                        child: const Text('Clear All', style: TextStyle(fontSize: 11, color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          if (hasActiveFilters) const Divider(height: 1),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('last_sync_timestamp');
+                final syncRepo = ref.read(syncRepositoryProvider);
+                await syncRepo.getOrders();
+                ref.invalidate(rawAnalysisOrdersProvider);
+                ref.invalidate(analysisStatsProvider);
+              },
+              child: statsAsyncValue.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => Center(child: Text('Error loading analytics: $error')),
+                data: (stats) => SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. PERIOD FILTER BAR
+                      _buildPeriodFilterChips(ref),
+                      const SizedBox(height: 16),
 
                 // 2. FINANCIAL SUMMARY SECTION
                 const Text(
@@ -382,8 +502,11 @@ class AnalysisScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  ],
+),
+);
+}
 
 
 
@@ -687,6 +810,256 @@ class AnalysisScreen extends ConsumerWidget {
             child: Text(
               '₦${value.toStringAsFixed(0)}',
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.primaryColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodFilterChips(WidgetRef ref) {
+    final filter = ref.watch(analysisFilterProvider);
+    final filterNotifier = ref.read(analysisFilterProvider.notifier);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildFilterChip(ref, 'All Time', 'All Time', filter.dateRange, filterNotifier),
+          const SizedBox(width: 8),
+          _buildFilterChip(ref, 'Today', 'Today', filter.dateRange, filterNotifier),
+          const SizedBox(width: 8),
+          _buildFilterChip(ref, 'This Week', 'This Week', filter.dateRange, filterNotifier),
+          const SizedBox(width: 8),
+          _buildFilterChip(ref, 'This Month', 'This Month', filter.dateRange, filterNotifier),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(WidgetRef ref, String label, String value, String currentRange, AnalysisFilterNotifier filterNotifier) {
+    final isSelected = currentRange == value;
+
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.white : AppTheme.textPrimary,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          fontSize: 12,
+        ),
+      ),
+      selected: isSelected,
+      selectedColor: AppTheme.primaryColor,
+      backgroundColor: Colors.grey.shade100,
+      elevation: isSelected ? 2 : 0,
+      onSelected: (selected) {
+        if (selected) {
+          filterNotifier.setDateRange(value);
+        }
+      },
+    );
+  }
+}
+
+class AnalysisFilterBottomSheet extends ConsumerWidget {
+  const AnalysisFilterBottomSheet({Key? key}) : super(key: key);
+
+  String _formatDate(DateTime date) {
+    return "${date.day}/${date.month}/${date.year.toString().substring(2)}";
+  }
+
+  Future<void> _pickCustomDateRange(BuildContext context, WidgetRef ref, DateTimeRange? currentRange) async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2025),
+      lastDate: DateTime(2030),
+      initialDateRange: currentRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              onSurface: AppTheme.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      ref.read(analysisFilterProvider.notifier).setCustomDateRange(picked);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filter = ref.watch(analysisFilterProvider);
+    final filterNotifier = ref.read(analysisFilterProvider.notifier);
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(
+        top: 8,
+        left: 20,
+        right: 20,
+        bottom: MediaQuery.of(context).padding.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 38,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Filter Business Analytics',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+              ),
+              TextButton(
+                onPressed: () => filterNotifier.reset(),
+                child: const Text('Reset All', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const Divider(),
+          const SizedBox(height: 12),
+
+          // 1. Date filters
+          const Text('Date Period', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              ...['All Time', 'Today', 'This Week', 'This Month'].map((range) {
+                final isSelected = filter.dateRange == range;
+                return ChoiceChip(
+                  label: Text(range, style: const TextStyle(fontSize: 11)),
+                  selected: isSelected,
+                  onSelected: (_) => filterNotifier.setDateRange(range),
+                  selectedColor: AppTheme.primaryColor.withOpacity(0.15),
+                  backgroundColor: Colors.grey.shade100,
+                  side: BorderSide(color: isSelected ? AppTheme.primaryColor : Colors.transparent),
+                  labelStyle: TextStyle(
+                    color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () => _pickCustomDateRange(context, ref, filter.customDateRange),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: filter.dateRange == 'Custom' ? AppTheme.primaryColor.withOpacity(0.08) : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: filter.dateRange == 'Custom' ? AppTheme.primaryColor : Colors.transparent,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.calendar,
+                    size: 16,
+                    color: filter.dateRange == 'Custom' ? AppTheme.primaryColor : AppTheme.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    filter.dateRange == 'Custom' && filter.customDateRange != null
+                        ? "${_formatDate(filter.customDateRange!.start)} - ${_formatDate(filter.customDateRange!.end)}"
+                        : 'Select Calendar Range',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: filter.dateRange == 'Custom' ? FontWeight.bold : FontWeight.normal,
+                      color: filter.dateRange == 'Custom' ? AppTheme.primaryColor : AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // 2. Order Progress
+          const Text('Order Progress', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              ...['All', 'Pending', 'Completed', 'Overdue'].map((status) {
+                final isSelected = filter.status == status;
+                return ChoiceChip(
+                  label: Text(status, style: const TextStyle(fontSize: 11)),
+                  selected: isSelected,
+                  onSelected: (_) => filterNotifier.setStatus(status),
+                  selectedColor: AppTheme.primaryColor.withOpacity(0.15),
+                  backgroundColor: Colors.grey.shade100,
+                  side: BorderSide(color: isSelected ? AppTheme.primaryColor : Colors.transparent),
+                  labelStyle: TextStyle(
+                    color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // 3. Payment Status
+          const Text('Payment Status', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textSecondary)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              ...['All', 'Fully Paid', 'Partially Paid', 'Unpaid'].map((payStatus) {
+                final isSelected = filter.paymentStatus == payStatus;
+                return ChoiceChip(
+                  label: Text(payStatus, style: const TextStyle(fontSize: 11)),
+                  selected: isSelected,
+                  onSelected: (_) => filterNotifier.setPaymentStatus(payStatus),
+                  selectedColor: AppTheme.primaryColor.withOpacity(0.15),
+                  backgroundColor: Colors.grey.shade100,
+                  side: BorderSide(color: isSelected ? AppTheme.primaryColor : Colors.transparent),
+                  labelStyle: TextStyle(
+                    color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Apply Analytics Filters', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ),
         ],

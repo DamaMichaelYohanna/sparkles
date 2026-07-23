@@ -202,7 +202,45 @@ CREATE TABLE item_pricing (
     await db.insert('customers', customerData, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<void> syncCustomersFromOrders() async {
+    final db = await database;
+    final orders = await db.query('orders', where: 'is_deleted = ?', whereArgs: [0]);
+    final existingCustomers = await db.query('customers');
+    final existingPhones = existingCustomers.map((e) => (e['phone'] as String? ?? '').trim()).where((p) => p.isNotEmpty).toSet();
+    final existingNames = existingCustomers.map((e) => (e['name'] as String? ?? '').trim().toLowerCase()).where((n) => n.isNotEmpty).toSet();
+
+    for (final order in orders) {
+      final phone = (order['customer_phone'] as String? ?? '').trim();
+      final name = (order['customer_name'] as String? ?? '').trim();
+      if (name.isEmpty && phone.isEmpty) continue;
+
+      bool exists = false;
+      if (phone.isNotEmpty && existingPhones.contains(phone)) exists = true;
+      if (phone.isEmpty && name.isNotEmpty && existingNames.contains(name.toLowerCase())) exists = true;
+
+      if (!exists) {
+        final now = DateTime.now().toUtc().toIso8601String();
+        final id = (order['customer_id'] as String?)?.isNotEmpty == true
+            ? order['customer_id'] as String
+            : 'cust_${DateTime.now().millisecondsSinceEpoch}_${name.replaceAll(' ', '_')}';
+        await db.insert('customers', {
+          'id': id,
+          'name': name.isNotEmpty ? name : 'Customer',
+          'phone': phone,
+          'is_whatsapp': 0,
+          'created_at': order['created_at'] ?? now,
+          'updated_at': now,
+          'is_deleted': 0,
+          'sync_status': 'pending',
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+        if (phone.isNotEmpty) existingPhones.add(phone);
+        if (name.isNotEmpty) existingNames.add(name.toLowerCase());
+      }
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getCustomers() async {
+    await syncCustomersFromOrders();
     final db = await database;
     return await db.query('customers', where: 'is_deleted = ?', whereArgs: [0], orderBy: 'name COLLATE NOCASE ASC');
   }
@@ -302,6 +340,7 @@ CREATE TABLE item_pricing (
   }
 
   Future<List<Map<String, String>>> getUniqueCustomers() async {
+    await syncCustomersFromOrders();
     final db = await database;
     final result = await db.query(
       'customers',
