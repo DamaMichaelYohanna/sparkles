@@ -49,11 +49,18 @@ class Order(BaseModel):
     custom_notes = models.TextField(blank=True)
     tracking_code = models.CharField(max_length=50, unique=True, null=True, blank=True, db_index=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['office', 'created_at']),
+            models.Index(fields=['office', 'due_date']),
+            models.Index(fields=['office', 'current_status']),
+        ]
+
     def save(self, *args, **kwargs):
         if not self.tracking_code:
             import random
             import string
-            while True:
+            for _ in range(10):
                 code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
                 if not Order.objects.filter(tracking_code=code).exists():
                     self.tracking_code = code

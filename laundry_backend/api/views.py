@@ -1,13 +1,14 @@
 import logging
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, Count, F
+from django.db import transaction, close_old_connections
+from django.db.models import Sum, Count, F, Q
 from django.utils import timezone
+from threading import Thread
 
 logger = logging.getLogger(__name__)
 from rest_framework import generics, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.exceptions import PermissionDenied
 from offices.models import LaundryOffice, PasswordResetOTP
 from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem, ActionLog
@@ -19,6 +20,18 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+def run_in_background(target_func, *args, **kwargs):
+    def wrapper():
+        try:
+            target_func(*args, **kwargs)
+        finally:
+            close_old_connections()
+
+    def schedule_thread():
+        Thread(target=wrapper, daemon=True).start()
+
+    transaction.on_commit(schedule_thread)
 
 class BaseTenantView:
     permission_classes = [permissions.IsAuthenticated]
@@ -60,14 +73,13 @@ class BaseTenantView:
                 details=f"Created ID {instance.id}"
             )
             
-            # Trigger WhatsApp notifications in background threads
-            from threading import Thread
+            # Trigger WhatsApp notifications in background after transaction commit
             if instance.current_status.is_completed_state:
                 from .whatsapp import send_whatsapp_order_completed
-                Thread(target=send_whatsapp_order_completed, args=(instance,), daemon=True).start()
+                run_in_background(send_whatsapp_order_completed, instance)
             else:
                 from .whatsapp import send_whatsapp_order_received
-                Thread(target=send_whatsapp_order_received, args=(instance,), daemon=True).start()
+                run_in_background(send_whatsapp_order_received, instance)
 
     def perform_update(self, serializer):
         model = self.serializer_class.Meta.model
@@ -103,9 +115,8 @@ class BaseTenantView:
             
             # Trigger WhatsApp if transitioned to completed
             if instance.current_status.is_completed_state and not was_completed:
-                from threading import Thread
                 from .whatsapp import send_whatsapp_order_completed
-                Thread(target=send_whatsapp_order_completed, args=(instance,), daemon=True).start()
+                run_in_background(send_whatsapp_order_completed, instance)
 
 
 # LaundryOffice
@@ -223,22 +234,21 @@ class OfficeOperationsDashboardAPIView(APIView):
         now = timezone.now()
         orders = Order.objects.filter(office=user.office)
         
-        total_orders_today = orders.filter(created_at__date=now.date()).count()
-        pending_orders = orders.filter(current_status__is_completed_state=False).count()
-        completed_orders = orders.filter(current_status__is_completed_state=True).count()
-        overdue_orders = orders.filter(
-            current_status__is_completed_state=False, 
-            due_date__lt=now
-        ).count()
+        stats = orders.aggregate(
+            total_orders_today=Count('id', filter=Q(created_at__date=now.date())),
+            pending_orders=Count('id', filter=Q(current_status__is_completed_state=False)),
+            completed_orders=Count('id', filter=Q(current_status__is_completed_state=True)),
+            overdue_orders=Count('id', filter=Q(current_status__is_completed_state=False, due_date__lt=now)),
+        )
         
         recent = orders.select_related('current_status').order_by('-created_at')[:5]
         recent_serialized = OrderSerializer(recent, many=True).data
 
         return Response({
-            "total_orders_today": total_orders_today,
-            "pending_orders": pending_orders,
-            "completed_orders": completed_orders,
-            "overdue_orders": overdue_orders,
+            "total_orders_today": stats['total_orders_today'] or 0,
+            "pending_orders": stats['pending_orders'] or 0,
+            "completed_orders": stats['completed_orders'] or 0,
+            "overdue_orders": stats['overdue_orders'] or 0,
             "recent_orders": recent_serialized
         })
 
