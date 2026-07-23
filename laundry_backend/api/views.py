@@ -432,30 +432,48 @@ class VerifySubscriptionView(APIView):
             logger.warning("[Billing] Verify Failed: User '%s' has no office.", user.email)
             return Response({"error": "No office associated with user"}, status=400)
             
-        pending = office.preferences.get('pending_subscription')
-        reference = request.query_params.get('reference') or (pending.get('reference') if pending else None)
+        preferences = office.preferences or {}
+        pending = preferences.get('pending_subscription')
+        
+        reference = request.query_params.get('reference')
+        if not reference and isinstance(pending, dict):
+            reference = pending.get('reference')
+            
         if not reference:
             logger.warning("[Billing] Verify Failed: Missing reference parameter and no pending subscription for user '%s'.", user.email)
             return Response({"error": "Reference parameter is required or no pending subscription found"}, status=400)
             
         logger.info("[Billing] Verifying transaction reference '%s' for office '%s'.", reference, office.name)
-        if pending and pending.get('reference') != reference:
-            logger.warning("[Billing] Verify Failed: Reference '%s' does not match pending reference for office '%s'.", reference, office.name)
-            return Response({"error": "No pending subscription found for this reference"}, status=400)
-            
+        
         from .paystack import verify_payment
         res = verify_payment(reference)
         
-        if res.get('status') == True and res['data']['status'] == 'success':
-            tier = pending.get('tier')
+        if res.get('status') == True and res.get('data', {}).get('status') == 'success':
+            tier = None
+            if isinstance(pending, dict):
+                tier = pending.get('tier')
+                
+            if not tier:
+                paystack_meta = res['data'].get('metadata') or {}
+                if isinstance(paystack_meta, dict) and paystack_meta.get('tier'):
+                    tier = paystack_meta.get('tier')
+                    
+            if not tier:
+                tier = request.query_params.get('tier', 'pro')
+
+            tier = str(tier).lower()
             office.subscription_tier = tier
-            # Clear pending subscription
-            office.preferences.pop('pending_subscription', None)
+            
+            # Clear pending subscription if present
+            if 'pending_subscription' in preferences:
+                preferences.pop('pending_subscription', None)
+                office.preferences = preferences
+                
             office.save()
             logger.info("[Billing] Payment successfully verified. Office '%s' upgraded to tier '%s'.", office.name, tier)
             return Response({
                 "status": "success",
-                "message": f"Subscription successfully upgraded to {tier}.",
+                "message": f"Subscription successfully upgraded to {tier.capitalize()}.",
                 "tier": tier
             })
         else:
