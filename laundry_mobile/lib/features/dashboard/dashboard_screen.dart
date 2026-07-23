@@ -227,7 +227,7 @@ class _DashboardBody extends ConsumerWidget {
               children: [
                 Builder(
                   builder: (context) {
-                    final logoBase64 = ref.watch(officeLogoProvider).valueOrNull;
+                    final logoBase64 = ref.watch(officeLogoProvider).asData?.value;
                     final hasLogo = logoBase64 != null && logoBase64.isNotEmpty;
                     return CircleAvatar(
                       backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
