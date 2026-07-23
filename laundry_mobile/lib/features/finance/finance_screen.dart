@@ -8,16 +8,9 @@ import '../../core/providers.dart';
 import 'finance_report_generator.dart';
 import 'providers/finance_provider.dart';
 
-/// Reads subscription_tier from SharedPreferences (cached at login/profile fetch).
-/// Falls back to checking the live userProfileProvider so it always has a value.
-final _tierProvider = FutureProvider<String>((ref) async {
-  // Try cached value first (instant, no network)
-  final prefs = await SharedPreferences.getInstance();
-  final cached = prefs.getString('subscription_tier');
-  if (cached != null && cached.isNotEmpty) return cached.toLowerCase();
-
-  // Fallback: read from live profile
-  final profileAsync = ref.read(userProfileProvider);
+/// Reactive provider watching userProfileProvider for real-time tier updates.
+final _tierProvider = Provider.autoDispose<String>((ref) {
+  final profileAsync = ref.watch(userProfileProvider);
   return profileAsync.maybeWhen(
     data: (p) => (p['subscription_tier'] as String? ?? 'free').toLowerCase(),
     orElse: () => 'free',
@@ -270,19 +263,7 @@ class FinanceScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncStats = ref.watch(financeStatsProvider);
-    // Read tier from cache (instant) — no loading flicker
-    final tierAsync = ref.watch(_tierProvider);
-    final tier = tierAsync.maybeWhen(
-      data: (t) => t,
-      orElse: () {
-        // While loading, also try live profile as synchronous fallback
-        final profileAsync = ref.watch(userProfileProvider);
-        return profileAsync.maybeWhen(
-          data: (p) => (p['subscription_tier'] as String? ?? 'free').toLowerCase(),
-          orElse: () => 'free',
-        );
-      },
-    );
+    final tier = ref.watch(_tierProvider);
 
     return Scaffold(
       appBar: AppBar(

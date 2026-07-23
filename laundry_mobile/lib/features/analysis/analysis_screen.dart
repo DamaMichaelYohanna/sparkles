@@ -11,13 +11,9 @@ import '../finance/providers/finance_provider.dart';
 import '../finance/finance_report_generator.dart';
 import '../settings/profile_screen.dart';
 
-/// Reads subscription_tier from SharedPreferences (cached at login/profile fetch).
-final _tierProvider = FutureProvider<String>((ref) async {
-  final prefs = await SharedPreferences.getInstance();
-  final cached = prefs.getString('subscription_tier');
-  if (cached != null && cached.isNotEmpty) return cached.toLowerCase();
-
-  final profileAsync = ref.read(userProfileProvider);
+/// Reactive provider watching userProfileProvider for real-time tier updates.
+final _tierProvider = Provider.autoDispose<String>((ref) {
+  final profileAsync = ref.watch(userProfileProvider);
   return profileAsync.maybeWhen(
     data: (p) => (p['subscription_tier'] as String? ?? 'free').toLowerCase(),
     orElse: () => 'free',
@@ -184,17 +180,7 @@ class AnalysisScreen extends ConsumerWidget {
     final financeStatsAsync = ref.watch(financeStatsProvider);
     final filter = ref.watch(analysisFilterProvider);
     final filterNotifier = ref.read(analysisFilterProvider.notifier);
-    final tierAsync = ref.watch(_tierProvider);
-    final tier = tierAsync.maybeWhen(
-      data: (t) => t,
-      orElse: () {
-        final profileAsync = ref.watch(userProfileProvider);
-        return profileAsync.maybeWhen(
-          data: (p) => (p['subscription_tier'] as String? ?? 'free').toLowerCase(),
-          orElse: () => 'free',
-        );
-      },
-    );
+    final tier = ref.watch(_tierProvider);
 
     final hasActiveFilters = filter.status != 'All' ||
         filter.paymentStatus != 'All' ||

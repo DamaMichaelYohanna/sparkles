@@ -181,7 +181,8 @@ class SyncRepository {
 
       await batch.commit(noResult: true);
       
-      // Invalidate customersProvider to ensure Customers list is refreshed with synced records
+      // Invalidate providers to ensure UI is refreshed with synced records & fresh profile tier
+      _ref.invalidate(userProfileProvider);
       _ref.invalidate(customersProvider);
       _ref.invalidate(categoriesProvider);
       _ref.invalidate(serviceTypesProvider);
