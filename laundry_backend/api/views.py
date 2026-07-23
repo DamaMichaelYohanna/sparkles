@@ -397,9 +397,14 @@ class InitializeSubscriptionView(APIView):
         if plan_code and "placeholder" in plan_code:
             plan_code = None # Ignore placeholder plan code for simple sandbox payments
             
-        # Initialize Paystack payment
+        # Initialize Paystack payment with metadata
+        metadata = {
+            'tier': tier,
+            'office_id': str(user.office.id),
+            'office_name': user.office.name,
+        }
         from .paystack import initialize_payment
-        res = initialize_payment(email=user.email, amount_kobo=amount_kobo, reference=reference, plan_code=plan_code)
+        res = initialize_payment(email=user.email, amount_kobo=amount_kobo, reference=reference, plan_code=plan_code, metadata=metadata)
         
         if res.get('status') == True:
             # Save pending reference in office preferences
@@ -459,7 +464,14 @@ class VerifySubscriptionView(APIView):
                     tier = paystack_meta.get('tier')
                     
             if not tier:
-                tier = request.query_params.get('tier', 'pro')
+                tier = request.query_params.get('tier')
+
+            if not tier:
+                # If tier was already upgraded by Webhook, preserve existing active tier!
+                if office.subscription_tier and office.subscription_tier != 'free':
+                    tier = office.subscription_tier
+                else:
+                    tier = 'starter'
 
             tier = str(tier).lower()
             office.subscription_tier = tier
