@@ -23,6 +23,7 @@
                 <a href="{% url 'subscriptions_view' %}" class="{% if request.resolver_match.url_name == 'subscriptions_view' %}active{% endif %}">💳 Subscriptions</a>
                 <a href="{% url 'users_list' %}" class="{% if request.resolver_match.url_name == 'users_list' %}active{% endif %}">👥 Users</a>
                 <a href="{% url 'waitlist_dashboard' %}" class="{% if request.resolver_match.url_name == 'waitlist_dashboard' %}active{% endif %}">📝 Waitlist</a>
+                <a href="{% url 'admin_tickets_list' %}" class="{% if 'ticket' in request.resolver_match.url_name %}active{% endif %}">💬 Support Tickets</a>
                 <a href="{% url 'settings_view' %}" class="{% if request.resolver_match.url_name == 'settings_view' %}active{% endif %}">⚙️ Settings</a>
                 <a href="/" class="back-home">← Back to Site</a>
             </nav>

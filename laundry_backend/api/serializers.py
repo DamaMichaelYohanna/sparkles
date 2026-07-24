@@ -72,3 +72,15 @@ class SubUserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+from operations.models import SupportTicket
+
+class SupportTicketSerializer(serializers.ModelSerializer):
+    office_name = serializers.CharField(source='office.name', read_only=True)
+    user_email = serializers.CharField(source='user.email', read_only=True)
+
+    class Meta:
+        model = SupportTicket
+        fields = '__all__'
+        read_only_fields = ['office', 'user']

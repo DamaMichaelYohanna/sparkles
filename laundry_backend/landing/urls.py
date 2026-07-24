@@ -24,4 +24,6 @@ urlpatterns = [
     path('manifest.json', views.pwa_manifest_view, name='pwa-manifest'),
     path('sw.js', TemplateView.as_view(template_name='landing/sw.js', content_type='application/javascript'), name='pwa-service-worker'),
     path('r/<str:tracking_code>/', views.public_receipt_view, name='public-receipt-detail'),
+    path('dashboard/tickets/', views.admin_tickets_list, name='admin_tickets_list'),
+    path('dashboard/tickets/<uuid:pk>/', views.admin_ticket_detail, name='admin_ticket_detail'),
 ]

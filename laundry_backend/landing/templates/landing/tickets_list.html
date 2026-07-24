@@ -1,0 +1,102 @@
+{% extends 'landing/dashboard_base.html' %}
+
+{% block title %}Sparkles Global Dashboard - Support Tickets{% endblock %}
+{% block header_title %}Support Tickets & Feedback{% endblock %}
+
+{% block content %}
+<section class="charts-section" style="grid-template-columns: 1fr;">
+    <div class="recent-orders-container">
+        
+        <!-- Filter Form -->
+        <form method="GET" action="{% url 'admin_tickets_list' %}" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; align-items: flex-end; background-color: var(--grey-100); padding: 1.25rem; border-radius: 8px;">
+            <div style="flex: 1; min-width: 200px;">
+                <label for="search" style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--grey-600);">Search</label>
+                <input type="text" id="search" name="search" value="{{ search_query|default:'' }}" placeholder="Search by title, description or office..." style="width: 100%; padding: 0.45rem 0.75rem; border: 1px solid var(--grey-300); border-radius: 6px; font-size: 0.85rem;">
+            </div>
+            
+            <div style="min-width: 150px;">
+                <label for="ticket_type" style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--grey-600);">Type</label>
+                <select id="ticket_type" name="ticket_type" style="width: 100%; padding: 0.45rem 0.75rem; border: 1px solid var(--grey-300); border-radius: 6px; font-size: 0.85rem; background-color: white;">
+                    <option value="">All Types</option>
+                    {% for value, label in ticket_types %}
+                        <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div style="min-width: 150px;">
+                <label for="status" style="display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--grey-600);">Status</label>
+                <select id="status" name="status" style="width: 100%; padding: 0.45rem 0.75rem; border: 1px solid var(--grey-300); border-radius: 6px; font-size: 0.85rem; background-color: white;">
+                    <option value="">All Statuses</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <button type="submit" class="btn-api" style="padding: 0.45rem 1.25rem; border: none; font-size: 0.85rem; cursor: pointer; border-radius: 6px; height: 34px;">Filter</button>
+                <a href="{% url 'admin_tickets_list' %}" style="display: inline-flex; align-items: center; justify-content: center; height: 34px; padding: 0 1rem; border: 1px solid var(--grey-300); border-radius: 6px; font-size: 0.85rem; color: var(--grey-600); text-decoration: none; background-color: white; margin-left: 0.5rem;">Reset</a>
+            </div>
+        </form>
+
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>Office</th>
+                    <th>Type</th>
+                    <th>Title & Description</th>
+                    <th>Status</th>
+                    <th>Submitted On</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td style="font-weight: 600;">{{ ticket.office.name }}</td>
+                    <td>
+                        <span style="padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+                            {% if ticket.ticket_type == 'feature_request' %}
+                                background: #cff4fc; color: #055160;
+                            {% elif ticket.ticket_type == 'complaint' %}
+                                background: #f8d7da; color: #842029;
+                            {% else %}
+                                background: #e2e3e5; color: #41464b;
+                            {% endif %}">
+                            {{ ticket.get_ticket_type_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600; color: var(--grey-800);">{{ ticket.title }}</div>
+                        <div style="font-size: 0.8rem; color: var(--grey-500); max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ ticket.description }}</div>
+                    </td>
+                    <td>
+                        <span style="font-weight: 700; font-size: 0.8rem;
+                            {% if ticket.status == 'pending' %}
+                                color: #ffc107;
+                            {% elif ticket.status == 'in_progress' %}
+                                color: #0dcaf0;
+                            {% elif ticket.status == 'resolved' %}
+                                color: #198754;
+                            {% else %}
+                                color: #6c757d;
+                            {% endif %}">
+                            {{ ticket.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ ticket.created_at|date:"M d, Y, h:i A" }}</td>
+                    <td>
+                        <a href="{% url 'admin_ticket_detail' ticket.id %}" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; text-decoration: none;">Review</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--grey-500);">No support tickets submitted yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

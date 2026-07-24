@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
 from django.conf import settings
 from offices.models import LaundryOffice, User
 from operations.models import Order
@@ -384,3 +384,64 @@ def pwa_manifest_view(request):
         ]
     }
     return JsonResponse(manifest_data)
+
+
+from operations.models import SupportTicket
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def admin_tickets_list(request):
+    tickets = SupportTicket.objects.select_related('office', 'user').filter(is_deleted=False).order_by('-created_at')
+    
+    # Filter by type
+    ticket_type = request.GET.get('ticket_type', '').strip()
+    if ticket_type:
+        tickets = tickets.filter(ticket_type=ticket_type)
+        
+    # Filter by status
+    status = request.GET.get('status', '').strip()
+    if status:
+        tickets = tickets.filter(status=status)
+        
+    # Search
+    search = request.GET.get('search', '').strip()
+    if search:
+        tickets = tickets.filter(
+            Q(title__icontains=search) | 
+            Q(description__icontains=search) | 
+            Q(office__name__icontains=search)
+        )
+        
+    context = {
+        'tickets': tickets,
+        'ticket_types': SupportTicket.TICKET_TYPES,
+        'status_choices': SupportTicket.STATUS_CHOICES,
+        'selected_type': ticket_type,
+        'selected_status': status,
+        'search_query': search,
+    }
+    return render(request, 'landing/tickets_list.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def admin_ticket_detail(request, pk):
+    ticket = get_object_or_404(SupportTicket, pk=pk)
+    
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        admin_notes = request.POST.get('admin_notes', '').strip()
+        
+        valid_statuses = {choice for choice, _ in SupportTicket.STATUS_CHOICES}
+        if status in valid_statuses:
+            ticket.status = status
+            ticket.admin_notes = admin_notes
+            ticket.save()
+            messages.success(request, f"Ticket status and response updated successfully.")
+            return redirect('admin_ticket_detail', pk=pk)
+        else:
+            messages.error(request, "Invalid status selected.")
+            
+    context = {
+        'ticket': ticket,
+        'status_choices': SupportTicket.STATUS_CHOICES,
+    }
+    return render(request, 'landing/ticket_detail.html', context)

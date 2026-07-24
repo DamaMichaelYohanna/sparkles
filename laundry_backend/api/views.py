@@ -12,12 +12,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from offices.models import LaundryOffice, PasswordResetOTP
-from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem, ActionLog
+from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem, ActionLog, SupportTicket
 from .permissions import IsOfficeAdmin, TierLimitPermission
 from .serializers import (
     LaundryOfficeSerializer, ServiceTypeSerializer, CategorySerializer,
     ItemPricingSerializer, OrderStatusSerializer, OrderSerializer, OrderItemSerializer,
-    SubUserSerializer
+    SubUserSerializer, SupportTicketSerializer
 )
 
 User = get_user_model()
@@ -895,3 +895,14 @@ class WhatsAppWebhookView(APIView):
         """
         logger.info("[WhatsApp Webhook] Event received: %s", request.data)
         return Response({"status": "ok"}, status=200)
+
+
+class SupportTicketListCreateView(BaseTenantView, generics.ListCreateAPIView):
+    queryset = SupportTicket.objects.all()
+    serializer_class = SupportTicketSerializer
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if not user.office:
+            raise PermissionDenied("You must belong to an office to submit support tickets.")
+        serializer.save(office=user.office, user=user)

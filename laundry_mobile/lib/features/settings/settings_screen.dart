@@ -11,6 +11,7 @@ import '../customers/customers_screen.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../core/local_db/database_helper.dart';
+import '../support/support_tickets_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -108,6 +109,19 @@ class SettingsScreen extends ConsumerWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const CustomersScreen()),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(LucideIcons.messageSquare),
+            title: const Text('Support & Feedback'),
+            subtitle: const Text('Submit feature requests, suggestions or complaints'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SupportTicketsScreen()),
               );
             },
           ),

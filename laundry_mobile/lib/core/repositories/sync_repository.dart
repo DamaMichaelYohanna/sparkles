@@ -14,6 +14,8 @@ import '../models/customer_model.dart';
 import '../providers.dart';
 import '../../features/customers/providers/customer_providers.dart';
 import '../../features/settings/providers/pricing_provider.dart';
+import '../models/support_ticket_model.dart';
+import '../../../features/support/providers/support_tickets_provider.dart';
 
 class SyncRepository {
   final Ref _ref;
@@ -76,7 +78,8 @@ class SyncRepository {
           (pendingRecords['categories'] as List).isNotEmpty ||
           (pendingRecords['service_types'] as List).isNotEmpty ||
           (pendingRecords['item_pricing'] as List).isNotEmpty ||
-          (pendingRecords['customers'] as List).isNotEmpty) {
+          (pendingRecords['customers'] as List).isNotEmpty ||
+          (pendingRecords['support_tickets'] as List).isNotEmpty) {
         await _apiService.pushDelta(pendingRecords);
         await _dbHelper.markRecordsAsSynced();
       }
@@ -179,6 +182,19 @@ class SyncRepository {
         }
       }
 
+      // Process Support Tickets
+      final pendingTickets = await db.query('support_tickets', where: 'sync_status = ?', whereArgs: ['pending']);
+      final pendingTicketIds = pendingTickets.map((e) => e['id'] as String).toSet();
+      for (var json in (deltaPayload['support_tickets'] as List? ?? [])) {
+        final item = SupportTicketModel.fromJson(json);
+        if (pendingTicketIds.contains(item.id)) continue;
+        if (item.isDeleted) {
+          batch.delete('support_tickets', where: 'id = ?', whereArgs: [item.id]);
+        } else {
+          batch.insert('support_tickets', item.toDb(), conflictAlgorithm: sqflite.ConflictAlgorithm.replace);
+        }
+      }
+
       await batch.commit(noResult: true);
       
       // Invalidate providers to ensure UI is refreshed with synced records & fresh profile tier
@@ -187,6 +203,7 @@ class SyncRepository {
       _ref.invalidate(categoriesProvider);
       _ref.invalidate(serviceTypesProvider);
       _ref.invalidate(itemPricingProvider);
+      _ref.invalidate(supportTicketsListProvider);
       
       // Update timestamp to current UTC time
       await prefs.setString('last_sync_timestamp', DateTime.now().toUtc().toIso8601String());

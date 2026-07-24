@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:uuid/uuid.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -19,7 +20,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
       onOpen: _onOpen,
@@ -37,6 +38,37 @@ class DatabaseHelper {
       ''');
     } catch (e) {
       print('Error resolving UUID statuses on open: $e');
+    }
+    await _sanitizeCustomerIds(db);
+  }
+
+  Future<void> _sanitizeCustomerIds(Database db) async {
+    try {
+      final badCustomers = await db.query('customers');
+      final uuidRegex = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+      
+      for (final customer in badCustomers) {
+        final String id = customer['id'] as String;
+        if (!uuidRegex.hasMatch(id)) {
+          final String newUuid = const Uuid().v4();
+          
+          // Update customer record ID locally
+          await db.update('customers', {
+            'id': newUuid,
+            'sync_status': 'pending'
+          }, where: 'id = ?', whereArgs: [id]);
+          
+          // Update referencing orders locally
+          await db.update('orders', {
+            'customer_id': newUuid,
+            'sync_status': 'pending'
+          }, where: 'customer_id = ?', whereArgs: [id]);
+          
+          print('Sanitized local customer ID from $id to $newUuid');
+        }
+      }
+    } catch (e) {
+      print('Error sanitizing customer IDs: $e');
     }
   }
 
@@ -70,6 +102,22 @@ CREATE TABLE expenses (
   amount REAL,
   description TEXT,
   category TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
+  sync_status TEXT
+)
+''');
+    }
+    if (oldVersion < 6) {
+      await db.execute('''
+CREATE TABLE support_tickets (
+  id TEXT PRIMARY KEY,
+  title TEXT,
+  description TEXT,
+  ticket_type TEXT,
+  status TEXT,
+  admin_notes TEXT,
   created_at TEXT,
   updated_at TEXT,
   is_deleted INTEGER DEFAULT 0,
@@ -190,6 +238,21 @@ CREATE TABLE expenses (
   sync_status TEXT
 )
 ''');
+
+    await db.execute('''
+CREATE TABLE support_tickets (
+  id TEXT PRIMARY KEY,
+  title TEXT,
+  description TEXT,
+  ticket_type TEXT,
+  status TEXT,
+  admin_notes TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
+  sync_status TEXT
+)
+''');
   }
 
   Future close() async {
@@ -235,6 +298,7 @@ CREATE TABLE expenses (
     final existingCustomers = await db.query('customers');
     final existingPhones = existingCustomers.map((e) => (e['phone'] as String? ?? '').trim()).where((p) => p.isNotEmpty).toSet();
     final existingNames = existingCustomers.map((e) => (e['name'] as String? ?? '').trim().toLowerCase()).where((n) => n.isNotEmpty).toSet();
+    final uuidRegex = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
     for (final order in orders) {
       final phone = (order['customer_phone'] as String? ?? '').trim();
@@ -247,11 +311,15 @@ CREATE TABLE expenses (
 
       if (!exists) {
         final now = DateTime.now().toUtc().toIso8601String();
-        final id = (order['customer_id'] as String?)?.isNotEmpty == true
-            ? order['customer_id'] as String
-            : 'cust_${DateTime.now().millisecondsSinceEpoch}_${name.replaceAll(' ', '_')}';
+        final String? orderCustId = order['customer_id'] as String?;
+        final bool isOrderCustIdValid = orderCustId != null && 
+            orderCustId.isNotEmpty && 
+            uuidRegex.hasMatch(orderCustId);
+            
+        final String newId = isOrderCustIdValid ? orderCustId : const Uuid().v4();
+        
         await db.insert('customers', {
-          'id': id,
+          'id': newId,
           'name': name.isNotEmpty ? name : 'Customer',
           'phone': phone,
           'is_whatsapp': 0,
@@ -260,6 +328,14 @@ CREATE TABLE expenses (
           'is_deleted': 0,
           'sync_status': 'pending',
         }, conflictAlgorithm: ConflictAlgorithm.ignore);
+        
+        if (!isOrderCustIdValid) {
+          await db.update('orders', {
+            'customer_id': newId,
+            'sync_status': 'pending'
+          }, where: 'id = ?', whereArgs: [order['id']]);
+        }
+        
         if (phone.isNotEmpty) existingPhones.add(phone);
         if (name.isNotEmpty) existingNames.add(name.toLowerCase());
       }
@@ -288,6 +364,7 @@ CREATE TABLE expenses (
     final pendingServices = await db.query('service_types', where: 'sync_status = ?', whereArgs: ['pending']);
     final pendingPricing = await db.query('item_pricing', where: 'sync_status = ?', whereArgs: ['pending']);
     final pendingCustomers = await db.query('customers', where: 'sync_status = ?', whereArgs: ['pending']);
+    final pendingTickets = await db.query('support_tickets', where: 'sync_status = ?', whereArgs: ['pending']);
     
     return {
       'orders': pendingOrders,
@@ -296,6 +373,7 @@ CREATE TABLE expenses (
       'service_types': pendingServices,
       'item_pricing': pendingPricing,
       'customers': pendingCustomers,
+      'support_tickets': pendingTickets,
     };
   }
 
@@ -308,6 +386,7 @@ CREATE TABLE expenses (
     await db.update('service_types', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
     await db.update('item_pricing', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
     await db.update('customers', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
+    await db.update('support_tickets', {'sync_status': 'synced'}, where: 'sync_status = ?', whereArgs: ['pending']);
   }
 
   Future<List<Map<String, dynamic>>> getOrderItemsWithPricing(String orderId) async {

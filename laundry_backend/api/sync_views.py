@@ -6,10 +6,11 @@ from rest_framework.permissions import IsAuthenticated
 from dateutil.parser import parse
 from django.utils import timezone
 from offices.models import LaundryOffice
-from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem, Customer
+from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem, Customer, SupportTicket
 from .serializers import (
     ServiceTypeSerializer, CategorySerializer, ItemPricingSerializer,
-    OrderStatusSerializer, OrderSerializer, OrderItemSerializer, CustomerSerializer
+    OrderStatusSerializer, OrderSerializer, OrderItemSerializer, CustomerSerializer,
+    SupportTicketSerializer
 )
 
 from .permissions import TierLimitPermission
@@ -61,6 +62,7 @@ class SyncAPIView(APIView):
         
         # Order items are tied to orders, which are tied to offices
         order_items_qs = OrderItem.objects.filter(order__office=office)
+        support_tickets_qs = SupportTicket.objects.filter(office=office)
 
         if last_sync:
             try:
@@ -72,6 +74,7 @@ class SyncAPIView(APIView):
                 orders_qs = orders_qs.filter(updated_at__gte=last_sync_date)
                 order_items_qs = order_items_qs.filter(updated_at__gte=last_sync_date)
                 customers_qs = customers_qs.filter(updated_at__gte=last_sync_date)
+                support_tickets_qs = support_tickets_qs.filter(updated_at__gte=last_sync_date)
             except ValueError:
                 return Response({"error": "Invalid last_sync_timestamp format."}, status=400)
 
@@ -83,6 +86,7 @@ class SyncAPIView(APIView):
             "orders": OrderSerializer(orders_qs, many=True).data,
             "order_items": OrderItemSerializer(order_items_qs, many=True).data,
             "customers": CustomerSerializer(customers_qs, many=True).data,
+            "support_tickets": SupportTicketSerializer(support_tickets_qs, many=True).data,
         }
 
         return Response(payload)
@@ -425,6 +429,42 @@ class SyncAPIView(APIView):
                         processed_items += 1
                     except (Order.DoesNotExist, ItemPricing.DoesNotExist):
                         pass
+
+        # Process Support Tickets
+        support_tickets_data = data.get('support_tickets', [])
+        for ticket_dict in support_tickets_data:
+            ticket_id = ticket_dict.get('id')
+            if not ticket_id: continue
+
+            existing_ticket = SupportTicket.objects.filter(id=ticket_id).first()
+            if existing_ticket:
+                if existing_ticket.office != office:
+                    continue
+                # Update (only if client has a newer update, e.g. client deleted it or edited title/desc before it was resolved)
+                incoming_updated_at = make_aware(parse(ticket_dict.get('updated_at', '')))
+                if incoming_updated_at > existing_ticket.updated_at or ticket_dict.get('is_deleted', False):
+                    if ticket_dict.get('is_deleted', False):
+                        existing_ticket.is_deleted = True
+                    else:
+                        existing_ticket.title = ticket_dict.get('title', existing_ticket.title)
+                        existing_ticket.description = ticket_dict.get('description', existing_ticket.description)
+                        existing_ticket.ticket_type = ticket_dict.get('ticket_type', existing_ticket.ticket_type)
+                    existing_ticket.updated_at = incoming_updated_at
+                    existing_ticket.save()
+            else:
+                if not ticket_dict.get('is_deleted', False):
+                    SupportTicket.objects.create(
+                        id=ticket_id,
+                        office=office,
+                        user=request.user,
+                        title=ticket_dict.get('title', ''),
+                        description=ticket_dict.get('description', ''),
+                        ticket_type=ticket_dict.get('ticket_type', 'feedback'),
+                        status=ticket_dict.get('status', 'pending'),
+                        admin_notes=ticket_dict.get('admin_notes', ''),
+                        created_at=make_aware(parse(ticket_dict.get('created_at'))) if ticket_dict.get('created_at') else None,
+                        updated_at=make_aware(parse(ticket_dict.get('updated_at'))) if ticket_dict.get('updated_at') else None
+                    )
 
         logger.info(
             "Sync POST completed for user '%s', office '%s'. Processed: %d orders, %d items, %d configs", 
