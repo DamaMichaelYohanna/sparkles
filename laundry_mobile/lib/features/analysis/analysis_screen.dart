@@ -8,7 +8,9 @@ import '../../core/providers.dart';
 import '../../core/widgets/sync_badge.dart';
 import 'providers/analysis_provider.dart';
 import '../finance/providers/finance_provider.dart';
+import '../finance/providers/expenses_provider.dart';
 import '../finance/finance_report_generator.dart';
+import '../finance/expenses_screen.dart';
 import '../settings/profile_screen.dart';
 
 /// Reactive provider watching userProfileProvider for real-time tier updates.
@@ -178,6 +180,7 @@ class AnalysisScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsyncValue = ref.watch(analysisStatsProvider);
     final financeStatsAsync = ref.watch(financeStatsProvider);
+    final expensesAsync = ref.watch(filteredExpensesProvider);
     final filter = ref.watch(analysisFilterProvider);
     final filterNotifier = ref.read(analysisFilterProvider.notifier);
     final tier = ref.watch(_tierProvider);
@@ -388,6 +391,141 @@ class AnalysisScreen extends ConsumerWidget {
                       subtitle: '${stats.totalOrdersCount} Total Orders',
                     ),
                   ],
+                ),
+                const SizedBox(height: 16),
+
+                // 2.5 EXPENSES & NET INCOME CARD
+                expensesAsync.when(
+                  loading: () => const SizedBox(
+                    height: 100,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (e, _) => Center(child: Text('Error loading expenses: $e')),
+                  data: (expensesTotal) {
+                    final double totalCollected = stats.totalCollected;
+                    final double netBalance = totalCollected - expensesTotal;
+
+                    return Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: Colors.grey.shade200, width: 1.5),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Expenses & Net Income',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryColor.withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    filter.dateRange,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Total Expenses',
+                                        style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '₦${expensesTotal.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  width: 1,
+                                  height: 40,
+                                  color: Colors.grey.shade200,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Net Income',
+                                        style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '₦${netBalance.toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: netBalance >= 0 ? Colors.green : Colors.redAccent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const ExpensesScreen()),
+                                  );
+                                },
+                                icon: const Icon(LucideIcons.wallet, size: 16, color: Colors.white),
+                                label: const Text(
+                                  'Manage Expenses & Daily Sheet',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryColor,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  elevation: 0,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
 

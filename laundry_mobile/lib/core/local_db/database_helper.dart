@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
       onOpen: _onOpen,
@@ -56,6 +56,20 @@ CREATE TABLE customers (
   name TEXT,
   phone TEXT,
   is_whatsapp INTEGER DEFAULT 0,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
+  sync_status TEXT
+)
+''');
+    }
+    if (oldVersion < 5) {
+      await db.execute('''
+CREATE TABLE expenses (
+  id TEXT PRIMARY KEY,
+  amount REAL,
+  description TEXT,
+  category TEXT,
   created_at TEXT,
   updated_at TEXT,
   is_deleted INTEGER DEFAULT 0,
@@ -157,6 +171,19 @@ CREATE TABLE item_pricing (
   price REAL,
   category_id TEXT,
   service_type_id TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
+  sync_status TEXT
+)
+''');
+
+    await db.execute('''
+CREATE TABLE expenses (
+  id TEXT PRIMARY KEY,
+  amount REAL,
+  description TEXT,
+  category TEXT,
   created_at TEXT,
   updated_at TEXT,
   is_deleted INTEGER DEFAULT 0,
