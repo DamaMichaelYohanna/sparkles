@@ -89,8 +89,8 @@ class BaseTenantView:
         if model == Order:
             try:
                 old_order = Order.objects.get(pk=serializer.instance.pk)
-                was_completed = old_order.current_status.is_completed_state
-                old_status_name = old_order.current_status.name
+                was_completed = old_order.current_status.is_completed_state if old_order.current_status else False
+                old_status_name = old_order.current_status.name if old_order.current_status else None
             except Order.DoesNotExist:
                 pass
 
@@ -110,12 +110,14 @@ class BaseTenantView:
             )
             
             # Trigger Web Push notification if status changed
-            if old_status_name and instance.current_status.name != old_status_name:
+            curr_status_name = instance.current_status.name if instance.current_status else None
+            if old_status_name and curr_status_name and curr_status_name != old_status_name:
                 from .push_notifications import notify_order_status_change
                 notify_order_status_change(instance)
             
             # Trigger WhatsApp if transitioned to completed
-            if instance.current_status.is_completed_state and not was_completed:
+            is_now_completed = instance.current_status.is_completed_state if instance.current_status else False
+            if is_now_completed and not was_completed:
                 from .whatsapp import send_whatsapp_order_completed
                 run_in_background(send_whatsapp_order_completed, instance)
 
@@ -834,6 +836,7 @@ class VerifyOTPView(APIView):
 
 
 class SavePushSubscriptionAPIView(APIView):
+    authentication_classes = []
     permission_classes = []  # Public endpoint
 
     def post(self, request):

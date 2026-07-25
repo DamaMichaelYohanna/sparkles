@@ -8,7 +8,6 @@ import 'services_pricing_screen.dart';
 import 'staff_management_screen.dart';
 import '../auth/auth_screen.dart';
 import '../customers/customers_screen.dart';
-import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../core/local_db/database_helper.dart';
 import '../support/support_tickets_screen.dart';

@@ -10,10 +10,10 @@ def send_web_push(subscription, title, body, url):
     """
     Sends a web push notification to a browser push service endpoint.
     """
-    vapid_private_key = settings.VAPID_PRIVATE_KEY
-    vapid_public_key = settings.VAPID_PUBLIC_KEY
+    vapid_private_key = getattr(settings, 'VAPID_PRIVATE_KEY', '') or ''
+    vapid_public_key = getattr(settings, 'VAPID_PUBLIC_KEY', '') or ''
     
-    sub_claim = settings.VAPID_CLAIM_EMAIL or "mailto:support@sparkles.com.ng"
+    sub_claim = getattr(settings, 'VAPID_CLAIM_EMAIL', '') or "mailto:support@sparkles.com.ng"
     if not sub_claim.startswith("mailto:") and not sub_claim.startswith("https://"):
         sub_claim = f"mailto:{sub_claim}"
     vapid_claims = {"sub": sub_claim}
@@ -45,9 +45,9 @@ def send_web_push(subscription, title, body, url):
         return True
     except WebPushException as ex:
         logger.warning("[WebPush] WebPushException for %s: %s", subscription.customer_phone, ex)
-        # Delete ONLY if 410 Gone (explicitly unsubscribed/invalidated by push service)
-        if ex.response is not None and ex.response.status_code == 410:
-            logger.info("[WebPush] Subscription expired (410 Gone). Deleting subscription for %s", subscription.customer_phone)
+        # Delete if 410 Gone or 404 Not Found (explicitly unsubscribed/invalidated by push service)
+        if ex.response is not None and ex.response.status_code in (404, 410):
+            logger.info("[WebPush] Subscription expired (%s). Deleting subscription for %s", ex.response.status_code, subscription.customer_phone)
             subscription.delete()
         return False
     except Exception as e:
@@ -69,17 +69,26 @@ def notify_order_status_change(order):
     last_10 = digits[-10:] if len(digits) >= 7 else ''
 
     q_filter = Q()
+    has_filter = False
+
     if raw_phone:
         q_filter |= Q(customer_phone=raw_phone)
+        has_filter = True
     if last_10:
         q_filter |= Q(customer_phone__endswith=last_10)
+        has_filter = True
     if order.customer:
         q_filter |= Q(customer=order.customer)
+        has_filter = True
         if order.customer.phone:
             q_filter |= Q(customer_phone=order.customer.phone)
             cust_digits = ''.join(filter(str.isdigit, order.customer.phone))
             if len(cust_digits) >= 7:
                 q_filter |= Q(customer_phone__endswith=cust_digits[-10:])
+
+    # Critical safety check: if no specific query condition was added, return immediately to prevent matching all rows
+    if not has_filter:
+        return
 
     subscriptions = WebPushSubscription.objects.filter(
         q_filter,
@@ -91,11 +100,12 @@ def notify_order_status_change(order):
         return
 
     status_name = order.current_status.name if order.current_status else 'Updated'
-    title = f"Sparkles | {order.office.name}"
+    office_name = order.office.name if order.office else 'Sparkles'
+    title = f"Sparkles | {office_name}"
     body = f"Order #{order.tracking_code} is now: {status_name}."
     
     # Construct receipt detail URL dynamically based on settings
-    base_url = settings.SPARKLES_PORTAL_BASE_URL.rstrip('/')
+    base_url = getattr(settings, 'SPARKLES_PORTAL_BASE_URL', 'http://localhost:8000').rstrip('/')
     url = f"{base_url}/r/{order.tracking_code}/"
 
     from threading import Thread

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/support_tickets_provider.dart';
-import '../../../core/models/support_ticket_model.dart';
 import '../../../core/providers.dart';
 
 class SupportTicketsScreen extends ConsumerStatefulWidget {

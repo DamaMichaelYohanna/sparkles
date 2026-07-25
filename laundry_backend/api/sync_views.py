@@ -281,8 +281,8 @@ class SyncAPIView(APIView):
                     # Belongs to another branch, skip
                     continue
                 # Update
-                was_completed = existing_order.current_status.is_completed_state
-                old_status_name = existing_order.current_status.name
+                was_completed = existing_order.current_status.is_completed_state if existing_order.current_status else False
+                old_status_name = existing_order.current_status.name if existing_order.current_status else None
                 incoming_updated_at = make_aware(parse(order_dict.get('updated_at', '')))
                 # Always apply updates from the client since the client is the source of truth for POS orders
                 if order_dict.get('is_deleted', False):
@@ -314,12 +314,14 @@ class SyncAPIView(APIView):
                 processed_orders += 1
                 
                 # Trigger Web Push notification if status changed
-                if existing_order.current_status.name != old_status_name:
+                curr_status_name = existing_order.current_status.name if existing_order.current_status else None
+                if old_status_name and curr_status_name and curr_status_name != old_status_name:
                     from .push_notifications import notify_order_status_change
                     notify_order_status_change(existing_order)
                 
                 # Trigger WhatsApp if transitioned to completed during sync
-                if existing_order.current_status.is_completed_state and not was_completed:
+                is_now_completed = existing_order.current_status.is_completed_state if existing_order.current_status else False
+                if is_now_completed and not was_completed:
                     from threading import Thread
                     from .whatsapp import send_whatsapp_order_completed
                     Thread(target=send_whatsapp_order_completed, args=(existing_order,), daemon=True).start()

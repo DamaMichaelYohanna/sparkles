@@ -618,7 +618,7 @@
     // Save this tracking code as the latest viewed receipt for the PWA launcher
     localStorage.setItem('latest_tracking_code', '{{ order.tracking_code }}');
 
-    const VAPID_PUBLIC_KEY = '{{ vapid_public_key }}';
+    const VAPID_PUBLIC_KEY = '{{ vapid_public_key|default:"" }}';
     const CUSTOMER_PHONE = '{{ order.customer_phone }}';
 
     function urlBase64ToUint8Array(base64String) {
@@ -631,8 +631,11 @@
     }
 
     function saveSubscription(subscription) {
-        const p256dh = btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh'))));
-        const auth = btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth'))));
+        const subJson = subscription.toJSON ? subscription.toJSON() : {};
+        const keys = subJson.keys || {};
+        const p256dh = keys.p256dh || (subscription.getKey('p256dh') ? btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')))) : '');
+        const auth = keys.auth || (subscription.getKey('auth') ? btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')))) : '');
+
         return fetch('/api/notifications/subscribe/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -645,7 +648,7 @@
     }
 
     async function setupPushNotifications(reg) {
-        if (!VAPID_PUBLIC_KEY || !CUSTOMER_PHONE) return;
+        if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY === 'None' || !CUSTOMER_PHONE) return;
 
         try {
             // Check if already subscribed

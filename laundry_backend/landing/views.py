@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -5,6 +6,8 @@ from django.db.models import Sum, Count, Q
 from django.conf import settings
 from offices.models import LaundryOffice, User
 from operations.models import Order
+
+logger = logging.getLogger(__name__)
 
 def landing_page(request):
     return render(request, 'landing/index.html')
@@ -353,7 +356,7 @@ def public_receipt_view(request, tracking_code):
         'statuses': statuses_list,
         'other_orders': other_orders,
         'newer_active_order': newer_active_order,
-        'vapid_public_key': settings.VAPID_PUBLIC_KEY,
+        'vapid_public_key': getattr(settings, 'VAPID_PUBLIC_KEY', '') or '',
     }
     return render(request, 'landing/receipt.html', context)
 
@@ -386,33 +389,44 @@ def pwa_manifest_view(request):
     return JsonResponse(manifest_data)
 
 
+from django.db import ProgrammingError, OperationalError
 from operations.models import SupportTicket
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def admin_tickets_list(request):
-    tickets = SupportTicket.objects.select_related('office', 'user').filter(is_deleted=False).order_by('-created_at')
-    
-    # Filter by type
-    ticket_type = request.GET.get('ticket_type', '').strip()
-    if ticket_type:
-        tickets = tickets.filter(ticket_type=ticket_type)
+    try:
+        tickets = SupportTicket.objects.select_related('office', 'user').filter(is_deleted=False).order_by('-created_at')
         
-    # Filter by status
-    status = request.GET.get('status', '').strip()
-    if status:
-        tickets = tickets.filter(status=status)
+        # Filter by type
+        ticket_type = request.GET.get('ticket_type', '').strip()
+        if ticket_type:
+            tickets = tickets.filter(ticket_type=ticket_type)
+            
+        # Filter by status
+        status = request.GET.get('status', '').strip()
+        if status:
+            tickets = tickets.filter(status=status)
+            
+        # Search
+        search = request.GET.get('search', '').strip()
+        if search:
+            tickets = tickets.filter(
+                Q(title__icontains=search) | 
+                Q(description__icontains=search) | 
+                Q(office__name__icontains=search)
+            )
         
-    # Search
-    search = request.GET.get('search', '').strip()
-    if search:
-        tickets = tickets.filter(
-            Q(title__icontains=search) | 
-            Q(description__icontains=search) | 
-            Q(office__name__icontains=search)
-        )
-        
+        # Force evaluation inside try block so missing table exceptions are caught
+        tickets_list = list(tickets)
+    except (ProgrammingError, OperationalError) as e:
+        logger.warning("[SupportTicket] Database table missing or unmigrated: %s", e)
+        tickets_list = []
+        ticket_type = ''
+        status = ''
+        search = ''
+
     context = {
-        'tickets': tickets,
+        'tickets': tickets_list,
         'ticket_types': SupportTicket.TICKET_TYPES,
         'status_choices': SupportTicket.STATUS_CHOICES,
         'selected_type': ticket_type,
@@ -424,7 +438,12 @@ def admin_tickets_list(request):
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def admin_ticket_detail(request, pk):
-    ticket = get_object_or_404(SupportTicket, pk=pk)
+    try:
+        ticket = get_object_or_404(SupportTicket, pk=pk)
+    except (ProgrammingError, OperationalError) as e:
+        logger.warning("[SupportTicket] Database table missing: %s", e)
+        messages.error(request, "Support Tickets table is currently unavailable. Please try again in a moment.")
+        return redirect('admin_tickets_list')
     
     if request.method == 'POST':
         status = request.POST.get('status')
