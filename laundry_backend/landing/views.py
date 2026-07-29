@@ -1,6 +1,7 @@
 import logging
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import login as auth_login, logout as auth_logout, authenticate
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from django.conf import settings
@@ -17,6 +18,55 @@ def terms_of_service(request):
 
 def privacy_policy(request):
     return render(request, 'landing/privacy.html')
+
+
+def custom_login(request):
+    if request.user.is_authenticated:
+        if request.user.is_superuser or request.user.is_staff:
+            next_url = request.GET.get('next') or request.POST.get('next') or 'dashboard'
+            return redirect(next_url)
+
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        next_url = request.POST.get('next', '').strip() or request.GET.get('next', '').strip() or 'dashboard'
+
+        if not username or not password:
+            messages.error(request, "Please enter both username/email and password.")
+            return render(request, 'landing/login.html', {'next': next_url, 'username': username})
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is None and '@' in username:
+            try:
+                user_obj = User.objects.filter(email__iexact=username).first()
+                if user_obj:
+                    user = authenticate(request, username=user_obj.username, password=password)
+            except Exception:
+                pass
+
+        if user is not None:
+            if not user.is_active:
+                messages.error(request, "This account is inactive. Please contact support.")
+            elif not (user.is_staff or user.is_superuser):
+                messages.error(request, "Access restricted to administrative staff.")
+            else:
+                auth_login(request, user)
+                messages.success(request, f"Welcome back, {user.get_full_name() or user.username}!")
+                return redirect(next_url)
+        else:
+            messages.error(request, "Invalid username or password.")
+
+        return render(request, 'landing/login.html', {'next': next_url, 'username': username})
+
+    next_url = request.GET.get('next', '')
+    return render(request, 'landing/login.html', {'next': next_url})
+
+
+def custom_logout(request):
+    auth_logout(request)
+    messages.info(request, "You have been logged out successfully.")
+    return redirect('login')
 
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
@@ -84,8 +134,29 @@ def subscriptions_view(request):
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def users_list(request):
-    users = User.objects.select_related('office').all().order_by('-date_joined')
-    context = {'users': users}
+    all_users_qs = User.objects.select_related('office').all().order_by('-date_joined')
+    
+    total_count = all_users_qs.count()
+    staff_count = all_users_qs.filter(Q(is_staff=True) | Q(is_superuser=True)).count()
+    customer_count = all_users_qs.filter(is_staff=False, is_superuser=False).count()
+    
+    selected_role = request.GET.get('role', 'all').lower().strip()
+    
+    if selected_role == 'staff':
+        users = all_users_qs.filter(Q(is_staff=True) | Q(is_superuser=True))
+    elif selected_role == 'customer':
+        users = all_users_qs.filter(is_staff=False, is_superuser=False)
+    else:
+        selected_role = 'all'
+        users = all_users_qs
+
+    context = {
+        'users': users,
+        'selected_role': selected_role,
+        'total_count': total_count,
+        'staff_count': staff_count,
+        'customer_count': customer_count,
+    }
     return render(request, 'landing/users.html', context)
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
@@ -148,7 +219,7 @@ def toggle_waitlist_notified(request, pk):
             
     return redirect('waitlist_dashboard')
 
-@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
 def delete_waitlist_entry(request, pk):
     if request.method == 'POST':
         entry = get_object_or_404(WaitlistEntry, pk=pk)
@@ -268,7 +339,21 @@ def toggle_user_active(request, pk):
     return redirect('users_list')
 
 
-@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+@user_passes_test(lambda u: u.is_superuser)
+def toggle_user_staff(request, pk):
+    if request.method == 'POST':
+        user = get_object_or_404(User, pk=pk)
+        if user == request.user:
+            messages.error(request, "You cannot alter your own staff role.")
+        else:
+            user.is_staff = not user.is_staff
+            user.save(update_fields=['is_staff'])
+            status_str = "promoted to Staff" if user.is_staff else "demoted from Staff to Customer"
+            messages.success(request, f"User {user.username} has been successfully {status_str}.")
+    return redirect('users_list')
+
+
+@user_passes_test(lambda u: u.is_superuser)
 def delete_user(request, pk):
     if request.method == 'POST':
         user = get_object_or_404(User, pk=pk)

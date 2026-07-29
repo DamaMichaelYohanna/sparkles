@@ -100,12 +100,14 @@
                                     {% if entry.is_notified %}Mark Pending{% else %}Mark Notified{% endif %}
                                 </button>
                             </form>
+                            {% if request.user.is_superuser %}
                             <form action="{% url 'delete_waitlist' entry.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete {{ entry.email }} from the waitlist?');">
                                 {% csrf_token %}
                                 <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #e63946; color: white;">
                                     Delete
                                 </button>
                             </form>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

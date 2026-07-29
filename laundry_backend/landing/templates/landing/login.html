@@ -1,0 +1,82 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sparkles Admin Login | Dashboard Access</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'landing/css/styles.css' %}">
+</head>
+<body class="login-body">
+    <div class="login-wrapper">
+        <div class="login-glow-bg"></div>
+        
+        <div class="login-card">
+            <div class="login-header">
+                <a href="/" class="login-logo-link">
+                    <img src="{% static 'landing/images/logo.png' %}" alt="Sparkles Logo" class="login-logo-img">
+                    <span class="login-logo-text">Sparkles</span>
+                </a>
+                <h1 class="login-title">Dashboard Login</h1>
+                <p class="login-subtitle">Enter your Django admin or staff credentials to manage the platform.</p>
+            </div>
+
+            {% if messages %}
+            <div class="login-messages">
+                {% for message in messages %}
+                    <div class="login-alert login-alert-{{ message.tags|default:'info' }}">
+                        {% if message.tags == 'error' %}⚠️{% elif message.tags == 'success' %}✅{% else %}ℹ️{% endif %}
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'login' %}" class="login-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next|default:'' }}">
+
+                <div class="form-group">
+                    <label for="username" class="form-label">Username or Email</label>
+                    <div class="input-icon-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input type="text" 
+                               id="username" 
+                               name="username" 
+                               value="{{ username|default:'' }}" 
+                               class="form-input" 
+                               placeholder="admin@sparkles.com.ng" 
+                               required 
+                               autofocus>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-row">
+                        <label for="password" class="form-label">Password</label>
+                    </div>
+                    <div class="input-icon-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               class="form-input" 
+                               placeholder="••••••••••••" 
+                               required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login-submit">
+                    <span>Sign In to Dashboard</span>
+                    <span class="arrow-icon">→</span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <a href="/" class="back-link">← Back to Main Website</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

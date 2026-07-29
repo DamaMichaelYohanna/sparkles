@@ -131,7 +131,8 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
-LOGIN_URL = '/admin/login/'
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
 
 PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY', 'sk_test_placeholder')
 PAYSTACK_PLAN_STARTER = os.environ.get('PAYSTACK_PLAN_STARTER', 'PLN_starter_placeholder')

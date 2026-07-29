@@ -32,8 +32,17 @@
         <main class="dashboard-content">
             <header class="dashboard-header">
                 <h2>{% block header_title %}Global Platform Overview{% endblock %}</h2>
-                <div class="user-profile">
-                    Admin User
+                <div class="user-profile-bar">
+                    <a href="/admin/" target="_blank" class="admin-link-btn" title="Open Django Admin Panel">⚙️ Django Admin</a>
+                    <div class="user-profile-badge">
+                        <span class="user-name">👤 {{ request.user.get_full_name|default:request.user.username }}</span>
+                        {% if request.user.is_superuser %}
+                            <span class="role-pill role-superuser">Super Admin</span>
+                        {% else %}
+                            <span class="role-pill role-staff">Staff</span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'logout' %}" class="logout-link-btn" title="Sign Out">🚪 Logout</a>
                 </div>
             </header>
 

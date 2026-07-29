@@ -6,9 +6,27 @@
 {% block content %}
 <section class="charts-section" style="grid-template-columns: 1fr;">
     <div class="recent-orders-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3>Platform Users</h3>
-            <button class="btn-api" style="padding: 0.5rem 1rem; border: none; font-size: 0.85rem; cursor: pointer;">+ Invite User</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h3>Platform Accounts</h3>
+            <span style="font-size: 0.85rem; color: var(--grey-500); font-weight: 500;">
+                Showing {{ users|length }} of {{ total_count }} account(s)
+            </span>
+        </div>
+        
+        <!-- Role Filter Tabs -->
+        <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--grey-200); padding-bottom: 0.85rem; flex-wrap: wrap;">
+            <a href="{% url 'users_list' %}?role=all" 
+               style="text-decoration: none; padding: 0.5rem 1.1rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease; {% if selected_role == 'all' %}background: var(--primary); color: white;{% else %}background: var(--grey-100); color: var(--grey-800);{% endif %}">
+               👥 All Users <span style="background: rgba(255,255,255,0.25); padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.75rem;">{{ total_count }}</span>
+            </a>
+            <a href="{% url 'users_list' %}?role=staff" 
+               style="text-decoration: none; padding: 0.5rem 1.1rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease; {% if selected_role == 'staff' %}background: #475569; color: white;{% else %}background: var(--grey-100); color: var(--grey-800);{% endif %}">
+               🛡️ Internal Staff <span style="background: rgba(255,255,255,0.25); padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.75rem;">{{ staff_count }}</span>
+            </a>
+            <a href="{% url 'users_list' %}?role=customer" 
+               style="text-decoration: none; padding: 0.5rem 1.1rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease; {% if selected_role == 'customer' %}background: #0284c7; color: white;{% else %}background: var(--grey-100); color: var(--grey-800);{% endif %}">
+               🧑‍🤝‍🧑 Customers <span style="background: rgba(255,255,255,0.25); padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.75rem;">{{ customer_count }}</span>
+            </a>
         </div>
         
         <table class="dashboard-table">
@@ -31,11 +49,11 @@
                     <td>{{ user.office.name|default:"Global Admin" }}</td>
                     <td>
                         {% if user.is_superuser %}
-                            <span style="background: var(--primary); color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Super Admin</span>
-                        {% elif user.is_office_admin %}
-                            <span style="background: var(--grey-500); color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Office Admin</span>
+                            <span style="background: #0284c7; color: white; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Super Admin</span>
+                        {% elif user.is_staff %}
+                            <span style="background: #475569; color: white; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Staff</span>
                         {% else %}
-                            <span style="background: var(--grey-200); padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Staff</span>
+                            <span style="background: #e2e8f0; color: #334155; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Customer</span>
                         {% endif %}
                     </td>
                     <td>
@@ -47,7 +65,7 @@
                     </td>
                     <td>{{ user.date_joined|date:"M d, Y" }}</td>
                     <td style="text-align: right;">
-                        <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end;">
+                        <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end;">
                             {% if user.id != request.user.id %}
                                 <form action="{% url 'toggle_user_active' user.id %}" method="post" style="display: inline;">
                                     {% csrf_token %}
@@ -55,12 +73,20 @@
                                         {% if user.is_active %}Block{% else %}Unblock{% endif %}
                                     </button>
                                 </form>
-                                <form action="{% url 'delete_user' user.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete user {{ user.username }}? This action is permanent.');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #e63946; color: white;">
-                                        Delete
-                                    </button>
-                                </form>
+                                {% if request.user.is_superuser %}
+                                    <form action="{% url 'toggle_user_staff' user.id %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: {% if user.is_staff %}#64748b{% else %}#0284c7{% endif %}; color: white;" title="Toggle Staff status">
+                                            {% if user.is_staff %}Remove Staff{% else %}Make Staff{% endif %}
+                                        </button>
+                                    </form>
+                                    <form action="{% url 'delete_user' user.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete user {{ user.username }}? This action is permanent.');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #e63946; color: white;">
+                                            Delete
+                                        </button>
+                                    </form>
+                                {% endif %}
                             {% else %}
                                 <span style="color: var(--grey-500); font-size: 0.8rem; font-style: italic;">Self (Current User)</span>
                             {% endif %}
@@ -69,7 +95,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7">No users found.</td>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--grey-500);">No users found for selected role filter.</td>
                 </tr>
                 {% endfor %}
             </tbody>
