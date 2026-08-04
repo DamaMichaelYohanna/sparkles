@@ -87,7 +87,15 @@
                     </td>
                     <td>{{ ticket.created_at|date:"M d, Y, h:i A" }}</td>
                     <td>
-                        <a href="{% url 'admin_ticket_detail' ticket.id %}" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; text-decoration: none;">Review</a>
+                        <div style="display: inline-flex; gap: 0.4rem;">
+                            <a href="{% url 'admin_ticket_detail' ticket.id %}" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; text-decoration: none;">Review</a>
+                            {% if request.user.is_superuser %}
+                            <form action="{% url 'delete_ticket' ticket.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete ticket: {{ ticket.title|escapejs }}?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #e63946; color: white;">Delete</button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% empty %}

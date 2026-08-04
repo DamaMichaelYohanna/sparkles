@@ -102,6 +102,16 @@ def offices_list(request):
     return render(request, 'landing/offices.html', context)
 
 
+@user_passes_test(lambda u: u.is_superuser)
+def delete_office(request, pk):
+    if request.method == 'POST':
+        office = get_object_or_404(LaundryOffice, pk=pk)
+        office_name = office.name
+        office.delete()
+        messages.success(request, f"Office '{office_name}' has been successfully deleted.")
+    return redirect('offices_list')
+
+
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def subscriptions_view(request):
     if request.method == 'POST':
@@ -549,3 +559,18 @@ def admin_ticket_detail(request, pk):
         'status_choices': SupportTicket.STATUS_CHOICES,
     }
     return render(request, 'landing/ticket_detail.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def delete_ticket(request, pk):
+    if request.method == 'POST':
+        try:
+            ticket = get_object_or_404(SupportTicket, pk=pk)
+            ticket_title = ticket.title
+            ticket.is_deleted = True
+            ticket.save(update_fields=['is_deleted'])
+            messages.success(request, f"Support ticket '{ticket_title}' has been deleted successfully.")
+        except Exception as e:
+            logger.error("Error deleting ticket: %s", e)
+            messages.error(request, "Unable to delete ticket at this time.")
+    return redirect('admin_tickets_list')

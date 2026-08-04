@@ -22,6 +22,9 @@
                     <th>Subscription</th>
                     <th>Created On</th>
                     <th>Status</th>
+                    {% if request.user.is_superuser %}
+                    <th style="text-align: right;">Actions</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -42,10 +45,20 @@
                             <span style="color: #198754; font-weight: 600; font-size: 0.85rem;">Active</span>
                         {% endif %}
                     </td>
+                    {% if request.user.is_superuser %}
+                    <td style="text-align: right;">
+                        <form action="{% url 'delete_office' office.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete office {{ office.name }}? This action is permanent.');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #e63946; color: white;">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5">No offices registered yet.</td>
+                    <td colspan="6">No offices registered yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>

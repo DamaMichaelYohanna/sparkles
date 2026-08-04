@@ -10,6 +10,7 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('dashboard/offices/', views.offices_list, name='offices_list'),
+    path('dashboard/offices/<uuid:pk>/delete/', views.delete_office, name='delete_office'),
     path('dashboard/users/', views.users_list, name='users_list'),
     path('dashboard/users/<uuid:pk>/toggle/', views.toggle_user_active, name='toggle_user_active'),
     path('dashboard/users/<uuid:pk>/toggle-staff/', views.toggle_user_staff, name='toggle_user_staff'),
@@ -29,4 +30,5 @@ urlpatterns = [
     path('r/<str:tracking_code>/', views.public_receipt_view, name='public-receipt-detail'),
     path('dashboard/tickets/', views.admin_tickets_list, name='admin_tickets_list'),
     path('dashboard/tickets/<uuid:pk>/', views.admin_ticket_detail, name='admin_ticket_detail'),
+    path('dashboard/tickets/<uuid:pk>/delete/', views.delete_ticket, name='delete_ticket'),
 ]

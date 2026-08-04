@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-from offices.models import User
+from offices.models import User, LaundryOffice
+from operations.models import SupportTicket
 from landing.models import WaitlistEntry
 
 class AuthDashboardTests(TestCase):
@@ -156,3 +157,45 @@ class AuthDashboardTests(TestCase):
         self.assertRedirects(response, reverse('users_list'))
         self.superuser.refresh_from_db()
         self.assertTrue(self.superuser.is_staff)
+
+    def test_superuser_can_delete_office(self):
+        office = LaundryOffice.objects.create(name="Office To Delete")
+        self.client.login(username='superadmin', password='Password123!')
+        response = self.client.post(reverse('delete_office', args=[office.id]))
+        self.assertRedirects(response, reverse('offices_list'))
+        self.assertFalse(LaundryOffice.objects.filter(id=office.id).exists())
+
+    def test_staff_cannot_delete_office(self):
+        office = LaundryOffice.objects.create(name="Office Main")
+        self.client.login(username='staffuser', password='Password123!')
+        response = self.client.post(reverse('delete_office', args=[office.id]))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(LaundryOffice.objects.filter(id=office.id).exists())
+
+    def test_superuser_can_delete_ticket(self):
+        office = LaundryOffice.objects.create(name="Ticket Office")
+        ticket = SupportTicket.objects.create(
+            office=office,
+            title="Complaint Ticket",
+            description="Bad service",
+            ticket_type="complaint"
+        )
+        self.client.login(username='superadmin', password='Password123!')
+        response = self.client.post(reverse('delete_ticket', args=[ticket.id]))
+        self.assertRedirects(response, reverse('admin_tickets_list'))
+        ticket.refresh_from_db()
+        self.assertTrue(ticket.is_deleted)
+
+    def test_staff_cannot_delete_ticket(self):
+        office = LaundryOffice.objects.create(name="Ticket Office 2")
+        ticket = SupportTicket.objects.create(
+            office=office,
+            title="Feature Request",
+            description="Add dark mode",
+            ticket_type="feature_request"
+        )
+        self.client.login(username='staffuser', password='Password123!')
+        response = self.client.post(reverse('delete_ticket', args=[ticket.id]))
+        self.assertEqual(response.status_code, 302)
+        ticket.refresh_from_db()
+        self.assertFalse(ticket.is_deleted)
