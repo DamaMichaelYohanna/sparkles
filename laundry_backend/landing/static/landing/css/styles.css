@@ -1889,13 +1889,13 @@ footer {
     color: #7f1d1d;
 }
 
-/* Early Adopters Showcase Section */
+/* Early Adopters Showcase Section (Grey Monochromatic Theme) */
 .early-adopters-section {
-    background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0f172a 70%, #090d16 100%);
+    background: radial-gradient(circle at 50% 20%, #262626 0%, #171717 70%, #0a0a0a 100%);
     padding: 5rem 1.5rem;
     position: relative;
     overflow: hidden;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .early-adopters-container {
@@ -1907,9 +1907,9 @@ footer {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(56, 189, 248, 0.12);
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    color: #38bdf8;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e5e5e5;
     font-size: 0.825rem;
     font-weight: 700;
     padding: 0.4rem 1.25rem;
@@ -1917,7 +1917,7 @@ footer {
     margin-bottom: 1.25rem;
     text-transform: uppercase;
     letter-spacing: 0.75px;
-    box-shadow: 0 4px 20px rgba(56, 189, 248, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .adopters-grid {
@@ -1929,23 +1929,23 @@ footer {
 }
 
 .adopter-card {
-    background: rgba(30, 41, 59, 0.6);
+    background: rgba(23, 23, 23, 0.75);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 20px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
 }
 
 .adopter-card:hover {
     transform: translateY(-8px);
-    border-color: rgba(56, 189, 248, 0.4);
-    box-shadow: 0 20px 40px -15px rgba(2, 132, 199, 0.35);
-    background: rgba(30, 41, 59, 0.85);
+    border-color: #ffffff;
+    box-shadow: 0 20px 40px -15px rgba(255, 255, 255, 0.15);
+    background: #1a1a1a;
 }
 
 /* Large Hero Showcase Slot for Logo */
@@ -1966,7 +1966,7 @@ footer {
 }
 
 .adopter-logo-showcase.icon-bg {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: linear-gradient(135deg, #171717 0%, #262626 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -1986,8 +1986,8 @@ footer {
 
 .adopter-icon-hero {
     font-size: 3.5rem;
-    color: #38bdf8;
-    filter: drop-shadow(0 4px 15px rgba(56, 189, 248, 0.4));
+    color: #e5e5e5;
+    filter: drop-shadow(0 4px 15px rgba(255, 255, 255, 0.2));
 }
 
 .adopter-card-body {
@@ -2015,7 +2015,7 @@ footer {
 
 .adopter-location {
     font-size: 0.85rem;
-    color: #94a3b8;
+    color: #a3a3a3;
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -2023,7 +2023,7 @@ footer {
 }
 
 .adopter-location i {
-    color: #f43f5e;
+    color: #d4d4d4;
 }
 
 .adopter-features-list {
@@ -2033,9 +2033,9 @@ footer {
 }
 
 .adopter-feature-pill {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #d4d4d4;
     font-size: 0.75rem;
     font-weight: 600;
     padding: 0.3rem 0.65rem;
@@ -2046,7 +2046,7 @@ footer {
 }
 
 .adopter-feature-pill i {
-    color: #38bdf8;
+    color: #ffffff;
 }
 
 .adopter-meta {
@@ -2054,13 +2054,13 @@ footer {
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
     padding-top: 1rem;
     font-size: 0.85rem;
 }
 
 .adopter-stat {
-    color: #38bdf8;
+    color: #ffffff;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -2068,9 +2068,9 @@ footer {
 }
 
 .adopter-tag {
-    background: rgba(34, 197, 94, 0.15);
-    border: 1px solid rgba(34, 197, 94, 0.3);
-    color: #86efac;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
     font-size: 0.725rem;
     font-weight: 700;
     padding: 0.25rem 0.65rem;
@@ -2079,21 +2079,21 @@ footer {
 }
 
 .adopter-ticker-wrapper {
-    background: rgba(15, 23, 42, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(20, 20, 20, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 14px;
     padding: 1rem 1.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
     overflow: hidden;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .ticker-label {
     font-size: 0.75rem;
     font-weight: 800;
-    color: #38bdf8;
+    color: #ffffff;
     letter-spacing: 1px;
     white-space: nowrap;
 }
@@ -2102,7 +2102,7 @@ footer {
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    color: #94a3b8;
+    color: #a3a3a3;
     font-size: 0.875rem;
     font-weight: 600;
     white-space: nowrap;
