@@ -73,12 +73,14 @@ def custom_logout(request):
 def dashboard(request):
     total_offices = LaundryOffice.objects.count()
     total_users = User.objects.count()
-    total_orders = Order.objects.count()
-    total_revenue = Order.objects.aggregate(Sum('total_price'))['total_price__sum'] or 0.00
+    total_orders = Order.objects.filter(is_deleted=False).count()
+    total_revenue = Order.objects.filter(is_deleted=False).aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0.00
     
-    recent_orders = Order.objects.select_related('office').order_by('-created_at')[:8]
+    recent_orders = Order.objects.select_related('office').filter(is_deleted=False).order_by('-created_at')[:8]
     
-    orders_by_office = LaundryOffice.objects.annotate(order_count=Count('orders')).values('name', 'order_count')
+    orders_by_office = LaundryOffice.objects.annotate(
+        order_count=Count('orders', filter=Q(orders__is_deleted=False))
+    ).values('name', 'order_count')
     chart_labels = [o['name'] for o in orders_by_office]
     chart_data = [o['order_count'] for o in orders_by_office]
 
