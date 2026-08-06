@@ -752,3 +752,18 @@ def delete_order(request, pk):
     next_url = request.META.get('HTTP_REFERER') or reverse('admin_orders_list')
     return redirect(next_url)
 
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def bulk_delete_orders(request):
+    if request.method == 'POST':
+        order_ids = request.POST.getlist('order_ids')
+        if order_ids:
+            count = Order.objects.filter(id__in=order_ids, is_deleted=False).update(is_deleted=True)
+            messages.success(request, f"Successfully deleted {count} order(s).")
+        else:
+            messages.warning(request, "No orders were selected for deletion.")
+            
+    next_url = request.META.get('HTTP_REFERER') or reverse('admin_orders_list')
+    return redirect(next_url)
+
+

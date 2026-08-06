@@ -10,12 +10,17 @@
             <div>
                 <h3 style="margin: 0;">Platform Orders List</h3>
                 <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--grey-500);">
-                    View, search, filter, and clean up test orders across all offices.
+                    Select multiple test orders to clean up or filter by office, status, and search query.
                 </p>
             </div>
-            <span style="background: rgba(92, 99, 106, 0.1); color: var(--primary-dark); padding: 0.4rem 0.85rem; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">
-                Total Orders: {{ total_count }}
-            </span>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="background: rgba(92, 99, 106, 0.1); color: var(--primary-dark); padding: 0.4rem 0.85rem; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">
+                    Total Orders: {{ total_count }}
+                </span>
+                <button type="submit" form="bulk-delete-form" id="bulk-delete-btn" disabled style="padding: 0.45rem 1rem; border: none; font-size: 0.85rem; cursor: pointer; background: #e63946; color: white; font-weight: 700; border-radius: 8px; opacity: 0.5; transition: all 0.2s ease;" onclick="return confirm('Are you sure you want to delete all selected orders? This action is permanent.');">
+                    🗑️ Delete Selected (<span id="selected-count">0</span>)
+                </button>
+            </div>
         </div>
         
         <!-- Filters & Search Form -->
@@ -51,68 +56,122 @@
             </div>
         </form>
         
-        <table class="dashboard-table">
-            <thead>
-                <tr>
-                    <th>Tracking Code</th>
-                    <th>Office</th>
-                    <th>Customer Name</th>
-                    <th>Customer Phone</th>
-                    <th>Status</th>
-                    <th>Date Created</th>
-                    <th>Total Price</th>
-                    <th style="text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in orders %}
-                <tr>
-                    <td style="font-weight: 700; font-family: monospace; font-size: 0.95rem;">
-                        {% if order.tracking_code %}
-                            #{{ order.tracking_code }}
-                        {% else %}
-                            #{{ order.id|truncatechars:8 }}
-                        {% endif %}
-                    </td>
-                    <td>{{ order.office.name }}</td>
-                    <td style="font-weight: 600;">{{ order.customer_name }}</td>
-                    <td>{{ order.customer_phone|default:"N/A" }}</td>
-                    <td>
-                        {% if order.current_status.name == 'Completed' or order.current_status.is_completed_state %}
-                            <span style="background: #2ec4b6; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Completed</span>
-                        {% elif order.current_status.name == 'Overdue' %}
-                            <span style="background: #e63946; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Overdue</span>
-                        {% else %}
-                            <span style="background: #ff9f1c; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Pending</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ order.created_at|date:"M d, Y, h:i A" }}</td>
-                    <td style="font-weight: 700;">₦{{ order.total_price|floatformat:2 }}</td>
-                    <td style="text-align: right;">
-                        <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+        <!-- Form for Bulk Deletion -->
+        <form method="post" action="{% url 'bulk_delete_orders' %}" id="bulk-delete-form">
+            {% csrf_token %}
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">
+                            <input type="checkbox" id="master-checkbox" onclick="toggleSelectAll(this)" style="width: 16px; height: 16px; cursor: pointer;">
+                        </th>
+                        <th>Tracking Code</th>
+                        <th>Office</th>
+                        <th>Customer Name</th>
+                        <th>Customer Phone</th>
+                        <th>Status</th>
+                        <th>Date Created</th>
+                        <th>Total Price</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td style="text-align: center;">
+                            <input type="checkbox" name="order_ids" value="{{ order.id }}" class="order-checkbox" onchange="updateBulkDeleteButton()" style="width: 16px; height: 16px; cursor: pointer;">
+                        </td>
+                        <td style="font-weight: 700; font-family: monospace; font-size: 0.95rem;">
                             {% if order.tracking_code %}
-                                <a href="/r/{{ order.tracking_code }}/" target="_blank" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; text-decoration: none; background: #0284c7; color: white; border-radius: 6px;" title="View Digital Receipt">
-                                    <i class="fa-solid fa-receipt"></i> Receipt
-                                </a>
+                                #{{ order.tracking_code }}
+                            {% else %}
+                                #{{ order.id|truncatechars:8 }}
                             {% endif %}
-                            <form action="{% url 'delete_order' order.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete order #{{ order.tracking_code|default:order.id }} for {{ order.customer_name }}? This action is permanent.');">
-                                {% csrf_token %}
-                                <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #e63946; color: white; border-radius: 6px;">
+                        </td>
+                        <td>{{ order.office.name }}</td>
+                        <td style="font-weight: 600;">{{ order.customer_name }}</td>
+                        <td>{{ order.customer_phone|default:"N/A" }}</td>
+                        <td>
+                            {% if order.current_status.name == 'Completed' or order.current_status.is_completed_state %}
+                                <span style="background: #2ec4b6; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Completed</span>
+                            {% elif order.current_status.name == 'Overdue' %}
+                                <span style="background: #e63946; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Overdue</span>
+                            {% else %}
+                                <span style="background: #ff9f1c; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ order.created_at|date:"M d, Y, h:i A" }}</td>
+                        <td style="font-weight: 700;">₦{{ order.total_price|floatformat:2 }}</td>
+                        <td style="text-align: right;">
+                            <div style="display: inline-flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                                {% if order.tracking_code %}
+                                    <a href="/r/{{ order.tracking_code }}/" target="_blank" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; text-decoration: none; background: #0284c7; color: white; border-radius: 6px;" title="View Digital Receipt">
+                                        <i class="fa-solid fa-receipt"></i> Receipt
+                                    </a>
+                                {% endif %}
+                                <button type="button" onclick="singleDeleteOrder('{{ order.id }}', '{{ order.tracking_code|default:order.id }}')" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #e63946; color: white; border-radius: 6px;">
                                     🗑️ Delete
                                 </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--grey-500);">
-                        No orders match your filter parameters.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--grey-500);">
+                            No orders match your filter parameters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+
+        <!-- Hidden form for single deletion -->
+        <form id="single-delete-form" method="post" action="">
+            {% csrf_token %}
+        </form>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function toggleSelectAll(master) {
+        const checkboxes = document.querySelectorAll('.order-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = master.checked;
+        });
+        updateBulkDeleteButton();
+    }
+
+    function updateBulkDeleteButton() {
+        const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+        const count = checkboxes.length;
+        const btn = document.getElementById('bulk-delete-btn');
+        const countSpan = document.getElementById('selected-count');
+        const master = document.getElementById('master-checkbox');
+        const total = document.querySelectorAll('.order-checkbox').length;
+
+        countSpan.innerText = count;
+        if (count > 0) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+        }
+
+        if (master) {
+            master.checked = (total > 0 && count === total);
+        }
+    }
+
+    function singleDeleteOrder(orderId, tracking) {
+        if (confirm('Are you sure you want to delete order #' + tracking + '? This action is permanent.')) {
+            const form = document.getElementById('single-delete-form');
+            form.action = '/dashboard/orders/' + orderId + '/delete/';
+            form.submit();
+        }
+    }
+</script>
 {% endblock %}

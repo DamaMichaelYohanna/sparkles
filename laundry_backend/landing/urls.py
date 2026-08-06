@@ -11,6 +11,7 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('dashboard/orders/', views.admin_orders_list, name='admin_orders_list'),
+    path('dashboard/orders/bulk-delete/', views.bulk_delete_orders, name='bulk_delete_orders'),
     path('dashboard/orders/<uuid:pk>/delete/', views.delete_order, name='delete_order'),
     path('dashboard/offices/', views.offices_list, name='offices_list'),
     path('dashboard/offices/<uuid:pk>/delete/', views.delete_office, name='delete_office'),
