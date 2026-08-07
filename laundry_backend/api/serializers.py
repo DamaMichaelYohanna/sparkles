@@ -41,6 +41,8 @@ class OrderStatusSerializer(serializers.ModelSerializer):
         read_only_fields = ['office']
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    item_name = serializers.CharField(source='item_pricing.name', read_only=True)
+
     class Meta:
         model = OrderItem
         fields = '__all__'

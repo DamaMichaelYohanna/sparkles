@@ -31,6 +31,10 @@ class Customer(BaseModel):
 
     class Meta:
         unique_together = ('office', 'phone')
+        indexes = [
+            models.Index(fields=['office', 'is_deleted', 'name']),
+            models.Index(fields=['office', 'phone']),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.phone})"
@@ -39,7 +43,7 @@ class Order(BaseModel):
     office = models.ForeignKey('offices.LaundryOffice', on_delete=models.CASCADE, related_name='orders')
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
     customer_name = models.CharField(max_length=255)
-    customer_phone = models.CharField(max_length=50)
+    customer_phone = models.CharField(max_length=50, db_index=True)
     customer_is_whatsapp = models.BooleanField(default=False)
     current_status = models.ForeignKey(OrderStatus, on_delete=models.RESTRICT)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -52,8 +56,11 @@ class Order(BaseModel):
     class Meta:
         indexes = [
             models.Index(fields=['office', 'created_at']),
+            models.Index(fields=['office', 'is_deleted', '-created_at']),
             models.Index(fields=['office', 'due_date']),
             models.Index(fields=['office', 'current_status']),
+            models.Index(fields=['office', 'customer']),
+            models.Index(fields=['office', 'customer_phone']),
         ]
 
     def save(self, *args, **kwargs):
@@ -102,11 +109,22 @@ class OrderItem(BaseModel):
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['order', 'item_pricing']),
+        ]
+
 class ActionLog(BaseModel):
     office = models.ForeignKey('offices.LaundryOffice', on_delete=models.CASCADE, related_name='action_logs')
     user = models.ForeignKey('offices.User', on_delete=models.SET_NULL, null=True, blank=True)
-    action = models.CharField(max_length=50) # e.g., "ORDER_CREATED", "ORDER_PAID"
+    action = models.CharField(max_length=50, db_index=True) # e.g., "ORDER_CREATED", "ORDER_PAID"
     details = models.TextField(blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['office', '-created_at']),
+            models.Index(fields=['office', 'action']),
+        ]
 
 class WebPushSubscription(BaseModel):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True, related_name='subscriptions')
@@ -135,8 +153,14 @@ class SupportTicket(BaseModel):
     title = models.CharField(max_length=255)
     description = models.TextField()
     ticket_type = models.CharField(max_length=20, choices=TICKET_TYPES, default='feedback')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
     admin_notes = models.TextField(blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['office', 'status']),
+            models.Index(fields=['office', '-created_at']),
+        ]
 
     def __str__(self):
         return f"{self.get_ticket_type_display()} - {self.title} ({self.status})"

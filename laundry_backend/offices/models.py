@@ -37,7 +37,7 @@ class LaundryOffice(BaseModel):
     name = models.CharField(max_length=255)
     contact_info = models.CharField(max_length=255, blank=True)
     preferences = models.JSONField(default=dict, blank=True)
-    subscription_tier = models.CharField(max_length=20, choices=SUBSCRIPTION_TIERS, default='free')
+    subscription_tier = models.CharField(max_length=20, choices=SUBSCRIPTION_TIERS, default='free', db_index=True)
 
 class OfficeImage(BaseModel):
     office = models.ForeignKey(LaundryOffice, on_delete=models.CASCADE, related_name='images')
@@ -46,14 +46,17 @@ class OfficeImage(BaseModel):
 
 class PasswordResetOTP(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField()
-    otp = models.CharField(max_length=6)
+    email = models.EmailField(db_index=True)
+    otp = models.CharField(max_length=6, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
 
     class Meta:
         verbose_name_plural = "Password Reset OTPs"
+        indexes = [
+            models.Index(fields=['email', 'is_used', 'expires_at']),
+        ]
 
     def __str__(self):
         return f"{self.email} - {self.otp}"

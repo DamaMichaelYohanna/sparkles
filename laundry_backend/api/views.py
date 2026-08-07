@@ -169,16 +169,16 @@ class OrderStatusRetrieveUpdateDestroyView(BaseTenantView, generics.RetrieveUpda
 
 # Order
 class OrderListCreateView(BaseTenantView, generics.ListCreateAPIView):
-    queryset = Order.objects.select_related('office', 'current_status').prefetch_related('items').all()
+    queryset = Order.objects.filter(is_deleted=False).select_related('office', 'current_status', 'customer').prefetch_related('items__item_pricing').all()
     serializer_class = OrderSerializer
 
 class OrderRetrieveUpdateDestroyView(BaseTenantView, generics.RetrieveUpdateDestroyAPIView):
-    queryset = Order.objects.select_related('office', 'current_status').prefetch_related('items').all()
+    queryset = Order.objects.filter(is_deleted=False).select_related('office', 'current_status', 'customer').prefetch_related('items__item_pricing').all()
     serializer_class = OrderSerializer
 
 # OrderItem
 class OrderItemListCreateView(BaseTenantView, generics.ListCreateAPIView):
-    queryset = OrderItem.objects.select_related('order', 'item_pricing').all()
+    queryset = OrderItem.objects.filter(is_deleted=False).select_related('order', 'item_pricing').all()
     serializer_class = OrderItemSerializer
 
     def get_queryset(self):
@@ -188,7 +188,7 @@ class OrderItemListCreateView(BaseTenantView, generics.ListCreateAPIView):
         return self.queryset.filter(order__office=user.office)
 
 class OrderItemRetrieveUpdateDestroyView(BaseTenantView, generics.RetrieveUpdateDestroyAPIView):
-    queryset = OrderItem.objects.select_related('order', 'item_pricing').all()
+    queryset = OrderItem.objects.filter(is_deleted=False).select_related('order', 'item_pricing').all()
     serializer_class = OrderItemSerializer
 
     def get_queryset(self):
@@ -235,16 +235,18 @@ class OfficeOperationsDashboardAPIView(APIView):
             raise PermissionDenied("You must belong to an office.")
 
         now = timezone.now()
-        orders = Order.objects.filter(office=user.office)
+        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        orders = Order.objects.filter(office=user.office, is_deleted=False)
         
         stats = orders.aggregate(
-            total_orders_today=Count('id', filter=Q(created_at__date=now.date())),
+            total_orders_today=Count('id', filter=Q(created_at__gte=start_of_day, created_at__lte=end_of_day)),
             pending_orders=Count('id', filter=Q(current_status__is_completed_state=False)),
             completed_orders=Count('id', filter=Q(current_status__is_completed_state=True)),
             overdue_orders=Count('id', filter=Q(current_status__is_completed_state=False, due_date__lt=now)),
         )
         
-        recent = orders.select_related('current_status').order_by('-created_at')[:5]
+        recent = orders.select_related('current_status', 'customer').order_by('-created_at')[:5]
         recent_serialized = OrderSerializer(recent, many=True).data
 
         return Response({
