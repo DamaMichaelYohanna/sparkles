@@ -16,6 +16,7 @@ urlpatterns = [
     path('dashboard/users/<uuid:pk>/toggle-staff/', views.toggle_user_staff, name='toggle_user_staff'),
     path('dashboard/users/<uuid:pk>/delete/', views.delete_user, name='delete_user'),
     path('dashboard/subscriptions/', views.subscriptions_view, name='subscriptions_view'),
+    path('dashboard/subscription-logs/', views.subscription_logs_view, name='subscription_logs_view'),
     path('dashboard/settings/', views.settings_view, name='settings_view'),
     path('dashboard/waitlist/', views.waitlist_dashboard, name='waitlist_dashboard'),
     path('dashboard/waitlist/send-email/', views.send_waitlist_email, name='send_waitlist_email'),

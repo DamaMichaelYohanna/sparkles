@@ -1,0 +1,164 @@
+{% extends 'landing/dashboard_base.html' %}
+
+{% block title %}Sparkles Global Dashboard - Paystack Logs{% endblock %}
+{% block header_title %}Paystack Subscription Audit Logs{% endblock %}
+
+{% block content %}
+<section class="kpi-grid">
+    <div class="kpi-card">
+        <h3>Total Webhook Events</h3>
+        <div class="value">{{ total_logs }}</div>
+    </div>
+    <div class="kpi-card">
+        <h3>Successful Renewals</h3>
+        <div class="value" style="color: #10b981;">{{ renewal_count }}</div>
+    </div>
+    <div class="kpi-card">
+        <h3>Failed Payments</h3>
+        <div class="value" style="color: #ef4444;">{{ failed_count }}</div>
+    </div>
+    <div class="kpi-card">
+        <h3>Cancellations</h3>
+        <div class="value" style="color: #f59e0b;">{{ cancelled_count }}</div>
+    </div>
+</section>
+
+<section class="charts-section" style="grid-template-columns: 1fr;">
+    <div class="recent-orders-container">
+        <!-- Header & Search Controls -->
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <div>
+                <h3 style="margin-bottom: 0.35rem;">Live Paystack Activity Audit</h3>
+                <p style="margin: 0; color: var(--grey-500); font-size: 0.9rem;">Track all incoming webhooks, subscription renewals, failed charges, and cancellations in real time.</p>
+            </div>
+            
+            <form method="get" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                <input type="hidden" name="event_type" value="{{ selected_event }}">
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Search email or reference..." 
+                    style="padding: 0.55rem 0.9rem; border: 1px solid var(--grey-200); border-radius: 20px; font-size: 0.85rem; font-family: var(--font-main); min-width: 240px;">
+                <button type="submit" class="btn-api" style="padding: 0.55rem 1rem; border: none; font-size: 0.85rem; cursor: pointer;">Search</button>
+            </form>
+        </div>
+
+        <!-- Filter Pill Navigation -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <a href="?event_type=all{% if search_query %}&search={{ search_query }}{% endif %}" 
+               style="text-decoration: none; padding: 0.45rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; transition: all 0.2s ease;
+               {% if selected_event == 'all' %}background: var(--accent-dark); color: #fff;{% else %}background: var(--grey-100); color: var(--grey-500); border: 1px solid var(--grey-200);{% endif %}">
+               All Events ({{ total_logs }})
+            </a>
+            <a href="?event_type=new{% if search_query %}&search={{ search_query }}{% endif %}" 
+               style="text-decoration: none; padding: 0.45rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; transition: all 0.2s ease;
+               {% if selected_event == 'new' %}background: #10b981; color: #fff;{% else %}background: var(--grey-100); color: var(--grey-500); border: 1px solid var(--grey-200);{% endif %}">
+               ✨ New Subscriptions ({{ new_count }})
+            </a>
+            <a href="?event_type=renewal{% if search_query %}&search={{ search_query }}{% endif %}" 
+               style="text-decoration: none; padding: 0.45rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; transition: all 0.2s ease;
+               {% if selected_event == 'renewal' %}background: #3b82f6; color: #fff;{% else %}background: var(--grey-100); color: var(--grey-500); border: 1px solid var(--grey-200);{% endif %}">
+               🔄 Renewals ({{ renewal_count }})
+            </a>
+            <a href="?event_type=failed{% if search_query %}&search={{ search_query }}{% endif %}" 
+               style="text-decoration: none; padding: 0.45rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; transition: all 0.2s ease;
+               {% if selected_event == 'failed' %}background: #ef4444; color: #fff;{% else %}background: var(--grey-100); color: var(--grey-500); border: 1px solid var(--grey-200);{% endif %}">
+               ⚠️ Failed Payments ({{ failed_count }})
+            </a>
+            <a href="?event_type=cancelled{% if search_query %}&search={{ search_query }}{% endif %}" 
+               style="text-decoration: none; padding: 0.45rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; transition: all 0.2s ease;
+               {% if selected_event == 'cancelled' %}background: #f59e0b; color: #fff;{% else %}background: var(--grey-100); color: var(--grey-500); border: 1px solid var(--grey-200);{% endif %}">
+               🚫 Cancellations ({{ cancelled_count }})
+            </a>
+        </div>
+
+        <!-- Logs Table -->
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Office / Customer Email</th>
+                    <th>Event Type</th>
+                    <th>Plan Tier</th>
+                    <th>Amount</th>
+                    <th>Reference</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td style="font-size: 0.82rem; color: var(--grey-500); white-space: nowrap;">
+                        {{ log.created_at|date:"M d, Y H:i" }}
+                    </td>
+                    <td>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-weight: 700; font-size: 0.9rem; color: var(--accent-dark);">
+                                {{ log.office.name|default:"Unlinked Office" }}
+                            </span>
+                            <span style="font-size: 0.78rem; color: var(--grey-500);">
+                                {{ log.customer_email|default:"No Email Recorded" }}
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if log.event_type == 'new' %}
+                            <span style="background: #d1fae5; color: #065f46; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                ✨ New Sub
+                            </span>
+                        {% elif log.event_type == 'renewal' %}
+                            <span style="background: #dbeafe; color: #1e40af; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                🔄 Renewal
+                            </span>
+                        {% elif log.event_type == 'failed' %}
+                            <span style="background: #fee2e2; color: #991b1b; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                ⚠️ Failed
+                            </span>
+                        {% elif log.event_type == 'cancelled' %}
+                            <span style="background: #fef3c7; color: #92400e; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                🚫 Cancelled
+                            </span>
+                        {% else %}
+                            <span style="background: #f1f5f9; color: #475569; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                ⚙️ {{ log.get_event_type_display }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: var(--grey-800);">
+                            {{ log.tier|default:"Free" }}
+                        </span>
+                    </td>
+                    <td style="font-weight: 700; font-size: 0.88rem; color: var(--accent-dark);">
+                        {% if log.amount > 0 %}
+                            ₦{{ log.amount|floatformat:2 }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        <code style="background: var(--grey-100); padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-family: monospace; color: var(--grey-800);">
+                            {{ log.reference|default:"—" }}
+                        </code>
+                    </td>
+                    <td>
+                        {% if log.status == 'success' %}
+                            <span style="color: #10b981; font-weight: 700; font-size: 0.8rem;">● Success</span>
+                        {% elif log.status == 'failed' %}
+                            <span style="color: #ef4444; font-weight: 700; font-size: 0.8rem;">● Failed</span>
+                        {% else %}
+                            <span style="color: #f59e0b; font-weight: 700; font-size: 0.8rem;">● {{ log.status|title }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 3rem 1rem; color: var(--grey-500);">
+                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📜</div>
+                        <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.25rem;">No Subscription Logs Found</div>
+                        <div style="font-size: 0.85rem;">Paystack webhook notifications and subscription changes will automatically log here.</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

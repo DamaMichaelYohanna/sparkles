@@ -11,7 +11,7 @@ from rest_framework import generics, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
-from offices.models import LaundryOffice, PasswordResetOTP
+from offices.models import LaundryOffice, PasswordResetOTP, SubscriptionLog
 from operations.models import ServiceType, Category, ItemPricing, OrderStatus, Order, OrderItem, ActionLog, SupportTicket
 from .permissions import IsOfficeAdmin, TierLimitPermission
 from .serializers import (
@@ -316,8 +316,10 @@ class PaystackWebhookView(APIView):
         logger.info("[Webhook] Received event: %s", event)
         
         if event == 'charge.success':
-            reference = data.get('reference')
-            customer_email = data.get('customer', {}).get('email')
+            reference = data.get('reference', '')
+            customer_email = data.get('customer', {}).get('email', '')
+            amount_kobo = data.get('amount', 0)
+            amount_naira = (amount_kobo or 0) / 100
             logger.info("[Webhook] Successful charge event. Ref: %s, Customer: %s", reference, customer_email)
             
             # Look up office by pending reference first
@@ -329,6 +331,7 @@ class PaystackWebhookView(APIView):
                 if user_obj and user_obj.office:
                     office = user_obj.office
             
+            event_type = 'new'
             if office:
                 pending = office.preferences.get('pending_subscription', {})
                 if pending and pending.get('reference') == reference:
@@ -336,6 +339,7 @@ class PaystackWebhookView(APIView):
                     tier = pending.get('tier', 'free')
                     office.subscription_tier = tier
                     office.preferences.pop('pending_subscription', None)
+                    event_type = 'new'
                 else:
                     # Recurring subscription payment from Paystack Plan billing
                     plan_code = data.get('plan', {}).get('plan_code')
@@ -346,6 +350,7 @@ class PaystackWebhookView(APIView):
                         office.subscription_tier = 'pro'
                     elif plan_code == getattr(settings, 'PAYSTACK_PLAN_STARTER', 'starter'):
                         office.subscription_tier = 'starter'
+                    event_type = 'renewal'
                 
                 if not office.preferences:
                     office.preferences = {}
@@ -354,10 +359,49 @@ class PaystackWebhookView(APIView):
                 logger.info("[Webhook] Activated/Renewed subscription to tier '%s' for office: %s", office.subscription_tier, office.name)
             else:
                 logger.warning("[Webhook] Charge success webhook received but no matching office found (Ref: %s, Email: %s)", reference, customer_email)
-                
+            
+            # Log transaction in SubscriptionLog
+            if reference and not SubscriptionLog.objects.filter(reference=reference).exists():
+                SubscriptionLog.objects.create(
+                    office=office,
+                    customer_email=customer_email,
+                    event_type=event_type,
+                    paystack_event=event,
+                    reference=reference,
+                    amount=amount_naira,
+                    tier=office.subscription_tier if office else 'unknown',
+                    status='success',
+                    payload={'plan': data.get('plan'), 'customer': data.get('customer')}
+                )
+
+        elif event in ['invoice.payment_failed', 'charge.failed']:
+            reference = data.get('reference', '')
+            customer_email = data.get('customer', {}).get('email', '')
+            amount_naira = (data.get('amount', 0) or 0) / 100
+            logger.warning("[Webhook] Payment failed event for customer: %s, ref: %s", customer_email, reference)
+            
+            office = None
+            if customer_email:
+                user_obj = User.objects.filter(email=customer_email, is_office_admin=True).first()
+                if user_obj and user_obj.office:
+                    office = user_obj.office
+            
+            SubscriptionLog.objects.create(
+                office=office,
+                customer_email=customer_email,
+                event_type='failed',
+                paystack_event=event,
+                reference=reference,
+                amount=amount_naira,
+                tier=office.subscription_tier if office else 'unknown',
+                status='failed',
+                payload={'reason': data.get('gateway_response') or data.get('message'), 'customer': data.get('customer')}
+            )
+
         elif event in ['subscription.disable', 'subscription.cancel']:
-            customer_email = data.get('customer', {}).get('email')
+            customer_email = data.get('customer', {}).get('email', '')
             logger.warning("[Webhook] Subscription disabled/cancelled event for customer: %s", customer_email)
+            office = None
             if customer_email:
                 user_obj = User.objects.filter(email=customer_email, is_office_admin=True).first()
                 if user_obj and user_obj.office:
@@ -368,6 +412,18 @@ class PaystackWebhookView(APIView):
                     office.preferences['subscription_status'] = 'disabled'
                     office.save()
                     logger.warning("[Webhook] Downgraded office %s to FREE due to cancellation/disable notification.", office.name)
+            
+            SubscriptionLog.objects.create(
+                office=office,
+                customer_email=customer_email,
+                event_type='cancelled',
+                paystack_event=event,
+                reference=data.get('subscription_code') or data.get('reference') or '',
+                amount=0.00,
+                tier='free',
+                status='cancelled',
+                payload={'event': event, 'customer': data.get('customer')}
+            )
             
         return Response(status=200)
 
@@ -487,6 +543,23 @@ class VerifySubscriptionView(APIView):
                 office.preferences = preferences
                 
             office.save()
+            
+            # Record log if not already created by webhook
+            if reference and not SubscriptionLog.objects.filter(reference=reference).exists():
+                raw_amt = res.get('data', {}).get('amount', 0)
+                amount_naira = (raw_amt or 0) / 100
+                SubscriptionLog.objects.create(
+                    office=office,
+                    customer_email=user.email,
+                    event_type='new',
+                    paystack_event='verification_success',
+                    reference=reference,
+                    amount=amount_naira,
+                    tier=tier,
+                    status='success',
+                    payload={'user': user.email, 'verified_via': 'api'}
+                )
+
             logger.info("[Billing] Payment successfully verified. Office '%s' upgraded to tier '%s'.", office.name, tier)
             return Response({
                 "status": "success",

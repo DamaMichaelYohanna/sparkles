@@ -60,3 +60,34 @@ class PasswordResetOTP(models.Model):
 
     def __str__(self):
         return f"{self.email} - {self.otp}"
+
+class SubscriptionLog(BaseModel):
+    EVENT_TYPES = [
+        ('new', 'New Subscription'),
+        ('renewal', 'Renewal'),
+        ('failed', 'Payment Failed'),
+        ('cancelled', 'Cancelled / Disabled'),
+        ('manual', 'Manual Admin Change'),
+    ]
+
+    office = models.ForeignKey(LaundryOffice, on_delete=models.SET_NULL, null=True, blank=True, related_name='subscription_logs')
+    customer_email = models.EmailField(blank=True)
+    event_type = models.CharField(max_length=30, choices=EVENT_TYPES, db_index=True)
+    paystack_event = models.CharField(max_length=100, blank=True)
+    reference = models.CharField(max_length=100, blank=True, db_index=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    tier = models.CharField(max_length=20, blank=True)
+    status = models.CharField(max_length=50, default='success')
+    payload = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['office', '-created_at']),
+            models.Index(fields=['event_type', '-created_at']),
+            models.Index(fields=['reference']),
+        ]
+
+    def __str__(self):
+        target = self.office.name if self.office else (self.customer_email or "Unknown Office")
+        return f"{target} - {self.get_event_type_display()} ({self.status})"

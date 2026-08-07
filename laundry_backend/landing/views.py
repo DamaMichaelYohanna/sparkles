@@ -5,7 +5,7 @@ from django.contrib.auth import login as auth_login, logout as auth_logout, auth
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from django.conf import settings
-from offices.models import LaundryOffice, User
+from offices.models import LaundryOffice, User, SubscriptionLog
 from operations.models import Order
 
 logger = logging.getLogger(__name__)
@@ -123,8 +123,23 @@ def subscriptions_view(request):
             valid_tiers = {choice for choice, _ in LaundryOffice.SUBSCRIPTION_TIERS}
 
             if subscription_tier in valid_tiers:
+                old_tier = office.subscription_tier
                 office.subscription_tier = subscription_tier
                 office.save(update_fields=['subscription_tier', 'updated_at'])
+                
+                # Log manual change
+                SubscriptionLog.objects.create(
+                    office=office,
+                    customer_email=request.user.email,
+                    event_type='manual',
+                    paystack_event='admin_override',
+                    reference=f"manual_{office.id.hex[:8]}",
+                    amount=0.00,
+                    tier=subscription_tier,
+                    status='success',
+                    payload={'old_tier': old_tier, 'new_tier': subscription_tier, 'changed_by': request.user.email}
+                )
+                
                 messages.success(request, f"Updated {office.name} to {office.get_subscription_tier_display()} subscription.")
             else:
                 messages.error(request, 'Invalid subscription tier selected.')
@@ -141,6 +156,49 @@ def subscriptions_view(request):
         'total_subscriptions': offices.count(),
     }
     return render(request, 'landing/subscriptions.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def subscription_logs_view(request):
+    logs_qs = SubscriptionLog.objects.select_related('office').all().order_by('-created_at')
+
+    # Filtering by event_type
+    selected_event = request.GET.get('event_type', 'all').lower().strip()
+    if selected_event in ['new', 'renewal', 'failed', 'cancelled', 'manual']:
+        logs = logs_qs.filter(event_type=selected_event)
+    else:
+        selected_event = 'all'
+        logs = logs_qs
+
+    # Search filter
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        logs = logs.filter(
+            Q(customer_email__icontains=search_query) |
+            Q(reference__icontains=search_query) |
+            Q(office__name__icontains=search_query) |
+            Q(paystack_event__icontains=search_query)
+        )
+
+    # Metrics
+    total_logs = logs_qs.count()
+    new_count = logs_qs.filter(event_type='new').count()
+    renewal_count = logs_qs.filter(event_type='renewal').count()
+    failed_count = logs_qs.filter(event_type='failed').count()
+    cancelled_count = logs_qs.filter(event_type='cancelled').count()
+
+    context = {
+        'logs': logs[:100],
+        'selected_event': selected_event,
+        'search_query': search_query,
+        'total_logs': total_logs,
+        'new_count': new_count,
+        'renewal_count': renewal_count,
+        'failed_count': failed_count,
+        'cancelled_count': cancelled_count,
+        'event_types': SubscriptionLog.EVENT_TYPES,
+    }
+    return render(request, 'landing/subscription_logs.html', context)
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def users_list(request):
