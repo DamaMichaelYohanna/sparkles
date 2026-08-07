@@ -458,6 +458,8 @@ class InitializeSubscriptionView(APIView):
         if plan_code and "placeholder" in plan_code:
             plan_code = None # Ignore placeholder plan code for simple sandbox payments
             
+        callback_url = request.data.get('callback_url') or "https://sparkles.com.ng/"
+        
         # Initialize Paystack payment with metadata
         metadata = {
             'tier': tier,
@@ -465,7 +467,7 @@ class InitializeSubscriptionView(APIView):
             'office_name': user.office.name,
         }
         from .paystack import initialize_payment
-        res = initialize_payment(email=user.email, amount_kobo=amount_kobo, reference=reference, plan_code=plan_code, metadata=metadata)
+        res = initialize_payment(email=user.email, amount_kobo=amount_kobo, reference=reference, plan_code=plan_code, metadata=metadata, callback_url=callback_url)
         
         if res.get('status') == True:
             # Save pending reference in office preferences

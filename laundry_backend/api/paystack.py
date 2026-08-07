@@ -1,7 +1,7 @@
 import requests
 from django.conf import settings
 
-def initialize_payment(email, amount_kobo, reference, plan_code=None, metadata=None):
+def initialize_payment(email, amount_kobo, reference, plan_code=None, metadata=None, callback_url=None):
     """
     Initializes a Paystack transaction.
     amount_kobo: Amount in the smallest currency unit (e.g., Kobo for NGN)
@@ -20,6 +20,8 @@ def initialize_payment(email, amount_kobo, reference, plan_code=None, metadata=N
         payload["metadata"] = metadata
     if plan_code:
         payload["plan"] = plan_code
+    if callback_url:
+        payload["callback_url"] = callback_url
     response = requests.post(url, json=payload, headers=headers)
     return response.json()
 

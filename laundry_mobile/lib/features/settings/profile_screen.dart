@@ -18,8 +18,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _launchUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      throw Exception('Could not launch $url');
+    try {
+      if (!await launchUrl(url, mode: LaunchMode.inAppBrowserView)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -368,7 +372,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                                 final refStr = res['reference'];
                                                 
                                                 await _launchUrl(url);
-                                                _showVerifyDialog(refStr, url);
+                                                // Auto-verify payment on return from in-app browser
+                                                _verifyPayment(refStr);
                                               }
                                             } catch (e) {
                                               if (mounted) {
