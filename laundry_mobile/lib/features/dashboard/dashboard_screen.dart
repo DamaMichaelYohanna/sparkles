@@ -284,6 +284,11 @@ class _DashboardBody extends ConsumerWidget {
                   value: '₦${stats.totalRevenue}',
                   icon: LucideIcons.dollarSign,
                   color: Colors.green,
+                  onTap: () {
+                    final filterNotifier = ref.read(ordersFilterProvider.notifier);
+                    filterNotifier.reset();
+                    ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                  },
                 ),
                 KpiCard(
                   title: 'Pending',

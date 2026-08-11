@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme.dart';
+import '../../core/models/order_model.dart';
 import 'add_order_screen.dart';
 import 'order_detail_screen.dart';
 import 'providers/orders_provider.dart';
@@ -44,9 +45,134 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     return "${date.day}/${date.month}/${date.year.toString().substring(2)}";
   }
 
+  Widget _buildSummaryCards(WidgetRef ref, List<OrderModel> allOrders, OrdersFilterState filter) {
+    final pendingCount = allOrders.where((o) => o.status == 'Pending').length;
+    final completedCount = allOrders.where((o) => o.status == 'Completed').length;
+    final overdueCount = allOrders.where((o) => o.status == 'Overdue').length;
+    final totalCount = allOrders.length;
+    final filterNotifier = ref.read(ordersFilterProvider.notifier);
+
+    return Container(
+      height: 64,
+      margin: const EdgeInsets.only(top: 8, bottom: 4),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _buildOrderSummaryCard(
+            title: 'All Orders',
+            count: '$totalCount',
+            icon: LucideIcons.shoppingBag,
+            color: AppTheme.primaryColor,
+            isSelected: filter.status == 'All',
+            onTap: () => filterNotifier.setStatus('All'),
+          ),
+          const SizedBox(width: 8),
+          _buildOrderSummaryCard(
+            title: 'Pending',
+            count: '$pendingCount',
+            icon: LucideIcons.clock,
+            color: Colors.orange,
+            isSelected: filter.status == 'Pending',
+            onTap: () {
+              filterNotifier.setStatus(filter.status == 'Pending' ? 'All' : 'Pending');
+            },
+          ),
+          const SizedBox(width: 8),
+          _buildOrderSummaryCard(
+            title: 'Completed',
+            count: '$completedCount',
+            icon: LucideIcons.checkCircle,
+            color: Colors.green,
+            isSelected: filter.status == 'Completed',
+            onTap: () {
+              filterNotifier.setStatus(filter.status == 'Completed' ? 'All' : 'Completed');
+            },
+          ),
+          const SizedBox(width: 8),
+          _buildOrderSummaryCard(
+            title: 'Overdue',
+            count: '$overdueCount',
+            icon: LucideIcons.alertCircle,
+            color: Colors.redAccent,
+            isSelected: filter.status == 'Overdue',
+            onTap: () {
+              filterNotifier.setStatus(filter.status == 'Overdue' ? 'All' : 'Overdue');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderSummaryCard({
+    required String title,
+    required String count,
+    required IconData icon,
+    required Color color,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: isSelected ? color.withOpacity(0.12) : Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : Colors.grey.shade200,
+              width: isSelected ? 1.8 : 1.0,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 16, color: color),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    count,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? color : AppTheme.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? color : AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ordersAsync = ref.watch(filteredOrdersListProvider);
+    final allOrdersAsync = ref.watch(ordersListProvider);
     final filter = ref.watch(ordersFilterProvider);
     final filterNotifier = ref.read(ordersFilterProvider.notifier);
 
@@ -133,6 +259,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   filterNotifier.setSearchQuery(val);
                 },
               ),
+            ),
+            allOrdersAsync.maybeWhen(
+              data: (allOrders) => _buildSummaryCards(ref, allOrders, filter),
+              orElse: () => const SizedBox.shrink(),
             ),
             // Active Filter Chips (Only shown if filters are active)
             if (hasActiveFilters)
