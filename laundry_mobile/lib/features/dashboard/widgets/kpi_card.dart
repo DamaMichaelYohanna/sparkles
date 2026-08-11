@@ -6,6 +6,7 @@ class KpiCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color? color;
+  final VoidCallback? onTap;
 
   const KpiCard({
     Key? key,
@@ -13,6 +14,7 @@ class KpiCard extends StatelessWidget {
     required this.value,
     required this.icon,
     this.color,
+    this.onTap,
   }) : super(key: key);
 
   @override
@@ -20,8 +22,11 @@ class KpiCard extends StatelessWidget {
     final themeColor = color ?? AppTheme.primaryColor;
     
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
         child: Row(
           children: [
             Container(

@@ -12,6 +12,7 @@ import '../finance/providers/expenses_provider.dart';
 import '../finance/finance_report_generator.dart';
 import '../finance/expenses_screen.dart';
 import '../settings/profile_screen.dart';
+import '../orders/providers/orders_provider.dart';
 
 /// Reactive provider watching userProfileProvider for real-time tier updates.
 final _tierProvider = Provider.autoDispose<String>((ref) {
@@ -367,6 +368,12 @@ class AnalysisScreen extends ConsumerWidget {
                       icon: LucideIcons.trendingUp,
                       color: AppTheme.primaryColor,
                       gradientColors: [AppTheme.primaryColor, AppTheme.primaryDark],
+                      onTap: () {
+                        final filterNotifier = ref.read(ordersFilterProvider.notifier);
+                        filterNotifier.reset();
+                        filterNotifier.setDateRange(filter.dateRange);
+                        ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                      },
                     ),
                     _buildMetricCard(
                       title: 'Collected',
@@ -374,6 +381,13 @@ class AnalysisScreen extends ConsumerWidget {
                       icon: LucideIcons.checkCircle2,
                       color: Colors.green,
                       gradientColors: [Colors.green.shade600, Colors.green.shade800],
+                      onTap: () {
+                        final filterNotifier = ref.read(ordersFilterProvider.notifier);
+                        filterNotifier.reset();
+                        filterNotifier.setPaymentStatus('Fully Paid');
+                        filterNotifier.setDateRange(filter.dateRange);
+                        ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                      },
                     ),
                     _buildMetricCard(
                       title: 'Outstanding',
@@ -381,6 +395,13 @@ class AnalysisScreen extends ConsumerWidget {
                       icon: LucideIcons.alertTriangle,
                       color: Colors.redAccent,
                       gradientColors: [Colors.redAccent.shade200, Colors.redAccent.shade700],
+                      onTap: () {
+                        final filterNotifier = ref.read(ordersFilterProvider.notifier);
+                        filterNotifier.reset();
+                        filterNotifier.setPaymentStatus('Unpaid');
+                        filterNotifier.setDateRange(filter.dateRange);
+                        ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                      },
                     ),
                     _buildMetricCard(
                       title: 'Collection Rate',
@@ -389,6 +410,12 @@ class AnalysisScreen extends ConsumerWidget {
                       color: Colors.orange,
                       gradientColors: [Colors.orange.shade500, Colors.orange.shade700],
                       subtitle: '${stats.totalOrdersCount} Total Orders',
+                      onTap: () {
+                        final filterNotifier = ref.read(ordersFilterProvider.notifier);
+                        filterNotifier.reset();
+                        filterNotifier.setDateRange(filter.dateRange);
+                        ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                      },
                     ),
                   ],
                 ),
@@ -608,7 +635,7 @@ class AnalysisScreen extends ConsumerWidget {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                 ),
                 const SizedBox(height: 12),
-                _buildOperationsCard(stats),
+                _buildOperationsCard(stats, ref),
                 const SizedBox(height: 24),
 
                 // Periodic Order Summaries
@@ -641,11 +668,19 @@ class AnalysisScreen extends ConsumerWidget {
 
 
 
-  Widget _buildOperationsCard(AnalysisStats stats) {
+  Widget _buildOperationsCard(AnalysisStats stats, WidgetRef ref) {
     final total = stats.completedOrdersCount + stats.pendingOrdersCount + stats.overdueOrdersCount;
     final compPercent = total > 0 ? (stats.completedOrdersCount / total) * 100 : 0.0;
     final pendPercent = total > 0 ? (stats.pendingOrdersCount / total) * 100 : 0.0;
     final overPercent = total > 0 ? (stats.overdueOrdersCount / total) * 100 : 0.0;
+
+    void navigateToFilteredOrders(String status) {
+      final filterNotifier = ref.read(ordersFilterProvider.notifier);
+      filterNotifier.reset();
+      filterNotifier.setStatus(status);
+      filterNotifier.setDateRange('All Time');
+      ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+    }
 
     return Card(
       child: Padding(
@@ -698,13 +733,34 @@ class AnalysisScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // Legends row
+            // Legends row (tappable)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildLegendItem('Completed', stats.completedOrdersCount, compPercent, Colors.green),
-                _buildLegendItem('Pending', stats.pendingOrdersCount, pendPercent, Colors.orange),
-                _buildLegendItem('Overdue', stats.overdueOrdersCount, overPercent, Colors.red),
+                InkWell(
+                  onTap: () => navigateToFilteredOrders('Completed'),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: _buildLegendItem('Completed', stats.completedOrdersCount, compPercent, Colors.green),
+                  ),
+                ),
+                InkWell(
+                  onTap: () => navigateToFilteredOrders('Pending'),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: _buildLegendItem('Pending', stats.pendingOrdersCount, pendPercent, Colors.orange),
+                  ),
+                ),
+                InkWell(
+                  onTap: () => navigateToFilteredOrders('Overdue'),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: _buildLegendItem('Overdue', stats.overdueOrdersCount, overPercent, Colors.red),
+                  ),
+                ),
               ],
             ),
           ],
@@ -825,69 +881,79 @@ class AnalysisScreen extends ConsumerWidget {
     required Color color,
     required List<Color> gradientColors,
     String? subtitle,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: gradientColors,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      padding: const EdgeInsets.all(14.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+          padding: const EdgeInsets.all(14.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Icon(icon, color: Colors.white, size: 18),
+                ],
               ),
-              Icon(icon, color: Colors.white, size: 18),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      value,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

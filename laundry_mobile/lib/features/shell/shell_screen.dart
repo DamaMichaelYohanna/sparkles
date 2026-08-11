@@ -17,11 +17,10 @@ class ShellScreen extends ConsumerStatefulWidget {
 }
 
 class _ShellScreenState extends ConsumerState<ShellScreen> {
-  int _currentIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     final isAdmin = ref.watch(isAdminProvider);
+    final currentIndex = ref.watch(bottomNavIndexProvider);
 
     final List<Widget> screens = [
       const DashboardScreen(),
@@ -31,7 +30,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     ];
 
     // Align current index in case screens list size changes dynamically
-    final actualIndex = _currentIndex >= screens.length ? 0 : _currentIndex;
+    final actualIndex = currentIndex >= screens.length ? 0 : currentIndex;
 
     return Scaffold(
       body: IndexedStack(
@@ -50,7 +49,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: actualIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          onTap: (index) => ref.read(bottomNavIndexProvider.notifier).setIndex(index),
           backgroundColor: Colors.white,
           selectedItemColor: AppTheme.textPrimary,
           unselectedItemColor: AppTheme.textSecondary.withOpacity(0.4),

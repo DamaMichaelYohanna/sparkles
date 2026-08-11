@@ -22,6 +22,17 @@ final lastSyncTimestampProvider = NotifierProvider<LastSyncTimestampNotifier, Da
   return LastSyncTimestampNotifier();
 });
 
+class BottomNavIndexNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void setIndex(int index) => state = index;
+}
+
+final bottomNavIndexProvider = NotifierProvider<BottomNavIndexNotifier, int>(() {
+  return BottomNavIndexNotifier();
+});
+
 final syncRepositoryProvider = Provider<SyncRepository>((ref) {
   return SyncRepository(ref);
 });

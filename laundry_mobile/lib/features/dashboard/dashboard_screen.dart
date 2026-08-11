@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/dashboard_provider.dart';
+import '../orders/providers/orders_provider.dart';
 import '../../core/models/dashboard_stats_model.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -289,18 +290,39 @@ class _DashboardBody extends ConsumerWidget {
                   value: '${stats.pendingOrders}',
                   icon: LucideIcons.clock,
                   color: Colors.orange,
+                  onTap: () {
+                    final filterNotifier = ref.read(ordersFilterProvider.notifier);
+                    filterNotifier.reset();
+                    filterNotifier.setStatus('Pending');
+                    filterNotifier.setDateRange('All Time');
+                    ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                  },
                 ),
                 KpiCard(
                   title: 'Completed',
                   value: '${stats.completedOrders}',
                   icon: LucideIcons.checkCircle,
                   color: AppTheme.primaryColor,
+                  onTap: () {
+                    final filterNotifier = ref.read(ordersFilterProvider.notifier);
+                    filterNotifier.reset();
+                    filterNotifier.setStatus('Completed');
+                    filterNotifier.setDateRange('All Time');
+                    ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                  },
                 ),
                 KpiCard(
                   title: 'Overdue',
                   value: '${stats.overdueOrders}',
                   icon: LucideIcons.alertCircle,
                   color: Colors.red,
+                  onTap: () {
+                    final filterNotifier = ref.read(ordersFilterProvider.notifier);
+                    filterNotifier.reset();
+                    filterNotifier.setStatus('Overdue');
+                    filterNotifier.setDateRange('All Time');
+                    ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                  },
                 ),
               ],
             ),
