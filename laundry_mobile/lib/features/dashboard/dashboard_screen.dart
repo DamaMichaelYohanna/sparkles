@@ -287,6 +287,7 @@ class _DashboardBody extends ConsumerWidget {
                   onTap: () {
                     final filterNotifier = ref.read(ordersFilterProvider.notifier);
                     filterNotifier.reset();
+                    filterNotifier.setDateRange('All Time');
                     ref.read(bottomNavIndexProvider.notifier).setIndex(1);
                   },
                 ),
