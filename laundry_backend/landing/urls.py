@@ -1,8 +1,9 @@
 from django.urls import path
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 from . import views
 
 urlpatterns = [
+    path('favicon.ico', RedirectView.as_view(url='/static/landing/images/favicon.ico', permanent=True)),
     path('', views.landing_page, name='landing-page'),
     path('terms/', views.terms_of_service, name='terms-of-service'),
     path('privacy/', views.privacy_policy, name='privacy-policy'),
