@@ -38,6 +38,7 @@
                     <th>Customer</th>
                     <th>Total</th>
                     <th>Receipt URL</th>
+                    <th style="text-align: right;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -59,10 +60,18 @@
                             <span style="color: #94a3b8;">N/A</span>
                         {% endif %}
                     </td>
+                    <td style="text-align: right;">
+                        <form action="{% url 'delete_order' order.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete order {{ order.tracking_code|default:order.id }}?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #e63946; color: white;">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5">No orders found on the platform yet.</td>
+                    <td colspan="6">No orders found on the platform yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>

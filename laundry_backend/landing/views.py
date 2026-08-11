@@ -700,3 +700,55 @@ def delete_ticket(request, pk):
             logger.error("Error deleting ticket: %s", e)
             messages.error(request, "Unable to delete ticket at this time.")
     return redirect('admin_tickets_list')
+
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def admin_orders_list(request):
+    orders_qs = Order.objects.select_related('office', 'current_status').filter(is_deleted=False).order_by('-created_at')
+    
+    # Filter by office
+    selected_office_id = request.GET.get('office_id', '').strip()
+    if selected_office_id:
+        orders_qs = orders_qs.filter(office_id=selected_office_id)
+        
+    # Filter by status
+    selected_status = request.GET.get('status', '').strip()
+    if selected_status:
+        orders_qs = orders_qs.filter(current_status__name__iexact=selected_status)
+
+    # Search filter
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        orders_qs = orders_qs.filter(
+            Q(customer_name__icontains=search_query) |
+            Q(customer_phone__icontains=search_query) |
+            Q(tracking_code__icontains=search_query) |
+            Q(office__name__icontains=search_query)
+        )
+
+    offices = LaundryOffice.objects.all().order_by('name')
+    total_count = orders_qs.count()
+
+    context = {
+        'orders': orders_qs[:200],
+        'offices': offices,
+        'selected_office_id': selected_office_id,
+        'selected_status': selected_status,
+        'search_query': search_query,
+        'total_count': total_count,
+    }
+    return render(request, 'landing/orders.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def delete_order(request, pk):
+    if request.method == 'POST':
+        order = get_object_or_404(Order, pk=pk)
+        tracking = order.tracking_code or str(order.id)[:8]
+        order.is_deleted = True
+        order.save(update_fields=['is_deleted'])
+        messages.success(request, f"Order #{tracking} has been deleted successfully.")
+    
+    next_url = request.META.get('HTTP_REFERER') or reverse('admin_orders_list')
+    return redirect(next_url)
+

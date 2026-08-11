@@ -27,6 +27,7 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">📊 Overview</a>
+                <a href="{% url 'admin_orders_list' %}" class="{% if 'order' in request.resolver_match.url_name %}active{% endif %}">📋 Platform Orders</a>
                 <a href="{% url 'offices_list' %}" class="{% if request.resolver_match.url_name == 'offices_list' %}active{% endif %}">🏢 Offices</a>
                 <a href="{% url 'subscriptions_view' %}" class="{% if request.resolver_match.url_name == 'subscriptions_view' %}active{% endif %}">💳 Subscriptions</a>
                 <a href="{% url 'subscription_logs_view' %}" class="{% if request.resolver_match.url_name == 'subscription_logs_view' %}active{% endif %}">📜 Paystack Logs</a>

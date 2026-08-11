@@ -318,6 +318,39 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                               ),
                             );
                           },
+                          onLongPress: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogCtx) => AlertDialog(
+                                title: const Text('Delete Order'),
+                                content: Text('Are you sure you want to delete order #${order.displayId}?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(dialogCtx, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(dialogCtx, true),
+                                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              await DatabaseHelper.instance.softDeleteOrder(order.id);
+                              ref.invalidate(ordersListProvider);
+                              ref.invalidate(recentOrdersProvider);
+                              ref.invalidate(dashboardStatsProvider);
+                              ref.invalidate(rawAnalysisOrdersProvider);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Order deleted')),
+                                );
+                              }
+                            }
+                          },
                         ),
                       );
                     },

@@ -472,11 +472,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
             icon: const Icon(LucideIcons.printer, color: AppTheme.primaryColor),
             onPressed: _handleReceiptActions,
           ),
-          if (isAdmin)
-            IconButton(
-              icon: const Icon(LucideIcons.trash2, color: Colors.redAccent),
-              onPressed: _deleteOrder,
-            ),
+          IconButton(
+            icon: const Icon(LucideIcons.trash2, color: Colors.redAccent),
+            onPressed: _deleteOrder,
+          ),
           const SizedBox(width: 8),
         ],
       ),
