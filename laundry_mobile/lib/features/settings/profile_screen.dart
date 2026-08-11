@@ -170,18 +170,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           {
             'id': 'pro',
             'name': 'Pro Tier',
-            'price': '₦7,500',
+            'price': '₦5,000',
             'period': '/ month',
             'desc': 'Grow your multi-location laundry business.',
-            'features': ['Unlimited Orders', 'Up to 3 Store Locations', 'Up to 10 Staff Accounts', 'Inventory & Expense Tracking', 'WhatsApp Notifications', 'Rider & Delivery Management'],
+            'features': ['Unlimited Orders', 'Up to 3 Store Locations', 'Up to 10 Staff Accounts', 'Inventory & Expense Tracking', 'WhatsApp Notifications'],
           },
           {
             'id': 'premium',
             'name': 'Premium Tier',
-            'price': '₦15,000',
+            'price': '₦10,000',
             'period': '/ month',
             'desc': 'Full operational suite and scaling tools.',
             'features': ['Unlimited Store Locations', 'Unlimited Staff Accounts', 'Automated Marketing Campaigns', 'Loyalty & Subscriptions', 'Advanced Analytics & P/L', 'Priority 24/7 Support'],
+          },
+          {
+            'id': 'custom',
+            'name': 'Custom Plan',
+            'price': 'Contact Us',
+            'period': '',
+            'desc': 'Tailored features & dedicated infrastructure.',
+            'features': ['Custom Location & Staff Limits', 'Dedicated Deployment & SLA', 'Custom API Integrations', 'Contact: codewithdama@gmail.com'],
           },
         ];
 
@@ -348,6 +356,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                               return;
                                             }
                                             
+                                            if (plan['id'] == 'custom') {
+                                              await _launchUrl('mailto:codewithdama@gmail.com?subject=Sparkles%20Custom%20Plan%20Inquiry');
+                                              return;
+                                            }
+                                            
                                             final navigator = Navigator.of(context);
                                             bool loaderShowed = true;
                                             showDialog(
@@ -390,7 +403,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                               }
                                             }
                                           },
-                                    child: Text(isCurrent ? 'Current Plan' : 'Upgrade to ${plan['name']}'),
+                                    child: Text(isCurrent ? 'Current Plan' : (plan['id'] == 'custom' ? 'Contact Us' : 'Upgrade to ${plan['name']}')),
                                   ),
                                 ),
                               ],

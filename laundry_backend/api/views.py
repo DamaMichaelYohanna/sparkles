@@ -444,8 +444,8 @@ class InitializeSubscriptionView(APIView):
             
         prices = {
             'starter': 250000, # ₦2,500
-            'pro': 750000,     # ₦7,500
-            'premium': 1500000  # ₦15,000
+            'pro': 500000,     # ₦5,000
+            'premium': 1000000 # ₦10,000
         }
         amount_kobo = prices[tier]
         reference = f"sub_{uuid.uuid4().hex[:12]}"
