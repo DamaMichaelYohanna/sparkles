@@ -13,6 +13,7 @@ urlpatterns = [
     path('dashboard/offices/', views.offices_list, name='offices_list'),
     path('dashboard/offices/<uuid:pk>/delete/', views.delete_office, name='delete_office'),
     path('dashboard/users/', views.users_list, name='users_list'),
+    path('dashboard/users/send-email/', views.send_user_email, name='send_user_email'),
     path('dashboard/users/<uuid:pk>/toggle/', views.toggle_user_active, name='toggle_user_active'),
     path('dashboard/users/<uuid:pk>/toggle-staff/', views.toggle_user_staff, name='toggle_user_staff'),
     path('dashboard/users/<uuid:pk>/delete/', views.delete_user, name='delete_user'),

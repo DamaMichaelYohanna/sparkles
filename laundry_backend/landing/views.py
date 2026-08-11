@@ -228,6 +228,74 @@ def users_list(request):
     return render(request, 'landing/users.html', context)
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def send_user_email(request):
+    if request.method == 'POST':
+        import logging
+        from threading import Thread
+        logger = logging.getLogger(__name__)
+
+        target_type = request.POST.get('target_type')
+        subject = request.POST.get('subject', '').strip()
+        message_body = request.POST.get('message_body', '').strip()
+        cta_text = request.POST.get('cta_text', '').strip() or None
+        cta_link = request.POST.get('cta_link', '').strip() or None
+        single_email = request.POST.get('single_email', '').strip()
+        
+        if not subject or not message_body:
+            messages.error(request, "Subject and Message Body are required.")
+            return redirect('users_list')
+            
+        all_active_users = User.objects.filter(is_active=True).exclude(email__isnull=True).exclude(email='')
+
+        # Determine recipients
+        if target_type == 'all':
+            recipients = all_active_users
+        elif target_type == 'staff':
+            recipients = all_active_users.filter(Q(is_staff=True) | Q(is_superuser=True))
+        elif target_type == 'customer':
+            recipients = all_active_users.filter(is_staff=False, is_superuser=False)
+        elif target_type == 'single':
+            if not single_email:
+                messages.error(request, "Specific email address is required.")
+                return redirect('users_list')
+            
+            class TempEntry:
+                def __init__(self, email):
+                    self.email = email
+            recipients = [TempEntry(single_email)]
+        else:
+            messages.error(request, "Invalid target type.")
+            return redirect('users_list')
+            
+        recipients_list = list(recipients)
+        if not recipients_list:
+            messages.warning(request, "No user accounts matched your selection or have valid email addresses.")
+            return redirect('users_list')
+            
+        # Send emails in a background thread to prevent blocking
+        def send_user_emails_background(recipients, email_subject, email_body, c_text, c_link):
+            from api.emails import send_custom_user_email
+            for user_entry in recipients:
+                try:
+                    send_custom_user_email(
+                        email=user_entry.email,
+                        subject=email_subject,
+                        message_body=email_body,
+                        cta_text=c_text,
+                        cta_link=c_link
+                    )
+                except Exception as e:
+                    logger.error(f"Error sending custom user email to {user_entry.email}: {e}")
+                    
+        thread = Thread(target=send_user_emails_background, args=(recipients_list, subject, message_body, cta_text, cta_link))
+        thread.daemon = True
+        thread.start()
+        
+        messages.success(request, f"Custom email broadcast started for {len(recipients_list)} user(s) in the background.")
+        
+    return redirect('users_list')
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def settings_view(request):
     # Placeholder for actual settings logic
     context = {}

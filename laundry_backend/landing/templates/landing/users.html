@@ -4,6 +4,60 @@
 {% block header_title %}User Management{% endblock %}
 
 {% block content %}
+<section class="charts-section" style="grid-template-columns: 1fr; margin-bottom: 2rem;">
+    <!-- Compose custom email card for registered users -->
+    <div class="recent-orders-container" id="email-compose-section">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+            <span style="font-size: 1.5rem;">✉️</span>
+            <h3 style="margin: 0; font-size: 1.25rem;">Send Email to Registered Users</h3>
+        </div>
+        
+        <form action="{% url 'send_user_email' %}" method="post">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Recipient Group</label>
+                    <select name="target_type" id="target_type" onchange="toggleSingleEmailField()" style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); background: #ffffff;">
+                        <option value="all">All Active Users ({{ total_count }})</option>
+                        <option value="staff">Internal Staff & Admins Only ({{ staff_count }})</option>
+                        <option value="customer">Customers Only ({{ customer_count }})</option>
+                        <option value="single">Specific Email Address</option>
+                    </select>
+                </div>
+                <div id="single_email_container" style="display: none;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Specific Email Address</label>
+                    <input type="email" name="single_email" id="single_email" placeholder="user@example.com" style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); background: #ffffff;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Subject</label>
+                <input type="text" name="subject" required placeholder="e.g. Important Update Regarding Your Sparkles Account" style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); background: #ffffff;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Message Body</label>
+                <textarea name="message_body" required rows="6" placeholder="Write your message here... It will automatically be wrapped in our branded Sparkles email template with line breaks preserved." style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); resize: vertical; background: #ffffff;"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Button Text (Optional)</label>
+                    <input type="text" name="cta_text" placeholder="e.g. Open App Dashboard" style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); background: #ffffff;">
+                </div>
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--grey-800);">Button Link (Optional)</label>
+                    <input type="url" name="cta_link" placeholder="https://www.sparkles.com.ng" style="width: 100%; padding: 0.8rem; border: 1px solid var(--grey-200); border-radius: 8px; font-family: var(--font-main); background: #ffffff;">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-api" style="padding: 0.8rem 2rem; border: none; font-size: 1rem; cursor: pointer; background: var(--primary); color: white; font-weight: bold; border-radius: 8px;">
+                🚀 Send Email Broadcast
+            </button>
+        </form>
+    </div>
+</section>
+
 <section class="charts-section" style="grid-template-columns: 1fr;">
     <div class="recent-orders-container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
@@ -66,6 +120,11 @@
                     <td>{{ user.date_joined|date:"M d, Y" }}</td>
                     <td style="text-align: right;">
                         <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end;">
+                            {% if user.email %}
+                                <button type="button" onclick="prepareSingleEmail('{{ user.email }}')" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #6c757d; color: white;">
+                                    Email
+                                </button>
+                            {% endif %}
                             {% if user.id != request.user.id %}
                                 <form action="{% url 'toggle_user_active' user.id %}" method="post" style="display: inline;">
                                     {% csrf_token %}
@@ -102,4 +161,32 @@
         </table>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function toggleSingleEmailField() {
+        var targetTypeSelect = document.getElementById('target_type');
+        var singleEmailContainer = document.getElementById('single_email_container');
+        if (targetTypeSelect.value === 'single') {
+            singleEmailContainer.style.display = 'block';
+            document.getElementById('single_email').required = true;
+        } else {
+            singleEmailContainer.style.display = 'none';
+            document.getElementById('single_email').required = false;
+        }
+    }
+
+    function prepareSingleEmail(email) {
+        var targetTypeSelect = document.getElementById('target_type');
+        targetTypeSelect.value = 'single';
+        toggleSingleEmailField();
+        
+        var singleEmailInput = document.getElementById('single_email');
+        singleEmailInput.value = email;
+        
+        document.getElementById('email-compose-section').scrollIntoView({ behavior: 'smooth' });
+        singleEmailInput.focus();
+    }
+</script>
 {% endblock %}
