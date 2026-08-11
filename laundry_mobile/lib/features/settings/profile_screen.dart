@@ -556,17 +556,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               if (isAdmin)
                                 Row(
                                   children: [
-                                    OutlinedButton.icon(
-                                      onPressed: () => _showVerifyDialog(pendingRef, pendingUrl),
-                                      icon: const Icon(LucideIcons.shieldCheck, size: 14),
-                                      label: const Text('Verify'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: AppTheme.primaryColor,
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    if (pendingSub != null) ...[
+                                      OutlinedButton.icon(
+                                        onPressed: () => _showVerifyDialog(pendingRef, pendingUrl),
+                                        icon: const Icon(LucideIcons.shieldCheck, size: 14),
+                                        label: const Text('Verify'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppTheme.primaryColor,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
+                                      const SizedBox(width: 8),
+                                    ],
                                     ElevatedButton.icon(
                                       onPressed: () => _showSubscriptionSheet(tier),
                                       icon: const Icon(Icons.payment, size: 14),

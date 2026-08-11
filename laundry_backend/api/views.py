@@ -477,7 +477,8 @@ class InitializeSubscriptionView(APIView):
             office.preferences['pending_subscription'] = {
                 'reference': reference,
                 'tier': tier,
-                'amount': amount_kobo // 100
+                'amount': amount_kobo // 100,
+                'authorization_url': res['data']['authorization_url']
             }
             office.save()
             logger.info("[Billing] Paystack checkout URL created for user '%s': %s", user.email, res['data']['authorization_url'])
@@ -508,8 +509,14 @@ class VerifySubscriptionView(APIView):
             reference = pending.get('reference')
             
         if not reference:
+            if office.subscription_tier and office.subscription_tier != 'free':
+                return Response({
+                    "status": "success",
+                    "message": f"Your account is currently active on the {office.subscription_tier.capitalize()} plan.",
+                    "tier": office.subscription_tier
+                })
             logger.warning("[Billing] Verify Failed: Missing reference parameter and no pending subscription for user '%s'.", user.email)
-            return Response({"error": "Reference parameter is required or no pending subscription found"}, status=400)
+            return Response({"error": "No pending payment found to verify. Please select a plan to initiate checkout."}, status=400)
             
         logger.info("[Billing] Verifying transaction reference '%s' for office '%s'.", reference, office.name)
         
