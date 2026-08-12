@@ -66,7 +66,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         if (setDialogState != null) setDialogState(() => _isCheckingStatus = false);
         setState(() => _isCheckingStatus = false);
-        ref.refresh(userProfileProvider);
+        ref.invalidate(userProfileProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(res['message'] ?? 'Subscription upgraded successfully!'),
