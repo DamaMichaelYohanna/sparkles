@@ -36,6 +36,11 @@
                         <span style="background: var(--grey-200); padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">
                             {{ office.get_subscription_tier_display }}
                         </span>
+                        {% if office.subscription_expires_at %}
+                            <br><small style="font-size: 0.75rem; color: {% if office.effective_tier == 'free' %}#dc2626{% else %}#555{% endif %};">
+                                Exp: {{ office.subscription_expires_at|date:"M d, Y" }}
+                            </small>
+                        {% endif %}
                     </td>
                     <td>{{ office.created_at|date:"M d, Y" }}</td>
                     <td>

@@ -15,6 +15,35 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isCheckingStatus = false;
 
+  String _formatExpiryDate(String? expiresAtStr, String tier) {
+    if (tier.toLowerCase() == 'free') return 'Free Tier (No Expiry)';
+    if (expiresAtStr == null || expiresAtStr.isEmpty) return 'Active Subscription';
+    try {
+      final expiry = DateTime.parse(expiresAtStr).toLocal();
+      final now = DateTime.now();
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final formatted = '${expiry.day} ${months[expiry.month - 1]} ${expiry.year}';
+      if (expiry.isBefore(now)) {
+        return 'Expired on $formatted';
+      } else {
+        final daysLeft = expiry.difference(now).inDays;
+        return 'Expires on $formatted (${daysLeft == 0 ? "Today" : "$daysLeft days left"})';
+      }
+    } catch (_) {
+      return 'Expires: $expiresAtStr';
+    }
+  }
+
+  bool _isExpired(String? expiresAtStr, String tier) {
+    if (tier.toLowerCase() == 'free' || expiresAtStr == null || expiresAtStr.isEmpty) return false;
+    try {
+      final expiry = DateTime.parse(expiresAtStr);
+      return expiry.isBefore(DateTime.now());
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _launchUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);
     try {
@@ -549,6 +578,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       fontSize: 18,
                                       fontWeight: FontWeight.w900,
                                       color: tier.toString().toLowerCase() == 'free' ? Colors.grey[700] : Colors.green[700],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _formatExpiryDate(profile['subscription_expires_at']?.toString(), tier),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: _isExpired(profile['subscription_expires_at']?.toString(), tier) ? Colors.red[700] : AppTheme.textSecondary,
                                     ),
                                   ),
                                 ],

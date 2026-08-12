@@ -23,7 +23,7 @@ class TierLimitPermission(permissions.BasePermission):
         if not user or not user.office:
             return True
             
-        tier = user.office.subscription_tier
+        tier = user.office.effective_tier
         if not tier or tier.lower() not in ['starter', 'pro', 'premium']:
             tier = 'free'
         else:

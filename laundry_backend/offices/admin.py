@@ -15,8 +15,8 @@ class OfficeUserInline(admin.TabularInline):
 
 @admin.register(LaundryOffice)
 class LaundryOfficeAdmin(admin.ModelAdmin):
-	list_display = ('name', 'subscription_tier', 'contact_info', 'user_count', 'created_at', 'updated_at')
-	list_filter = ('subscription_tier', 'is_deleted', 'created_at')
+	list_display = ('name', 'subscription_tier', 'subscription_expires_at', 'contact_info', 'user_count', 'created_at', 'updated_at')
+	list_filter = ('subscription_tier', 'subscription_expires_at', 'is_deleted', 'created_at')
 	search_fields = ('name', 'contact_info')
 	ordering = ('-created_at',)
 	inlines = [OfficeUserInline]
@@ -39,17 +39,26 @@ class LaundryOfficeAdmin(admin.ModelAdmin):
 	def set_subscription_free(self, request, queryset):
 		queryset.update(subscription_tier='free')
 
-	@admin.action(description='Set selected offices to Starter')
+	@admin.action(description='Set selected offices to Starter (30 Days Expiry)')
 	def set_subscription_starter(self, request, queryset):
-		queryset.update(subscription_tier='starter')
+		for office in queryset:
+			office.subscription_tier = 'starter'
+			office.extend_subscription(days=30)
+			office.save()
 
-	@admin.action(description='Set selected offices to Pro')
+	@admin.action(description='Set selected offices to Pro (30 Days Expiry)')
 	def set_subscription_pro(self, request, queryset):
-		queryset.update(subscription_tier='pro')
+		for office in queryset:
+			office.subscription_tier = 'pro'
+			office.extend_subscription(days=30)
+			office.save()
 
-	@admin.action(description='Set selected offices to Premium')
+	@admin.action(description='Set selected offices to Premium (30 Days Expiry)')
 	def set_subscription_premium(self, request, queryset):
-		queryset.update(subscription_tier='premium')
+		for office in queryset:
+			office.subscription_tier = 'premium'
+			office.extend_subscription(days=30)
+			office.save()
 
 
 @admin.register(User)

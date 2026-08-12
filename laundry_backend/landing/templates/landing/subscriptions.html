@@ -38,7 +38,8 @@
                 <tr>
                     <th>Office</th>
                     <th>Current Plan</th>
-                    <th>Change Plan</th>
+                    <th>Expiry Date</th>
+                    <th>Change Plan / Duration</th>
                     <th>Updated</th>
                 </tr>
             </thead>
@@ -52,6 +53,18 @@
                         </span>
                     </td>
                     <td>
+                        {% if office.subscription_tier == 'free' %}
+                            <span style="color: var(--grey-500); font-size: 0.85rem;">No Expiry (Free)</span>
+                        {% elif office.subscription_expires_at %}
+                            <span style="font-weight: 600; font-size: 0.85rem; color: {% if office.effective_tier == 'free' %}#dc2626{% else %}#16a34a{% endif %};">
+                                {{ office.subscription_expires_at|date:"M d, Y" }}
+                                {% if office.effective_tier == 'free' %}<br><small style="color: #dc2626;">(Expired)</small>{% endif %}
+                            </span>
+                        {% else %}
+                            <span style="color: var(--grey-500); font-size: 0.85rem;">Not Set</span>
+                        {% endif %}
+                    </td>
+                    <td>
                         <form method="post" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
                             {% csrf_token %}
                             <input type="hidden" name="office_id" value="{{ office.id }}">
@@ -60,6 +73,12 @@
                                     <option value="{{ tier_value }}" {% if office.subscription_tier == tier_value %}selected{% endif %}>{{ tier_label }}</option>
                                 {% endfor %}
                             </select>
+                            <select name="expiry_days" style="padding: 0.55rem 0.75rem; border: 1px solid var(--grey-200); border-radius: 10px; background: var(--white); font-family: var(--font-main); color: var(--grey-800); font-size: 0.82rem;">
+                                <option value="30" selected>+30 Days (1 Mo)</option>
+                                <option value="60">+60 Days (2 Mos)</option>
+                                <option value="90">+90 Days (3 Mos)</option>
+                                <option value="365">+365 Days (1 Yr)</option>
+                            </select>
                             <button type="submit" class="btn-api" style="padding: 0.55rem 0.9rem; border: none; font-size: 0.82rem; cursor: pointer;">Save</button>
                         </form>
                     </td>
@@ -67,7 +86,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4">No offices available for subscription management.</td>
+                    <td colspan="5">No offices available for subscription management.</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -38,6 +38,26 @@ class LaundryOffice(BaseModel):
     contact_info = models.CharField(max_length=255, blank=True)
     preferences = models.JSONField(default=dict, blank=True)
     subscription_tier = models.CharField(max_length=20, choices=SUBSCRIPTION_TIERS, default='free', db_index=True)
+    subscription_expires_at = models.DateTimeField(null=True, blank=True, help_text="Date and time when current subscription tier expires")
+
+    def extend_subscription(self, days=30):
+        from django.utils import timezone
+        import datetime
+        now = timezone.now()
+        if self.subscription_expires_at and self.subscription_expires_at > now:
+            self.subscription_expires_at = self.subscription_expires_at + datetime.timedelta(days=days)
+        else:
+            self.subscription_expires_at = now + datetime.timedelta(days=days)
+
+    @property
+    def effective_tier(self):
+        if self.subscription_tier == 'free':
+            return 'free'
+        if self.subscription_expires_at:
+            from django.utils import timezone
+            if self.subscription_expires_at < timezone.now():
+                return 'free'
+        return self.subscription_tier
 
 class OfficeImage(BaseModel):
     office = models.ForeignKey(LaundryOffice, on_delete=models.CASCADE, related_name='images')

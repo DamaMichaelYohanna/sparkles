@@ -355,6 +355,8 @@ class PaystackWebhookView(APIView):
                 if not office.preferences:
                     office.preferences = {}
                 office.preferences['subscription_status'] = 'active'
+                if office.subscription_tier != 'free':
+                    office.extend_subscription(days=30)
                 office.save()
                 logger.info("[Webhook] Activated/Renewed subscription to tier '%s' for office: %s", office.subscription_tier, office.name)
             else:
@@ -545,6 +547,8 @@ class VerifySubscriptionView(APIView):
 
             tier = str(tier).lower()
             office.subscription_tier = tier
+            if tier != 'free':
+                office.extend_subscription(days=30)
             
             # Clear pending subscription if present
             if 'pending_subscription' in preferences:
@@ -595,6 +599,8 @@ class CurrentUserView(APIView):
             "office_name": user.office.name if user.office else None,
             "office_contact_info": user.office.contact_info if user.office else "",
             "subscription_tier": user.office.subscription_tier if user.office else 'free',
+            "effective_subscription_tier": user.office.effective_tier if user.office else 'free',
+            "subscription_expires_at": user.office.subscription_expires_at.isoformat() if (user.office and user.office.subscription_expires_at) else None,
             "office_preferences": user.office.preferences if user.office else {}
         })
 

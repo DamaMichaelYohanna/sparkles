@@ -127,7 +127,15 @@ def subscriptions_view(request):
             if subscription_tier in valid_tiers:
                 old_tier = office.subscription_tier
                 office.subscription_tier = subscription_tier
-                office.save(update_fields=['subscription_tier', 'updated_at'])
+                expiry_days = request.POST.get('expiry_days')
+                
+                if subscription_tier == 'free':
+                    office.subscription_expires_at = None
+                else:
+                    days = int(expiry_days) if (expiry_days and expiry_days.isdigit()) else 30
+                    office.extend_subscription(days=days)
+                    
+                office.save(update_fields=['subscription_tier', 'subscription_expires_at', 'updated_at'])
                 
                 # Log manual change
                 SubscriptionLog.objects.create(
@@ -139,7 +147,12 @@ def subscriptions_view(request):
                     amount=0.00,
                     tier=subscription_tier,
                     status='success',
-                    payload={'old_tier': old_tier, 'new_tier': subscription_tier, 'changed_by': request.user.email}
+                    payload={
+                        'old_tier': old_tier, 
+                        'new_tier': subscription_tier, 
+                        'expires_at': office.subscription_expires_at.isoformat() if office.subscription_expires_at else None,
+                        'changed_by': request.user.email
+                    }
                 )
                 
                 messages.success(request, f"Updated {office.name} to {office.get_subscription_tier_display()} subscription.")
