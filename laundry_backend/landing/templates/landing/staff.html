@@ -1,0 +1,255 @@
+{% extends 'landing/dashboard_base.html' %}
+
+{% block title %}Sparkles Global Dashboard - Staff Management{% endblock %}
+{% block header_title %}Staff Management & Directory{% endblock %}
+
+{% block content %}
+<!-- Staff Overview & Header Banner -->
+<div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 2rem; border-radius: 16px; margin-bottom: 2rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2); position: relative; overflow: hidden;">
+    <div style="position: absolute; right: -20px; bottom: -20px; font-size: 8rem; opacity: 0.08; user-select: none;">🛡️</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; position: relative; z-index: 1;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 2rem;">🛡️</span>
+                <h2 style="margin: 0; font-size: 1.75rem; font-weight: 700; color: #ffffff;">Internal Staff & Admin Management</h2>
+            </div>
+            <p style="margin: 0; color: #94a3b8; font-size: 0.95rem; max-width: 650px;">
+                Manage registered staff members, assign store branch offices, configure administrative access privileges, and create staff accounts directly.
+            </p>
+        </div>
+        <button type="button" onclick="toggleCreateStaffForm()" class="btn-api" style="padding: 0.85rem 1.6rem; border: none; font-size: 0.95rem; cursor: pointer; background: #38bdf8; color: #0f172a; font-weight: 700; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);">
+            <span>➕</span> Create New Staff Account
+        </button>
+    </div>
+</div>
+
+<!-- Staff KPI Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div style="background: white; padding: 1.5rem; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 1.25rem;">
+        <div style="background: #eff6ff; color: #2563eb; width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem;">👥</div>
+        <div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Total Staff</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #0f172a; line-height: 1.2;">{{ total_staff }}</div>
+        </div>
+    </div>
+
+    <div style="background: white; padding: 1.5rem; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 1.25rem;">
+        <div style="background: #f5f3ff; color: #7c3aed; width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem;">🏢</div>
+        <div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Office Admins</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #7c3aed; line-height: 1.2;">{{ office_admins_count }}</div>
+        </div>
+    </div>
+
+    <div style="background: white; padding: 1.5rem; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 1.25rem;">
+        <div style="background: #f0fdf4; color: #16a34a; width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem;">👑</div>
+        <div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Super Admins</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #16a34a; line-height: 1.2;">{{ super_admins_count }}</div>
+        </div>
+    </div>
+
+    <div style="background: white; padding: 1.5rem; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 1.25rem;">
+        <div style="background: #fff7ed; color: #ea580c; width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem;">📍</div>
+        <div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Active Offices</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #ea580c; line-height: 1.2;">{{ assigned_offices_count }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Inline Create Staff Account Form Section -->
+<div id="create-staff-card" style="display: none; margin-bottom: 2rem; background: white; border-radius: 16px; border: 2px solid #38bdf8; box-shadow: 0 12px 30px -10px rgba(56, 189, 248, 0.2); padding: 2rem; transition: all 0.3s ease;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 1.5rem; background: #e0f2fe; color: #0284c7; padding: 0.5rem; border-radius: 10px;">👤</span>
+            <div>
+                <h3 style="margin: 0; font-size: 1.25rem; color: #0f172a;">Create Staff Account</h3>
+                <p style="margin: 0; color: #64748b; font-size: 0.85rem;">Register a new staff member and assign their primary laundry office.</p>
+            </div>
+        </div>
+        <button type="button" onclick="toggleCreateStaffForm()" style="background: #f1f5f9; border: none; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 1rem; color: #64748b;">✕</button>
+    </div>
+
+    <form action="{% url 'create_staff_user' %}" method="post">
+        {% csrf_token %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: #334155; font-size: 0.88rem;">Username <span style="color: #ef4444;">*</span></label>
+                <input type="text" name="username" required placeholder="e.g. john_staff" style="width: 100%; padding: 0.75rem 0.9rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: var(--font-main); font-size: 0.9rem; background: #f8fafc;">
+            </div>
+
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: #334155; font-size: 0.88rem;">Email Address <span style="color: #ef4444;">*</span></label>
+                <input type="email" name="email" required placeholder="staff@sparkles.com.ng" style="width: 100%; padding: 0.75rem 0.9rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: var(--font-main); font-size: 0.9rem; background: #f8fafc;">
+            </div>
+
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: #334155; font-size: 0.88rem;">Password <span style="color: #ef4444;">*</span></label>
+                <input type="password" name="password" required placeholder="••••••••" minlength="6" style="width: 100%; padding: 0.75rem 0.9rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: var(--font-main); font-size: 0.9rem; background: #f8fafc;">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: #334155; font-size: 0.88rem;">First Name</label>
+                <input type="text" name="first_name" placeholder="John" style="width: 100%; padding: 0.75rem 0.9rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: var(--font-main); font-size: 0.9rem; background: #ffffff;">
+            </div>
+
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: #334155; font-size: 0.88rem;">Last Name</label>
+                <input type="text" name="last_name" placeholder="Doe" style="width: 100%; padding: 0.75rem 0.9rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: var(--font-main); font-size: 0.9rem; background: #ffffff;">
+            </div>
+
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 0.4rem; color: #334155; font-size: 0.88rem;">Assigned Laundry Office</label>
+                <select name="office" style="width: 100%; padding: 0.75rem 0.9rem; border: 1px solid #cbd5e1; border-radius: 8px; font-family: var(--font-main); font-size: 0.9rem; background: #ffffff;">
+                    <option value="">-- Unassigned (Global / Float Staff) --</option>
+                    {% for office in offices %}
+                        <option value="{{ office.id }}">{{ office.name }} (Tier: {{ office.get_subscription_tier_display }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem; background: #f8fafc; padding: 0.85rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <input type="checkbox" name="is_office_admin" id="is_office_admin" style="width: 18px; height: 18px; cursor: pointer; accent-color: #0f172a;">
+            <label for="is_office_admin" style="font-weight: 600; color: #334155; font-size: 0.88rem; cursor: pointer; margin: 0;">
+                Grant Office Admin Rights <span style="font-weight: 400; color: #64748b;">(Allows staff to manage branch inventory, staff, & POS pricing)</span>
+            </label>
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button type="button" onclick="toggleCreateStaffForm()" class="btn-api" style="padding: 0.75rem 1.5rem; border: none; font-size: 0.9rem; cursor: pointer; background: #94a3b8; color: white; font-weight: 600; border-radius: 8px;">
+                Cancel
+            </button>
+            <button type="submit" class="btn-api" style="padding: 0.75rem 1.8rem; border: none; font-size: 0.9rem; cursor: pointer; background: #0f172a; color: white; font-weight: 700; border-radius: 8px; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);">
+                🚀 Save & Create Staff Account
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Staff Members Roster Table -->
+<section class="charts-section" style="grid-template-columns: 1fr;">
+    <div class="recent-orders-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a;">Staff Roster</h3>
+                <span style="font-size: 0.85rem; color: #64748b;">Showing {{ staff_users|length }} staff member(s)</span>
+            </div>
+            <a href="{% url 'users_list' %}" style="text-decoration: none; font-size: 0.85rem; color: #0284c7; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;">
+                View Customer Accounts →
+            </a>
+        </div>
+        
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>Staff Member</th>
+                    <th>Email</th>
+                    <th>Laundry Office</th>
+                    <th>Role / Access Level</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in staff_users %}
+                <tr>
+                    <td style="font-weight: 600;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 38px; height: 38px; border-radius: 50%; background: #475569; color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; text-transform: uppercase;">
+                                {{ user.first_name|default:user.username|slice:":1" }}{{ user.last_name|slice:":1" }}
+                            </div>
+                            <div>
+                                <div style="color: #0f172a; font-weight: 700;">
+                                    {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}
+                                </div>
+                                <div style="font-size: 0.78rem; color: #64748b; font-weight: 400;">@{{ user.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.email|default:"N/A" }}</td>
+                    <td>
+                        {% if user.office %}
+                            <span style="background: #f1f5f9; color: #334155; padding: 0.25rem 0.65rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                🏢 {{ user.office.name }}
+                            </span>
+                        {% else %}
+                            <span style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">Global / Unassigned</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_superuser %}
+                            <span style="background: #0284c7; color: white; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Super Admin</span>
+                        {% elif user.is_office_admin %}
+                            <span style="background: #7c3aed; color: white; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Office Admin</span>
+                        {% else %}
+                            <span style="background: #475569; color: white; padding: 0.25rem 0.65rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Staff Operator</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_active %}
+                            <span style="background: #10b981; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Active</span>
+                        {% else %}
+                            <span style="background: #f59e0b; color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Blocked</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 0.4rem; justify-content: flex-end;">
+                            {% if user.id != request.user.id %}
+                                <form action="{% url 'toggle_user_active' user.id %}" method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: {% if user.is_active %}#f59e0b{% else %}#10b981{% endif %}; color: white; font-weight: 600;">
+                                        {% if user.is_active %}Block{% else %}Unblock{% endif %}
+                                    </button>
+                                </form>
+
+                                {% if request.user.is_superuser %}
+                                    <form action="{% url 'toggle_user_staff' user.id %}" method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #64748b; color: white; font-weight: 600;" title="Toggle Staff status">
+                                            Remove Staff
+                                        </button>
+                                    </form>
+
+                                    <form action="{% url 'delete_user' user.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete staff account {{ user.username }}? This action is permanent.');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-api" style="padding: 0.35rem 0.75rem; border: none; font-size: 0.8rem; cursor: pointer; background: #ef4444; color: white; font-weight: 600;">
+                                            Delete
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% else %}
+                                <span style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">Self (Current User)</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2.5rem; color: #64748b;">No staff members registered yet. Click "Create New Staff Account" above to add team members.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function toggleCreateStaffForm() {
+        var card = document.getElementById('create-staff-card');
+        if (card.style.display === 'none' || card.style.display === '') {
+            card.style.display = 'block';
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            card.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

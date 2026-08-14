@@ -199,3 +199,43 @@ class AuthDashboardTests(TestCase):
         self.assertEqual(response.status_code, 302)
         ticket.refresh_from_db()
         self.assertFalse(ticket.is_deleted)
+
+    def test_staff_list_view_access(self):
+        self.client.login(username='staffuser', password='Password123!')
+        response = self.client.get(reverse('staff_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'landing/staff.html')
+        self.assertIn('staff_users', response.context)
+        self.assertEqual(len(response.context['staff_users']), 2) # staffuser + superadmin
+
+    def test_create_staff_user_success(self):
+        office = LaundryOffice.objects.create(name="Central Branch")
+        self.client.login(username='superadmin', password='Password123!')
+        response = self.client.post(reverse('create_staff_user'), {
+            'username': 'new_staff_member',
+            'email': 'newstaff@sparkles.com.ng',
+            'first_name': 'New',
+            'last_name': 'Staff',
+            'password': 'StaffPassword123!',
+            'office': str(office.id),
+            'is_office_admin': 'on',
+        })
+        self.assertRedirects(response, reverse('staff_list'))
+        created = User.objects.get(username='new_staff_member')
+        self.assertTrue(created.is_staff)
+        self.assertTrue(created.is_office_admin)
+        self.assertEqual(created.email, 'newstaff@sparkles.com.ng')
+        self.assertEqual(created.office, office)
+        self.assertTrue(created.check_password('StaffPassword123!'))
+
+    def test_create_staff_user_validation(self):
+        self.client.login(username='superadmin', password='Password123!')
+        # Attempt to create user with existing username
+        response = self.client.post(reverse('create_staff_user'), {
+            'username': 'staffuser',
+            'email': 'unique_email@sparkles.com.ng',
+            'password': 'Password123!',
+        })
+        self.assertRedirects(response, reverse('staff_list'))
+        self.assertEqual(User.objects.filter(username='staffuser').count(), 1)
+

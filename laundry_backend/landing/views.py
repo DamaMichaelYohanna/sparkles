@@ -216,6 +216,77 @@ def subscription_logs_view(request):
     return render(request, 'landing/subscription_logs.html', context)
 
 @user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def staff_list(request):
+    staff_users = User.objects.select_related('office').filter(
+        Q(is_staff=True) | Q(is_superuser=True)
+    ).order_by('-date_joined')
+    
+    total_staff = staff_users.count()
+    office_admins_count = staff_users.filter(is_office_admin=True).count()
+    super_admins_count = staff_users.filter(is_superuser=True).count()
+    assigned_offices_count = LaundryOffice.objects.filter(users__in=staff_users).distinct().count()
+    
+    offices = LaundryOffice.objects.all().order_by('name')
+    
+    context = {
+        'staff_users': staff_users,
+        'total_staff': total_staff,
+        'office_admins_count': office_admins_count,
+        'super_admins_count': super_admins_count,
+        'assigned_offices_count': assigned_offices_count,
+        'offices': offices,
+    }
+    return render(request, 'landing/staff.html', context)
+
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
+def create_staff_user(request):
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        password = request.POST.get('password', '')
+        office_id = request.POST.get('office', '').strip()
+        is_office_admin = request.POST.get('is_office_admin') == 'on'
+
+        if not username or not email or not password:
+            messages.error(request, "Username, Email, and Password are required to create a staff account.")
+            return redirect('staff_list')
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f"Username '{username}' is already in use.")
+            return redirect('staff_list')
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, f"An account with email '{email}' already exists.")
+            return redirect('staff_list')
+
+        office = None
+        if office_id:
+            try:
+                office = LaundryOffice.objects.get(id=office_id)
+            except (LaundryOffice.DoesNotExist, ValueError):
+                messages.error(request, "Selected office does not exist.")
+                return redirect('staff_list')
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            is_staff=True,
+            is_office_admin=is_office_admin,
+            office=office
+        )
+        messages.success(request, f"Staff account '{user.username}' created successfully!")
+        return redirect('staff_list')
+
+    return redirect('staff_list')
+
+
+@user_passes_test(lambda u: u.is_superuser or u.is_staff)
 def users_list(request):
     all_users_qs = User.objects.select_related('office').all().order_by('-date_joined')
     

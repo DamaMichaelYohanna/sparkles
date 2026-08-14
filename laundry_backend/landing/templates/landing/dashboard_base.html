@@ -31,6 +31,7 @@
                 <a href="{% url 'offices_list' %}" class="{% if request.resolver_match.url_name == 'offices_list' %}active{% endif %}">🏢 Offices</a>
                 <a href="{% url 'subscriptions_view' %}" class="{% if request.resolver_match.url_name == 'subscriptions_view' %}active{% endif %}">💳 Subscriptions</a>
                 <a href="{% url 'subscription_logs_view' %}" class="{% if request.resolver_match.url_name == 'subscription_logs_view' %}active{% endif %}">📜 Paystack Logs</a>
+                <a href="{% url 'staff_list' %}" class="{% if request.resolver_match.url_name == 'staff_list' %}active{% endif %}">🛡️ Staff Directory</a>
                 <a href="{% url 'users_list' %}" class="{% if request.resolver_match.url_name == 'users_list' %}active{% endif %}">👥 Users</a>
                 <a href="{% url 'waitlist_dashboard' %}" class="{% if request.resolver_match.url_name == 'waitlist_dashboard' %}active{% endif %}">📝 Waitlist</a>
                 <a href="{% url 'admin_tickets_list' %}" class="{% if 'ticket' in request.resolver_match.url_name %}active{% endif %}">💬 Support Tickets</a>

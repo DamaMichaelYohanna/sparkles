@@ -73,7 +73,7 @@
                style="text-decoration: none; padding: 0.5rem 1.1rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease; {% if selected_role == 'all' %}background: var(--primary); color: white;{% else %}background: var(--grey-100); color: var(--grey-800);{% endif %}">
                👥 All Users <span style="background: rgba(255,255,255,0.25); padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.75rem;">{{ total_count }}</span>
             </a>
-            <a href="{% url 'users_list' %}?role=staff" 
+            <a href="{% url 'staff_list' %}" 
                style="text-decoration: none; padding: 0.5rem 1.1rem; border-radius: 20px; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease; {% if selected_role == 'staff' %}background: #475569; color: white;{% else %}background: var(--grey-100); color: var(--grey-800);{% endif %}">
                🛡️ Internal Staff <span style="background: rgba(255,255,255,0.25); padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.75rem;">{{ staff_count }}</span>
             </a>
