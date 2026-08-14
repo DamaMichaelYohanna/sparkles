@@ -241,6 +241,7 @@ class AuthDashboardTests(TestCase):
 
     def test_tier_limit_permission_order_limits(self):
         from api.permissions import TierLimitPermission
+        from operations.models import Order
         from unittest.mock import MagicMock
 
         perm = TierLimitPermission()
