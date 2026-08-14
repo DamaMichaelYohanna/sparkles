@@ -258,12 +258,15 @@ class AuthDashboardTests(TestCase):
         request.method = 'POST'
         request.user = user
 
+        from operations.models import OrderStatus
+        status = OrderStatus.objects.create(office=office, name="Pending")
+
         # Under 20 orders -> allowed
         self.assertTrue(perm.has_permission(request, view))
 
         # Create 20 orders for office
         for i in range(20):
-            Order.objects.create(office=office, total_amount=100)
+            Order.objects.create(office=office, current_status=status, customer_name="Test Customer", customer_phone="12345", total_price=100)
 
         # 20 orders -> denied for Free tier
         self.assertFalse(perm.has_permission(request, view))
