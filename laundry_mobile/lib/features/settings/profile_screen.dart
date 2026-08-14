@@ -185,7 +185,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             'price': '₦0',
             'period': '/ month',
             'desc': 'Limited free plan to get started.',
-            'features': ['Point of Sale & Billing', 'Up to 50 orders/month', '1 Store Location', 'Max 1 Staff Account'],
+            'features': ['Point of Sale & Billing', '20 free orders/year', '1 Store Location', 'Max 1 Staff Account'],
           },
           {
             'id': 'starter',
@@ -193,7 +193,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             'price': '₦2,500',
             'period': '/ month',
             'desc': 'Support for standard small operations.',
-            'features': ['Point of Sale & Billing', 'Up to 500 orders/month', '1 Store Location', 'Basic Sales Reports', 'Up to 3 Staff Accounts', 'Email & SMS Receipts'],
+            'features': ['Point of Sale & Billing', '100 orders', '1 Store Location', 'Basic Sales Reports', 'Up to 3 Staff Accounts'],
           },
           {
             'id': 'pro',
@@ -201,7 +201,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             'price': '₦5,000',
             'period': '/ month',
             'desc': 'Grow your multi-location laundry business.',
-            'features': ['Unlimited Orders', 'Up to 3 Store Locations', 'Up to 10 Staff Accounts', 'Inventory & Expense Tracking', 'WhatsApp Notifications'],
+            'features': ['500 orders', 'Up to 3 Store Locations', 'Up to 10 Staff Accounts', 'Inventory & Expense Tracking', 'WhatsApp Notifications'],
           },
           {
             'id': 'premium',
@@ -209,7 +209,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             'price': '₦10,000',
             'period': '/ month',
             'desc': 'Full operational suite and scaling tools.',
-            'features': ['Unlimited Store Locations', 'Unlimited Staff Accounts', 'Automated Marketing Campaigns', 'Loyalty & Subscriptions', 'Advanced Analytics & P/L', 'Priority 24/7 Support'],
+            'features': ['Unlimited Orders', 'Unlimited Store Locations', 'Unlimited Staff Accounts', 'Automated Marketing Campaigns', 'Loyalty & Subscriptions', 'Advanced Analytics & P/L', 'Priority 24/7 Support'],
           },
           {
             'id': 'custom',

@@ -43,20 +43,27 @@ class TierLimitPermission(permissions.BasePermission):
                 self.message = "Pro tier allows a maximum of 10 staff accounts. Please upgrade to Premium."
                 return False
                 
-        # 2. Enforce monthly order creation limit on OrderListCreateView and SyncAPIView
+        # 2. Enforce order creation limit on OrderListCreateView and SyncAPIView
         if view.__class__.__name__ in ['OrderListCreateView', 'SyncAPIView']:
             from django.utils import timezone
             now = timezone.now()
-            current_month_orders = user.office.orders.filter(
-                created_at__year=now.year,
-                created_at__month=now.month
-            ).count()
             
-            if tier == 'free' and current_month_orders >= 50:
-                self.message = "Free tier allows a maximum of 50 orders per month. Please upgrade to Starter, Pro, or Premium."
-                return False
-            elif tier == 'starter' and current_month_orders >= 500:
-                self.message = "Starter tier allows a maximum of 500 orders per month. Please upgrade to Pro or Premium."
-                return False
+            if tier == 'free':
+                current_year_orders = user.office.orders.filter(
+                    created_at__year=now.year
+                ).count()
+                if current_year_orders >= 20:
+                    self.message = "Free tier allows a maximum of 20 orders per year. Please upgrade to Starter, Pro, or Premium."
+                    return False
+            elif tier == 'starter':
+                total_orders = user.office.orders.count()
+                if total_orders >= 100:
+                    self.message = "Starter tier allows a maximum of 100 orders. Please upgrade to Pro or Premium."
+                    return False
+            elif tier == 'pro':
+                total_orders = user.office.orders.count()
+                if total_orders >= 500:
+                    self.message = "Pro tier allows a maximum of 500 orders. Please upgrade to Premium."
+                    return False
                 
         return True

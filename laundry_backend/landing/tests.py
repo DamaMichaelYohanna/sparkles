@@ -239,3 +239,43 @@ class AuthDashboardTests(TestCase):
         self.assertRedirects(response, reverse('staff_list'))
         self.assertEqual(User.objects.filter(username='staffuser').count(), 1)
 
+    def test_tier_limit_permission_order_limits(self):
+        from api.permissions import TierLimitPermission
+        from unittest.mock import MagicMock
+
+        perm = TierLimitPermission()
+        
+        class DummyView:
+            pass
+        DummyView.__name__ = 'OrderListCreateView'
+        view = DummyView()
+
+        office = LaundryOffice.objects.create(name="Free Branch", subscription_tier="free")
+        user = User.objects.create_user(username="free_tier_user", password="Password123!", office=office)
+        
+        request = MagicMock()
+        request.method = 'POST'
+        request.user = user
+
+        # Under 20 orders -> allowed
+        self.assertTrue(perm.has_permission(request, view))
+
+        # Create 20 orders for office
+        for i in range(20):
+            Order.objects.create(office=office, total_amount=100)
+
+        # 20 orders -> denied for Free tier
+        self.assertFalse(perm.has_permission(request, view))
+        self.assertIn("20 orders per year", perm.message)
+
+        # Starter tier -> allowed (20 < 100)
+        office.subscription_tier = "starter"
+        office.save()
+        self.assertTrue(perm.has_permission(request, view))
+
+        # Pro tier -> allowed (20 < 500)
+        office.subscription_tier = "pro"
+        office.save()
+        self.assertTrue(perm.has_permission(request, view))
+
+
