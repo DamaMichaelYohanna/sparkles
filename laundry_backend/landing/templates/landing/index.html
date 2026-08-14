@@ -57,121 +57,109 @@
         </div>
     </header>
 
-    <!-- Early Adopters Showcase Section -->
-    <section id="early-adopters" class="early-adopters-section">
-        <div class="early-adopters-container">
-            <div class="text-center">
-                <div class="adopter-pill-badge">
-                    <i class="fa-solid fa-star"></i> Early Adopter Network
+    <!-- Trusted Partners Showcase Section -->
+    <section id="early-adopters" style="background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 6rem 1.5rem; position: relative; overflow: hidden;">
+        <!-- Glowing ambient light background circles -->
+        <div style="position: absolute; top: -100px; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(15, 23, 42, 0) 70%); pointer-events: none; border-radius: 50%;"></div>
+
+        <div style="max-width: 1140px; margin: 0 auto; position: relative; z-index: 2;">
+            <div style="text-align: center; margin-bottom: 3.5rem;">
+                <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; padding: 0.4rem 1.1rem; border-radius: 30px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1.25rem;">
+                    <i class="fa-solid fa-shield-halved"></i> Verified Enterprise Partners
                 </div>
-                <h2 class="section-title-centered">Trusted by Leading Early Adopters</h2>
-                <p class="section-subtitle-centered">
-                    Forward-thinking dry cleaners and multi-branch laundry hubs streamlining operations with Sparkles.
+                <h2 style="font-size: 2.5rem; font-weight: 800; color: #ffffff; margin-bottom: 0.8rem; letter-spacing: -0.5px;">Trusted by Operational Leaders</h2>
+                <p style="font-size: 1.1rem; color: #94a3b8; max-width: 680px; margin: 0 auto; line-height: 1.6;">
+                    Leading dry cleaning centers and multi-branch laundry hubs actively running daily operations on Sparkles SaaS platform.
                 </p>
             </div>
 
-            <!-- Adopter Cards Grid -->
-            <div class="adopters-grid">
-                <!-- Adopter 1: De Blizz Services Ltd -->
-                <div class="adopter-card">
-                    <div class="adopter-logo-showcase white-bg">
-                        <img src="{% static 'landing/images/de_blizz_logo.png' %}" alt="De Blizz Services Ltd Logo" class="adopter-logo-hero">
-                    </div>
-                    <div class="adopter-card-body">
-                        <div class="adopter-header-info">
-                            <h4 class="adopter-name">De Blizz Services Ltd</h4>
-                            <span class="adopter-location"><i class="fa-solid fa-location-dot"></i> Keffi, Nasarawa, Nigeria</span>
+            <!-- 2 Flagship Partner Cards Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 3.5rem;">
+                
+                <!-- Partner 1: De Blizz Services Ltd -->
+                <div style="background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 2.25rem; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between;" onmouseover="this.style.borderColor='rgba(56, 189, 248, 0.5)'; this.style.transform='translateY(-6px)';" onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.transform='translateY(0)';">
+                    <div>
+                        <!-- Header / Logo -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                            <div style="background: #ffffff; padding: 0.75rem 1.25rem; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; height: 64px;">
+                                <img src="{% static 'landing/images/de_blizz_logo.png' %}" alt="De Blizz Services Ltd Logo" style="max-height: 48px; width: auto; object-fit: contain;">
+                            </div>
+                            <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-circle-check"></i> Verified Partner
+                            </span>
                         </div>
-                        <div class="adopter-features-list">
-                            <div class="adopter-feature-pill"><i class="fa-solid fa-store"></i> 1 Active Branch</div>
-                            <div class="adopter-feature-pill"><i class="fa-solid fa-cloud"></i> Offline Sync Active</div>
+
+                        <h3 style="font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem;">De Blizz Services Ltd</h3>
+                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-location-dot" style="color: #38bdf8;"></i> Keffi, Nasarawa State, Nigeria
                         </div>
-                        <div class="adopter-meta">
-                            <span class="adopter-stat"><i class="fa-solid fa-bolt"></i> 1,000+ Orders Processed</span>
-                            <span class="adopter-tag">Verified Partner</span>
+
+                        <!-- Feature Badges -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
+                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-store" style="color: #38bdf8;"></i> 1 Active Branch
+                            </span>
+                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-bolt" style="color: #fbbf24;"></i> 1,000+ Orders Processed
+                            </span>
+                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-cloud-arrow-down" style="color: #34d399;"></i> Offline Delta Sync
+                            </span>
                         </div>
+
+                        <p style="color: #cbd5e1; font-size: 0.93rem; line-height: 1.6; font-style: italic; border-left: 3px solid #38bdf8; padding-left: 0.85rem; margin-bottom: 0;">
+                            "Sparkles has transformed our multi-counter billing and offline transaction management in Keffi with 100% data reliability."
+                        </p>
                     </div>
                 </div>
 
-                <!-- Adopter 2: Phillz Laundry Services -->
-                <div class="adopter-card">
-                    <div class="adopter-logo-showcase white-bg">
-                        <img src="{% static 'landing/images/phillz_logo.jpg' %}" alt="Phillz Laundry Services Logo" class="adopter-logo-hero">
-                    </div>
-                    <div class="adopter-card-body">
-                        <div class="adopter-header-info">
-                            <h4 class="adopter-name">Phillz Laundry Services</h4>
-                            <span class="adopter-location"><i class="fa-solid fa-location-dot"></i> Keffi, Nasarawa, Nigeria</span>
+                <!-- Partner 2: Bright Drycleaners -->
+                <div style="background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 2.25rem; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between;" onmouseover="this.style.borderColor='rgba(56, 189, 248, 0.5)'; this.style.transform='translateY(-6px)';" onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.transform='translateY(0)';">
+                    <div>
+                        <!-- Header / Logo -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                            <div style="background: #ffffff; padding: 0.5rem 1rem; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; height: 64px;">
+                                <img src="{% static 'landing/images/bright_logo.png' %}" alt="Bright Drycleaners Logo" style="max-height: 52px; width: auto; object-fit: contain;">
+                            </div>
+                            <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-circle-check"></i> Verified Partner
+                            </span>
                         </div>
-                        <div class="adopter-features-list">
-                            <div class="adopter-feature-pill"><i class="fa-solid fa-store"></i> 1 Active Branch</div>
-                            <div class="adopter-feature-pill"><i class="fa-solid fa-receipt"></i> Digital Invoicing</div>
-                        </div>
-                        <div class="adopter-meta">
-                            <span class="adopter-stat"><i class="fa-solid fa-bolt"></i> 100+ Orders Processed</span>
-                            <span class="adopter-tag">Early Adopter</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Adopter 3: Royal Press Drycleaners -->
-                <div class="adopter-card">
-                    <div class="adopter-logo-showcase icon-bg">
-                        <i class="fa-solid fa-shirt adopter-icon-hero"></i>
-                    </div>
-                    <div class="adopter-card-body">
-                        <div class="adopter-header-info">
-                            <h4 class="adopter-name">Royal Press Drycleaners</h4>
-                            <span class="adopter-location"><i class="fa-solid fa-location-dot"></i> Lagos, Nigeria</span>
+                        <h3 style="font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem;">Bright Drycleaners</h3>
+                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-location-dot" style="color: #38bdf8;"></i> Abuja & Keffi, Nigeria
                         </div>
-                        <div class="adopter-features-list">
-                            <div class="adopter-feature-pill"><i class="fa-solid fa-store"></i> 4 Active Branches</div>
-                            <div class="adopter-feature-pill"><i class="fa-brands fa-whatsapp"></i> Auto WhatsApp</div>
-                        </div>
-                        <div class="adopter-meta">
-                            <span class="adopter-stat"><i class="fa-solid fa-bolt"></i> 5,000+ Orders Processed</span>
-                            <span class="adopter-tag">Verified Partner</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Adopter 4: FabriCare Wash Hub -->
-                <div class="adopter-card">
-                    <div class="adopter-logo-showcase icon-bg">
-                        <i class="fa-solid fa-soap adopter-icon-hero"></i>
-                    </div>
-                    <div class="adopter-card-body">
-                        <div class="adopter-header-info">
-                            <h4 class="adopter-name">FabriCare Wash Hub</h4>
-                            <span class="adopter-location"><i class="fa-solid fa-location-dot"></i> Abuja, Nigeria</span>
+                        <!-- Feature Badges -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
+                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-layer-group" style="color: #38bdf8;"></i> Multi-Branch Active
+                            </span>
+                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-cash-register" style="color: #fbbf24;"></i> High-Speed POS
+                            </span>
+                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <i class="fa-solid fa-receipt" style="color: #34d399;"></i> Digital PDF Receipts
+                            </span>
                         </div>
-                        <div class="adopter-features-list">
-                            <div class="adopter-feature-pill"><i class="fa-solid fa-store"></i> 3 Active Branches</div>
-                            <div class="adopter-feature-pill"><i class="fa-solid fa-shield-halved"></i> Multi-Branch Isolation</div>
-                        </div>
-                        <div class="adopter-meta">
-                            <span class="adopter-stat"><i class="fa-solid fa-bolt"></i> 2,500+ Orders Processed</span>
-                            <span class="adopter-tag">Early Adopter</span>
-                        </div>
+
+                        <p style="color: #cbd5e1; font-size: 0.93rem; line-height: 1.6; font-style: italic; border-left: 3px solid #38bdf8; padding-left: 0.85rem; margin-bottom: 0;">
+                            "From instant order creation to branch management, Sparkles provides high speed and operational excellence every single day."
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <!-- Ticker Banner -->
-            <div class="adopter-ticker-wrapper">
-                <span class="ticker-label">EARLY ADOPTERS:</span>
-                <div class="ticker-content">
-                    <span>✨ De Blizz Services Ltd (Keffi)</span>
-                    <span>•</span>
-                    <span>✨ Phillz Laundry Services (Keffi)</span>
-                    <span>•</span>
-                    <span>✨ Royal Press Drycleaners</span>
-                    <span>•</span>
-                    <span>✨ FabriCare Wash Hub</span>
-                    <span>•</span>
-                    <span>✨ Sparkles Executive Care</span>
-                    <span>•</span>
-                    <span>✨ Apex Laundry & Garment</span>
+            <!-- Ticker / Partner Banner -->
+            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; overflow: hidden; flex-wrap: wrap;">
+                <span style="background: #38bdf8; color: #0f172a; font-size: 0.75rem; font-weight: 800; padding: 0.38rem 0.85rem; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; shrink: 0; white-space: nowrap;">
+                    OFFICIAL ENTERPRISE PARTNERS
+                </span>
+                <div style="display: flex; align-items: center; gap: 1.5rem; color: #94a3b8; font-weight: 600; font-size: 0.9rem; flex-wrap: wrap;">
+                    <span>✨ De Blizz Services Ltd (Keffi, Nigeria)</span>
+                    <span style="color: rgba(255,255,255,0.2);">•</span>
+                    <span>✨ Bright Drycleaners (Abuja & Keffi, Nigeria)</span>
                 </div>
             </div>
         </div>
