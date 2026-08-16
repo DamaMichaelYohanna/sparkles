@@ -598,8 +598,9 @@ class CurrentUserView(APIView):
             "office_id": str(user.office.id) if user.office else None,
             "office_name": user.office.name if user.office else None,
             "office_contact_info": user.office.contact_info if user.office else "",
-            "subscription_tier": user.office.subscription_tier if user.office else 'free',
+            "subscription_tier": user.office.effective_tier if user.office else 'free',
             "effective_subscription_tier": user.office.effective_tier if user.office else 'free',
+            "raw_subscription_tier": user.office.subscription_tier if user.office else 'free',
             "subscription_expires_at": user.office.subscription_expires_at.isoformat() if (user.office and user.office.subscription_expires_at) else None,
             "office_preferences": user.office.preferences if user.office else {}
         })
@@ -622,12 +623,16 @@ class RegisterOfficeView(APIView):
             
         logger.info("[Register] Registering new office '%s' with email '%s'...", office_name, email)
         from django.db import transaction
+        from django.utils import timezone
+        import datetime
         try:
             with transaction.atomic():
-                # 1. Create office
+                # 1. Create office with 1-month (30 days) complimentary Pro access
+                subscription_expires_at = timezone.now() + datetime.timedelta(days=30)
                 office = LaundryOffice.objects.create(
                     name=office_name,
-                    subscription_tier='free'
+                    subscription_tier='pro',
+                    subscription_expires_at=subscription_expires_at
                 )
                 
                 # 2. Create user (owner / admin)
@@ -643,7 +648,18 @@ class RegisterOfficeView(APIView):
                 # Link primary branch
                 user.branches.add(office)
                 
-                # 3. Initialize default data (Categories, ServiceTypes, ItemPricing)
+                # 3. Log the complimentary 30-day Pro trial
+                SubscriptionLog.objects.create(
+                    office=office,
+                    customer_email=user.email,
+                    event_type='new',
+                    paystack_event='trial_welcome',
+                    tier='pro',
+                    status='success',
+                    payload={'note': '30-day Pro trial grant on registration'}
+                )
+                
+                # 4. Initialize default data (Categories, ServiceTypes, ItemPricing)
                 clothing = Category.objects.create(office=office, name="Clothing")
                 household = Category.objects.create(office=office, name="Household")
                 
@@ -659,14 +675,21 @@ class RegisterOfficeView(APIView):
                 
             # Send welcome registration email
             from .emails import send_welcome_registration
-            send_welcome_registration(email=user.email, office_name=office.name)
+            send_welcome_registration(
+                email=user.email,
+                office_name=office.name,
+                expires_at=office.subscription_expires_at
+            )
             
-            logger.info("[Register] Successfully registered office '%s' (ID: %s) for admin email '%s'", office.name, office.id, user.email)
+            logger.info("[Register] Successfully registered office '%s' (ID: %s) with 30-day Pro trial for admin email '%s'", office.name, office.id, user.email)
             return Response({
                 "status": "success",
-                "message": "Office and admin account registered successfully.",
+                "message": "Office and admin account registered successfully with 1 month of Pro access.",
                 "office_name": office.name,
-                "email": user.email
+                "email": user.email,
+                "subscription_tier": office.subscription_tier,
+                "effective_subscription_tier": office.effective_tier,
+                "subscription_expires_at": office.subscription_expires_at.isoformat() if office.subscription_expires_at else None
             }, status=201)
         except Exception as e:
             logger.error("[Register] Registration failed for office '%s', email '%s': %s", office_name, email, e, exc_info=True)
@@ -687,7 +710,7 @@ class BranchListCreateView(APIView):
             "id": str(b.id),
             "name": b.name,
             "contact_info": b.contact_info,
-            "subscription_tier": b.subscription_tier,
+            "subscription_tier": b.effective_tier,
             "is_active": user.office_id == b.id
         } for b in branches]
         return Response(data)
@@ -706,7 +729,7 @@ class BranchListCreateView(APIView):
             return Response({"error": "Only office admins / owners can create new branches."}, status=403)
             
         current_branches_count = user.branches.count()
-        tier = user.office.subscription_tier if user.office else 'free'
+        tier = user.office.effective_tier if user.office else 'free'
         if not tier or tier.lower() not in ['starter', 'pro', 'premium']:
             tier = 'free'
         else:

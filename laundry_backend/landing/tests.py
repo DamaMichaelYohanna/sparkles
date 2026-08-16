@@ -283,3 +283,96 @@ class AuthDashboardTests(TestCase):
         self.assertTrue(perm.has_permission(request, view))
 
 
+class RegistrationProTrialTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_registration_assigns_pro_trial_and_logs(self):
+        from offices.models import SubscriptionLog
+        response = self.client.post(
+            reverse('api-register'),
+            data={
+                'office_name': 'Sparkle Cleaners',
+                'email': 'owner@sparklecleaners.com',
+                'password': 'StrongPassword123!'
+            },
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(data['status'], 'success')
+        self.assertEqual(data['subscription_tier'], 'pro')
+        self.assertEqual(data['effective_subscription_tier'], 'pro')
+        self.assertIsNotNone(data['subscription_expires_at'])
+
+        office = LaundryOffice.objects.get(name='Sparkle Cleaners')
+        self.assertEqual(office.subscription_tier, 'pro')
+        self.assertEqual(office.effective_tier, 'pro')
+        self.assertIsNotNone(office.subscription_expires_at)
+
+        # Check SubscriptionLog
+        log = SubscriptionLog.objects.filter(office=office).first()
+        self.assertIsNotNone(log)
+        self.assertEqual(log.tier, 'pro')
+        self.assertEqual(log.event_type, 'new')
+
+    def test_effective_tier_downgrades_to_free_after_expiry(self):
+        from django.utils import timezone
+        import datetime
+
+        # Office registered with expired trial (past date)
+        expired_date = timezone.now() - datetime.timedelta(days=1)
+        office = LaundryOffice.objects.create(
+            name="Expired Pro Office",
+            subscription_tier="pro",
+            subscription_expires_at=expired_date
+        )
+        self.assertEqual(office.effective_tier, "free")
+
+        # Current user endpoint returns effective tier as free
+        from rest_framework.test import APIClient
+        api_client = APIClient()
+        user = User.objects.create_user(
+            username='expired_owner@example.com',
+            email='expired_owner@example.com',
+            password='Password123!',
+            office=office,
+            is_office_admin=True
+        )
+        api_client.force_authenticate(user=user)
+        response = api_client.get(reverse('current-user-detail'))
+        self.assertEqual(response.status_code, 200)
+        user_data = response.json()
+        self.assertEqual(user_data['subscription_tier'], 'free')
+        self.assertEqual(user_data['effective_subscription_tier'], 'free')
+        self.assertEqual(user_data['raw_subscription_tier'], 'pro')
+
+    def test_welcome_email_content_contains_pro_trial(self):
+        from unittest.mock import patch
+        from api.emails import send_welcome_registration
+        from django.utils import timezone
+        import datetime
+
+        expiry = timezone.now() + datetime.timedelta(days=30)
+        with patch('api.emails._send_html_email') as mock_send:
+            mock_send.return_value = True
+            result = send_welcome_registration('trialuser@example.com', 'Elite Wash', expires_at=expiry)
+            self.assertTrue(result)
+            self.assertTrue(mock_send.called)
+
+            args, kwargs = mock_send.call_args
+            subject = args[0]
+            to_email = args[1]
+            html_content = args[2]
+            text_content = args[3]
+
+            self.assertIn("1-Month Free Pro Access", subject)
+            self.assertEqual(to_email, 'trialuser@example.com')
+            self.assertIn("30-Day Pro Access", html_content)
+            self.assertIn("Free plan", html_content)
+            self.assertIn("Up to 500 orders", html_content)
+            self.assertIn("30-day trial", text_content)
+
+
+
+

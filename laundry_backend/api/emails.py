@@ -339,14 +339,36 @@ def send_waitlist_notified(email):
 # ─────────────────────────────────────────────────────────────────────────────
 # 3. Registration — Welcome (sent when a new office registers in the app)
 # ─────────────────────────────────────────────────────────────────────────────
-def send_welcome_registration(email, office_name):
-    subject = f"Welcome to Sparkles — {office_name} is live! 🌟"
+def send_welcome_registration(email, office_name, expires_at=None):
+    subject = f"Welcome to Sparkles — 1-Month Free Pro Access Unlocked! 🌟"
+
+    # Format expiry date string if provided
+    expiry_formatted = ""
+    if expires_at:
+        try:
+            months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            expiry_formatted = f"{expires_at.day} {months[expires_at.month - 1]} {expires_at.year}"
+        except Exception:
+            expiry_formatted = str(expires_at)
+    else:
+        expiry_formatted = "30 days from signup"
 
     text_content = (
         f"Welcome to Sparkles!\n\n"
         f"Congratulations! Your laundry workspace '{office_name}' has been registered successfully.\n"
         f"Your admin account is linked to: {email}\n\n"
-        f"Next Steps:\n"
+        f"🎁 1-MONTH COMPLIMENTARY PRO ACCESS\n"
+        f"To kickstart your business, you have full Pro plan access for 30 days (valid until {expiry_formatted}) at no cost!\n\n"
+        f"Your Pro Access includes:\n"
+        f"• Up to 500 Orders\n"
+        f"• Up to 10 Staff Accounts with role management\n"
+        f"• Multi-Store Branch Management (up to 3 branches)\n"
+        f"• Inventory & Expense Tracking\n"
+        f"• Instant WhatsApp, SMS & Email receipts for customers\n"
+        f"• Advanced sales analytics & daily performance insights\n\n"
+        f"ℹ️ What happens after 30 days?\n"
+        f"After your 30-day trial ends on {expiry_formatted}, your workspace will automatically move to our Free plan with zero surprise charges. All your orders, customer records, and settings remain completely intact. You can upgrade to Starter, Pro, or Premium at any time from your profile.\n\n"
+        f"Next Steps to Get Started:\n"
         f"1. Open the Sparkles app and log in with your email and password.\n"
         f"2. Go to Settings → Services to add your service types (Wash & Iron, Dry Clean, etc.).\n"
         f"3. Add your Item Pricing and Categories.\n"
@@ -359,20 +381,39 @@ def send_welcome_registration(email, office_name):
     )
 
     inner = f"""
-        <div class="badge">Welcome Aboard</div>
+        <div class="badge">🌟 Welcome Gift: 30-Day Pro Access</div>
         <h1 class="headline">Welcome to Sparkles! 🌟</h1>
-        <p class="subline">Your workspace is live and ready to go.</p>
+        <p class="subline">Your workspace is live and upgraded to Pro for your first month.</p>
 
         <div class="info-box">
             <p>
                 <strong>🏢 Office registered:</strong> {office_name}<br>
-                <strong>📧 Admin account:</strong> {email}
+                <strong>📧 Admin account:</strong> {email}<br>
+                <strong>💎 Active Plan:</strong> Pro Tier (Complimentary 1 Month)<br>
+                <strong>📅 Trial Valid Until:</strong> {expiry_formatted}
             </p>
         </div>
 
-        <p>
-            Congratulations — your laundry workspace is fully set up. Here's everything you need
-            to get running in the next 10 minutes:
+        <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 12px; padding: 20px 24px; margin: 20px 0;">
+            <p style="margin-bottom: 8px; color: #a5b4fc; font-weight: 700; font-size: 15px;">
+                ✨ What's unlocked in your 30-Day Pro Trial:
+            </p>
+            <ul style="list-style: none; padding: 0; margin: 0; font-size: 13px; color: #cbd5e1; line-height: 1.8;">
+                <li>🚀 <strong>Up to 500 orders</strong> capacity</li>
+                <li>👥 <strong>Up to 10 staff accounts</strong> with custom permissions</li>
+                <li>🏬 <strong>Multi-branch management</strong> (up to 3 store locations)</li>
+                <li>📦 <strong>Inventory &amp; expense tracking</strong></li>
+                <li>📱 <strong>Instant WhatsApp, SMS &amp; Email receipts</strong> for customers</li>
+                <li>📊 <strong>In-depth revenue analytics &amp; reports</strong></li>
+            </ul>
+        </div>
+
+        <p style="font-size:14px; background: rgba(255,255,255,0.03); border-left: 3px solid #6b7280; padding: 12px 16px; border-radius: 4px;">
+            <strong>ℹ️ After 30 days:</strong> Your account will automatically transition to our <strong>Free plan</strong> with zero unexpected charges. All your customer history, orders, and data remain safe. You can upgrade anytime to maintain Pro or Premium features.
+        </p>
+
+        <p style="margin-top: 24px;">
+            Here's everything you need to get your laundry operations running in the next 10 minutes:
         </p>
 
         <ul class="steps">
@@ -399,7 +440,7 @@ def send_welcome_registration(email, office_name):
         </ul>
 
         <div class="btn-wrapper">
-            <a href="https://www.sparkles.com.ng/#pricing" class="btn">View Subscription Plans →</a>
+            <a href="https://www.sparkles.com.ng/#pricing" class="btn">Explore Sparkles Plans →</a>
         </div>
 
         <hr class="divider">
