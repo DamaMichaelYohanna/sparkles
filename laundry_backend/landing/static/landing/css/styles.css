@@ -2117,5 +2117,133 @@ footer {
     gap: 0.4rem;
 }
 
+/* ==========================================================================
+   Redesigned Partner Carousel Showcase Section
+   ========================================================================== */
+.partner-carousel-section {
+    background: #ffffff;
+    padding: 5rem 1.5rem;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+    position: relative;
+    overflow: hidden;
+}
+
+.partner-carousel-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.partner-carousel-title {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 3.5rem;
+    letter-spacing: -0.02em;
+}
+
+.partner-slider-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    gap: 1.25rem;
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 0.5rem;
+}
+
+.partner-nav-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    z-index: 10;
+    outline: none;
+}
+
+.partner-nav-btn:hover {
+    background: #ffffff;
+    color: #2563eb;
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    border-color: #cbd5e1;
+}
+
+.partner-nav-btn:active {
+    transform: scale(0.95);
+}
+
+.partner-slider-track-container {
+    overflow: hidden;
+    flex: 1;
+    position: relative;
+    padding: 0.75rem 0;
+    mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+}
+
+.partner-slider-track {
+    display: flex;
+    align-items: center;
+    gap: 4rem;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+    white-space: nowrap;
+}
+
+.partner-logo-item {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 52px;
+    padding: 0 0.5rem;
+    transition: transform 0.3s ease, filter 0.3s ease;
+    cursor: pointer;
+    user-select: none;
+}
+
+.partner-logo-item:hover {
+    transform: translateY(-2px) scale(1.05);
+}
+
+@media (max-width: 768px) {
+    .partner-carousel-section {
+        padding: 3.5rem 1rem;
+    }
+
+    .partner-carousel-title {
+        font-size: 1.45rem;
+        margin-bottom: 2.25rem;
+    }
+
+    .partner-slider-track {
+        gap: 2.25rem;
+    }
+
+    .partner-nav-btn {
+        width: 38px;
+        height: 38px;
+    }
+
+    .partner-nav-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+
 
 

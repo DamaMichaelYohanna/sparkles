@@ -57,113 +57,253 @@
         </div>
     </header>
 
-    <!-- Trusted Partners Showcase Section -->
-    <section id="early-adopters" style="background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 6rem 1.5rem; position: relative; overflow: hidden;">
-        <!-- Glowing ambient light background circles -->
-        <div style="position: absolute; top: -100px; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(15, 23, 42, 0) 70%); pointer-events: none; border-radius: 50%;"></div>
+    <!-- Trusted Partners Showcase Section (Redesigned Partner Carousel) -->
+    <section id="early-adopters" class="partner-carousel-section">
+        <div class="partner-carousel-container">
+            <h2 class="partner-carousel-title">Trusted by laundry companies worldwide</h2>
 
-        <div style="max-width: 1140px; margin: 0 auto; position: relative; z-index: 2;">
-            <div style="text-align: center; margin-bottom: 3.5rem;">
-                <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; padding: 0.4rem 1.1rem; border-radius: 30px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1.25rem;">
-                    <i class="fa-solid fa-shield-halved"></i> Verified Enterprise Partners
-                </div>
-                <h2 style="font-size: 2.5rem; font-weight: 800; color: #ffffff; margin-bottom: 0.8rem; letter-spacing: -0.5px;">Trusted by Operational Leaders</h2>
-                <p style="font-size: 1.1rem; color: #94a3b8; max-width: 680px; margin: 0 auto; line-height: 1.6;">
-                    Leading dry cleaning centers and multi-branch laundry hubs actively running daily operations on Sparkles SaaS platform.
-                </p>
-            </div>
+            <div class="partner-slider-wrapper">
+                <button class="partner-nav-btn prev" id="partnerPrevBtn" aria-label="Previous partner logos">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
 
-            <!-- 2 Flagship Partner Cards Grid -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 3.5rem;">
-                
-                <!-- Partner 1: De Blizz Services Ltd -->
-                <div style="background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 2.25rem; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between;" onmouseover="this.style.borderColor='rgba(56, 189, 248, 0.5)'; this.style.transform='translateY(-6px)';" onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.transform='translateY(0)';">
-                    <div>
-                        <!-- Header / Logo -->
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                            <div style="background: #ffffff; padding: 0.75rem 1.25rem; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; height: 64px;">
-                                <img src="{% static 'landing/images/de_blizz_logo.png' %}" alt="De Blizz Services Ltd Logo" style="max-height: 48px; width: auto; object-fit: contain;">
+                <div class="partner-slider-track-container" id="partnerTrackContainer">
+                    <div class="partner-slider-track" id="partnerTrack">
+                        <!-- 1. De Blizz Services Ltd (Deblizz) -->
+                        <div class="partner-logo-item" title="De Blizz Services Ltd">
+                            <img src="{% static 'landing/images/de_blizz_logo.png' %}" alt="De Blizz Services Ltd" style="max-height: 42px; width: auto; object-fit: contain;">
+                        </div>
+
+                        <!-- 2. Phillz Laundry (Philz) -->
+                        <div class="partner-logo-item" title="Phillz Laundry">
+                            <img src="{% static 'landing/images/phillz_logo.jpg' %}" alt="Phillz Laundry" style="max-height: 42px; width: auto; object-fit: contain; border-radius: 6px;">
+                        </div>
+
+                        <!-- 3. Treasureland -->
+                        <div class="partner-logo-item" title="Treasureland Laundry">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <svg viewBox="0 0 40 40" width="38" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="40" height="40" rx="10" fill="url(#treasureGrad)"/>
+                                    <defs>
+                                        <linearGradient id="treasureGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#f59e0b"/>
+                                            <stop offset="1" stop-color="#b45309"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M20 9L24 16L31 17L26 22L27.5 29L20 25L12.5 29L14 22L9 17L16 16L20 9Z" fill="#ffffff"/>
+                                </svg>
+                                <div style="display: flex; flex-direction: column; text-align: left;">
+                                    <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.15rem; color: #1e293b; line-height: 1; letter-spacing: -0.01em;">Treasure<span style="color: #d97706;">land</span></span>
+                                    <span style="font-size: 0.52rem; font-weight: 700; color: #78350f; letter-spacing: 0.8px; margin-top: 3px;">LAUNDRY & DRY CLEANING</span>
+                                </div>
                             </div>
-                            <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <i class="fa-solid fa-circle-check"></i> Verified Partner
-                            </span>
                         </div>
 
-                        <h3 style="font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem;">De Blizz Services Ltd</h3>
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.4rem;">
-                            <i class="fa-solid fa-location-dot" style="color: #38bdf8;"></i> Keffi, Nasarawa State, Nigeria
+                        <!-- 4. ATAFACENU -->
+                        <div class="partner-logo-item" title="ATAFACENU Services">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <svg viewBox="0 0 40 40" width="38" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="40" height="40" rx="10" fill="#1e3a8a"/>
+                                    <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="#3b82f6" stroke-width="2"/>
+                                    <path d="M20 14L25 18V24L20 27L15 24V18L20 14Z" fill="#60a5fa"/>
+                                </svg>
+                                <div style="display: flex; flex-direction: column; text-align: left;">
+                                    <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.15rem; color: #1e3a8a; line-height: 1; letter-spacing: 0.5px;">ATAFACENU</span>
+                                    <span style="font-size: 0.52rem; font-weight: 700; color: #3b82f6; letter-spacing: 1px; margin-top: 3px;">LAUNDRY SERVICES</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Feature Badges -->
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
-                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <i class="fa-solid fa-store" style="color: #38bdf8;"></i> 1 Active Branch
-                            </span>
-                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <i class="fa-solid fa-bolt" style="color: #fbbf24;"></i> 1,000+ Orders Processed
-                            </span>
-                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <i class="fa-solid fa-cloud-arrow-down" style="color: #34d399;"></i> Offline Delta Sync
-                            </span>
+                        <!-- 5. Reality Laundry Services -->
+                        <div class="partner-logo-item" title="Reality Laundry Services">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <svg viewBox="0 0 40 40" width="38" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="20" cy="20" r="18" fill="#0891b2"/>
+                                    <path d="M20 10C20 10 13 18 13 22.5C13 26.366 16.134 29.5 20 29.5C23.866 29.5 27 26.366 27 22.5C27 18 20 10 20 10Z" fill="#ffffff"/>
+                                    <circle cx="17.5" cy="21.5" r="2" fill="#06b6d4"/>
+                                </svg>
+                                <div style="display: flex; flex-direction: column; text-align: left;">
+                                    <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.15rem; color: #0e7490; line-height: 1;">Reality <span style="color: #1e293b; font-weight: 700;">Laundry</span></span>
+                                    <span style="font-size: 0.52rem; font-weight: 700; color: #64748b; letter-spacing: 0.8px; margin-top: 3px;">SERVICES</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <p style="color: #cbd5e1; font-size: 0.93rem; line-height: 1.6; font-style: italic; border-left: 3px solid #38bdf8; padding-left: 0.85rem; margin-bottom: 0;">
-                            "Sparkles has transformed our multi-counter billing and offline transaction management in Keffi with 100% data reliability."
-                        </p>
+                        <!-- 6. DFreeMan Klin Service -->
+                        <div class="partner-logo-item" title="DFreeMan Klin Service">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <svg viewBox="0 0 40 40" width="38" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="40" height="40" rx="10" fill="#059669"/>
+                                    <path d="M12 20C12 15.5817 15.5817 12 20 12C24.4183 12 28 15.5817 28 20C28 24.4183 24.4183 28 20 28C15.5817 28 12 24.4183 12 20Z" stroke="#ffffff" stroke-width="2"/>
+                                    <path d="M16 20L19 23L24 17" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <div style="display: flex; flex-direction: column; text-align: left;">
+                                    <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.15rem; color: #047857; line-height: 1;">DFreeMan</span>
+                                    <span style="font-size: 0.52rem; font-weight: 700; color: #1e293b; letter-spacing: 0.8px; margin-top: 3px;">KLIN SERVICE</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seamless Loop Duplicate Sequence -->
+                        <!-- 1. De Blizz Services Ltd -->
+                        <div class="partner-logo-item" title="De Blizz Services Ltd">
+                            <img src="{% static 'landing/images/de_blizz_logo.png' %}" alt="De Blizz Services Ltd" style="max-height: 42px; width: auto; object-fit: contain;">
+                        </div>
+
+                        <!-- 2. Phillz Laundry -->
+                        <div class="partner-logo-item" title="Phillz Laundry">
+                            <img src="{% static 'landing/images/phillz_logo.jpg' %}" alt="Phillz Laundry" style="max-height: 42px; width: auto; object-fit: contain; border-radius: 6px;">
+                        </div>
+
+                        <!-- 3. Treasureland -->
+                        <div class="partner-logo-item" title="Treasureland Laundry">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <svg viewBox="0 0 40 40" width="38" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="40" height="40" rx="10" fill="url(#treasureGradLoop)"/>
+                                    <defs>
+                                        <linearGradient id="treasureGradLoop" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#f59e0b"/>
+                                            <stop offset="1" stop-color="#b45309"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M20 9L24 16L31 17L26 22L27.5 29L20 25L12.5 29L14 22L9 17L16 16L20 9Z" fill="#ffffff"/>
+                                </svg>
+                                <div style="display: flex; flex-direction: column; text-align: left;">
+                                    <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.15rem; color: #1e293b; line-height: 1; letter-spacing: -0.01em;">Treasure<span style="color: #d97706;">land</span></span>
+                                    <span style="font-size: 0.52rem; font-weight: 700; color: #78350f; letter-spacing: 0.8px; margin-top: 3px;">LAUNDRY & DRY CLEANING</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. ATAFACENU -->
+                        <div class="partner-logo-item" title="ATAFACENU Services">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <svg viewBox="0 0 40 40" width="38" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="40" height="40" rx="10" fill="#1e3a8a"/>
+                                    <path d="M20 8L30 14V26L20 32L10 26V14L20 8Z" stroke="#3b82f6" stroke-width="2"/>
+                                    <path d="M20 14L25 18V24L20 27L15 24V18L20 14Z" fill="#60a5fa"/>
+                                </svg>
+                                <div style="display: flex; flex-direction: column; text-align: left;">
+                                    <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 900; font-size: 1.15rem; color: #1e3a8a; line-height: 1; letter-spacing: 0.5px;">ATAFACENU</span>
+                                    <span style="font-size: 0.52rem; font-weight: 700; color: #3b82f6; letter-spacing: 1px; margin-top: 3px;">LAUNDRY SERVICES</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. Reality Laundry Services -->
+                        <div class="partner-logo-item" title="Reality Laundry Services">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <svg viewBox="0 0 40 40" width="38" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="20" cy="20" r="18" fill="#0891b2"/>
+                                    <path d="M20 10C20 10 13 18 13 22.5C13 26.366 16.134 29.5 20 29.5C23.866 29.5 27 26.366 27 22.5C27 18 20 10 20 10Z" fill="#ffffff"/>
+                                    <circle cx="17.5" cy="21.5" r="2" fill="#06b6d4"/>
+                                </svg>
+                                <div style="display: flex; flex-direction: column; text-align: left;">
+                                    <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.15rem; color: #0e7490; line-height: 1;">Reality <span style="color: #1e293b; font-weight: 700;">Laundry</span></span>
+                                    <span style="font-size: 0.52rem; font-weight: 700; color: #64748b; letter-spacing: 0.8px; margin-top: 3px;">SERVICES</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 6. DFreeMan Klin Service -->
+                        <div class="partner-logo-item" title="DFreeMan Klin Service">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <svg viewBox="0 0 40 40" width="38" height="38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="40" height="40" rx="10" fill="#059669"/>
+                                    <path d="M12 20C12 15.5817 15.5817 12 20 12C24.4183 12 28 15.5817 28 20C28 24.4183 24.4183 28 20 28C15.5817 28 12 24.4183 12 20Z" stroke="#ffffff" stroke-width="2"/>
+                                    <path d="M16 20L19 23L24 17" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <div style="display: flex; flex-direction: column; text-align: left;">
+                                    <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.15rem; color: #047857; line-height: 1;">DFreeMan</span>
+                                    <span style="font-size: 0.52rem; font-weight: 700; color: #1e293b; letter-spacing: 0.8px; margin-top: 3px;">KLIN SERVICE</span>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- Partner 2: Bright Drycleaners -->
-                <div style="background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 2.25rem; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between;" onmouseover="this.style.borderColor='rgba(56, 189, 248, 0.5)'; this.style.transform='translateY(-6px)';" onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.transform='translateY(0)';">
-                    <div>
-                        <!-- Header / Logo -->
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                            <div style="background: #ffffff; padding: 0.5rem 1rem; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; height: 64px;">
-                                <img src="{% static 'landing/images/bright_logo.png' %}" alt="Bright Drycleaners Logo" style="max-height: 52px; width: auto; object-fit: contain;">
-                            </div>
-                            <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <i class="fa-solid fa-circle-check"></i> Verified Partner
-                            </span>
-                        </div>
-
-                        <h3 style="font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-bottom: 0.35rem;">Bright Drycleaners</h3>
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.4rem;">
-                            <i class="fa-solid fa-location-dot" style="color: #38bdf8;"></i> Abuja & Keffi, Nigeria
-                        </div>
-
-                        <!-- Feature Badges -->
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
-                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <i class="fa-solid fa-layer-group" style="color: #38bdf8;"></i> Multi-Branch Active
-                            </span>
-                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <i class="fa-solid fa-cash-register" style="color: #fbbf24;"></i> High-Speed POS
-                            </span>
-                            <span style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem;">
-                                <i class="fa-solid fa-receipt" style="color: #34d399;"></i> Digital PDF Receipts
-                            </span>
-                        </div>
-
-                        <p style="color: #cbd5e1; font-size: 0.93rem; line-height: 1.6; font-style: italic; border-left: 3px solid #38bdf8; padding-left: 0.85rem; margin-bottom: 0;">
-                            "From instant order creation to branch management, Sparkles provides high speed and operational excellence every single day."
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ticker / Partner Banner -->
-            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; overflow: hidden; flex-wrap: wrap;">
-                <span style="background: #38bdf8; color: #0f172a; font-size: 0.75rem; font-weight: 800; padding: 0.38rem 0.85rem; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; shrink: 0; white-space: nowrap;">
-                    OFFICIAL ENTERPRISE PARTNERS
-                </span>
-                <div style="display: flex; align-items: center; gap: 1.5rem; color: #94a3b8; font-weight: 600; font-size: 0.9rem; flex-wrap: wrap;">
-                    <span>✨ De Blizz Services Ltd (Keffi, Nigeria)</span>
-                    <span style="color: rgba(255,255,255,0.2);">•</span>
-                    <span>✨ Bright Drycleaners (Abuja & Keffi, Nigeria)</span>
-                </div>
+                <button class="partner-nav-btn next" id="partnerNextBtn" aria-label="Next partner logos">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
             </div>
         </div>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const track = document.getElementById('partnerTrack');
+            const prevBtn = document.getElementById('partnerPrevBtn');
+            const nextBtn = document.getElementById('partnerNextBtn');
+            const container = document.getElementById('partnerTrackContainer');
+
+            if (!track || !prevBtn || !nextBtn || !container) return;
+
+            let currentScroll = 0;
+            const scrollStep = 240;
+
+            function getMaxScroll() {
+                return Math.max(0, track.scrollWidth - container.clientWidth);
+            }
+
+            function updateSlidePosition() {
+                const maxScroll = getMaxScroll();
+                if (currentScroll > maxScroll) currentScroll = maxScroll;
+                if (currentScroll < 0) currentScroll = 0;
+                track.style.transform = `translateX(-${currentScroll}px)`;
+            }
+
+            nextBtn.addEventListener('click', function () {
+                const maxScroll = getMaxScroll();
+                currentScroll += scrollStep;
+                if (currentScroll > maxScroll) {
+                    currentScroll = 0;
+                }
+                updateSlidePosition();
+            });
+
+            prevBtn.addEventListener('click', function () {
+                const maxScroll = getMaxScroll();
+                if (currentScroll <= 0) {
+                    currentScroll = maxScroll;
+                } else {
+                    currentScroll -= scrollStep;
+                }
+                updateSlidePosition();
+            });
+
+            // Smooth continuous subtle auto-slide
+            let autoPlayInterval = setInterval(function () {
+                const maxScroll = getMaxScroll();
+                if (maxScroll > 0) {
+                    currentScroll += 1.2;
+                    if (currentScroll >= maxScroll) {
+                        currentScroll = 0;
+                    }
+                    track.style.transform = `translateX(-${currentScroll}px)`;
+                }
+            }, 30);
+
+            container.addEventListener('mouseenter', () => clearInterval(autoPlayInterval));
+            container.addEventListener('mouseleave', () => {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = setInterval(function () {
+                    const maxScroll = getMaxScroll();
+                    if (maxScroll > 0) {
+                        currentScroll += 1.2;
+                        if (currentScroll >= maxScroll) {
+                            currentScroll = 0;
+                        }
+                        track.style.transform = `translateX(-${currentScroll}px)`;
+                    }
+                }, 30);
+            });
+        });
+    </script>
 
     <!-- About Section -->
     <section id="about" class="about-section">
